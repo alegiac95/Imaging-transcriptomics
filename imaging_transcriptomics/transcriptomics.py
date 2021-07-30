@@ -1,11 +1,11 @@
 from pathlib import Path
 
 import pandas as pd
-import numpy as np
 from scipy.stats import zscore
 
 from .inputs import (load_gene_expression,
                      load_gene_labels)
+from .bootstrap import *
 
 
 class GeneResults(dict):
@@ -31,9 +31,12 @@ class ImagingTranscriptomics:
         self.var = kwargs.get("variance")
         self.__cortical = zscore(scan_data[0:34], ddof=1, axis=0)
         self.__subcortical = zscore(scan_data[34:], ddof=1, axis=0)
-        self.__permuted = None
         self.__gene_expression = load_gene_expression()
         self.__gene_labels = load_gene_labels()
+        # Initialise with defaults for later
+        self.__permuted = None
+        self.r_boot = None
+        self.p_boot = None
 
     def __permute_data(self, iterations=1_000):
         """Permute the scan data for the analysis.
@@ -67,4 +70,9 @@ class ImagingTranscriptomics:
         :param int n_iter: number of permutations to make.
         """
         self.__permute_data(iterations=n_iter)
+        self.r_boot, self.p_boot = bootstrap_pls(self.scan_data,
+                                                 self.__gene_expression,
+                                                 self.__permuted,
+                                                 self.n_components,
+                                                 iterations=n_iter)
         pass
