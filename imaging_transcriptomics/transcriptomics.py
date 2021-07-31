@@ -1,11 +1,12 @@
 from pathlib import Path
 
 import pandas as pd
+import numpy as np
 from scipy.stats import zscore
 
 from .inputs import (load_gene_expression,
                      load_gene_labels)
-from .bootstrap import *
+from .bootstrap import (bootstrap_pls)
 
 
 class GeneResults(dict):
@@ -15,6 +16,7 @@ class GeneResults(dict):
         self.pls_weights = [None] * n_comp
         self.pls_gene = [None] * n_comp
         self.gene_id = [None] * n_comp
+        # TODO: Complete the definition of the class.
 
 
 class ImagingTranscriptomics:
@@ -26,17 +28,19 @@ class ImagingTranscriptomics:
         :param int n_components: number of components to use for the PLS regression.
         :param int variance: total explained variance by the PLS components.
         """
-        self.scan_data = zscore(scan_data, ddof=1, axis=0)
+        self.scan_data = scan_data
+        self.zscore_data = zscore(scan_data, ddof=1, axis=0)
         self.n_components = kwargs.get("n_components")
         self.var = kwargs.get("variance")
-        self.__cortical = zscore(scan_data[0:34], ddof=1, axis=0)
-        self.__subcortical = zscore(scan_data[34:], ddof=1, axis=0)
+        self.__cortical = self.zscore_data[0:34]
+        self.__subcortical = self.zscore_data[34:]
         self.__gene_expression = load_gene_expression()
         self.__gene_labels = load_gene_labels()
         # Initialise with defaults for later
         self.__permuted = None
         self.r_boot = None
         self.p_boot = None
+        self.gene_results = GeneResults(n_comp=self.n_components)  # TODO: check if this works with defaults
 
     def __permute_data(self, iterations=1_000):
         """Permute the scan data for the analysis.
@@ -70,7 +74,7 @@ class ImagingTranscriptomics:
         :param int n_iter: number of permutations to make.
         """
         self.__permute_data(iterations=n_iter)
-        self.r_boot, self.p_boot = bootstrap_pls(self.scan_data,
+        self.r_boot, self.p_boot = bootstrap_pls(self.zscore_data,
                                                  self.__gene_expression,
                                                  self.__permuted,
                                                  self.n_components,
