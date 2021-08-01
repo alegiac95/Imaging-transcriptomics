@@ -7,6 +7,9 @@ __pycache__/
 # C extensions
 *.so
 
+# Tests - need to figure out what to test
+tests/
+
 # Distribution / packaging
 .Python
 build/
