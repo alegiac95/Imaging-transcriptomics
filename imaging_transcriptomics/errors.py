@@ -31,7 +31,7 @@ class InvalidSizeError(Exception):
         * message -- optional user defined error message
     """
 
-    def __init__(self, error_file, size=(128, 218, 128), message="The provided file has a wrong size."):
+    def __init__(self, error_file, size=(182, 218, 182), message="The provided file has a wrong size."):
         self.error_file = error_file
         self.message = message
         self.size = size
@@ -42,6 +42,7 @@ class InvalidSizeError(Exception):
 
 
 # Checks Decorators
+# TODO: Change decorators from functions to classes.
 
 
 def check_path_exists(func):
@@ -55,11 +56,11 @@ def check_path_exists(func):
     return wrapper
 
 
-def check_correct_size(func):
+def check_correct_shape(func):
     """Decorator to check the correct matrix size of an imaging file.
     """
     def wrapper(image, *args, **kwargs):
-        if image.size == (128, 218, 128):
+        if image.shape == (182, 218, 182):
             func(image, *args, **kwargs)
         else:
             raise InvalidSizeError

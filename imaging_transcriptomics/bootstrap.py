@@ -5,7 +5,7 @@ from tqdm import tqdm
 
 def pls_regression(X, Y, n_components, **kwargs):
     """Placeholder while i understand how to incorporate the library from Ross Markello."""
-    return {}
+    return {"varexp": np.ones(15)}
 
 
 def bootstrap_pls(x, y, y_perm, dim, iterations=1_000):

@@ -5,8 +5,9 @@ import numpy as np
 from scipy.stats import zscore
 
 from .inputs import (load_gene_expression,
-                     load_gene_labels)
-from .bootstrap import (bootstrap_pls)
+                     load_gene_labels,
+                     get_components)
+from .bootstrap import (bootstrap_pls, pls_regression)
 
 
 class GeneResults(dict):
@@ -54,6 +55,7 @@ class ImagingTranscriptomics:
         ).reshape(7, iterations)
         self.__permuted[34:, :] = sub_permuted
         # cortical
+        # TODO: add the method to permute cortical regions with spatial nulls (R.Markello)
 
     def save_permutations(self, path):
         """Save the permutations to a csv file at a specified path.
@@ -68,15 +70,25 @@ class ImagingTranscriptomics:
                                  "permutations you need to compute them.")
         return
 
+    def pls_all_components(self):
+        results = pls_regression(self.zscore_data, self.__gene_expression, 15)
+        var_exp = results.get("varexp")
+        if self.n_components is None and self.var != 0.0:
+            self.n_components = get_components((self.var / 100), var_exp)
+        elif self.var is None and self.n_components != 0:
+            self.var = np.cumsum(var_exp)[self.n_components-1]
+        return var_exp
+
     def run(self, n_iter=1_000):
         """Run the analysis of the imaging scan.
 
         :param int n_iter: number of permutations to make.
         """
+        var_explained_components = self.pls_all_components()
         self.__permute_data(iterations=n_iter)
         self.r_boot, self.p_boot = bootstrap_pls(self.zscore_data,
                                                  self.__gene_expression,
                                                  self.__permuted,
                                                  self.n_components,
                                                  iterations=n_iter)
-        pass
+        return var_explained_components
