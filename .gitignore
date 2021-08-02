@@ -9,6 +9,8 @@ __pycache__/
 
 # Tests - need to figure out what to test
 tests/
+# Docs - need to write them first
+docs/
 
 # Distribution / packaging
 .Python
