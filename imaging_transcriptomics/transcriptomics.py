@@ -1,23 +1,18 @@
+import warnings
 from pathlib import Path
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 from scipy.stats import zscore
+
+with warnings.catch_warnings():
+    warnings.filterwarnings("ignore")
+    from netneurotools import freesurfer, stats
 
 from .inputs import (load_gene_expression,
                      load_gene_labels,
                      get_components)
-from .bootstrap import (bootstrap_pls, pls_regression)
-
-
-class GeneResults(dict):
-    """Class to save the gene results."""
-    def __init__(self, n_comp):
-        super().__init__()
-        self.pls_weights = [None] * n_comp
-        self.pls_gene = [None] * n_comp
-        self.gene_id = [None] * n_comp
-        # TODO: Complete the definition of the class.
+from .bootstrap import (bootstrap_pls, pls_regression, bootstrap_genes)
 
 
 class ImagingTranscriptomics:
@@ -41,21 +36,38 @@ class ImagingTranscriptomics:
         self.__permuted = None
         self.r_boot = None
         self.p_boot = None
-        self.gene_results = GeneResults(n_comp=self.n_components)  # TODO: check if this works with defaults
+        self.gene_results = None
+        self.var_components = None
 
     def __permute_data(self, iterations=1_000):
         """Permute the scan data for the analysis.
 
         :param int iterations: number of iterations to perform in the permutations.
         """
-        self.__permuted = np.zeros((self.scan_data.shape[0], iterations))
+        self.__permuted = np.zeros((self.zscore_data.shape[0], iterations))
         # subcortical
         sub_permuted = np.array(
             [np.random.permutation(self.__subcortical) for _ in range(iterations)]
         ).reshape(7, iterations)
         self.__permuted[34:, :] = sub_permuted
-        # cortical
-        # TODO: add the method to permute cortical regions with spatial nulls (R.Markello)
+        # Cortical
+        # Annotation file for the Desikan-Killiany atlas in fs5
+        annot_lh = Path(__file__).resolve().parent.parent / "data/fsa5_lh_aparc.annot"
+        annot_rh = Path(__file__).resolve().parent.parent / "data/fsa5_rh_aparc.annot"
+        # Get the parcel centroids of the Desikan-Killiany atlas
+        parcel_centroids, parcel_hemi = freesurfer.find_parcel_centroids(
+            lhannot=annot_lh,
+            rhannot=annot_rh,
+            version='fsaverage5',
+            surf='sphere',
+            method="surface")
+        # Mask the results to have only the left hemisphere
+        left_hemi_mask = parcel_hemi == 0
+        coords, hemi = parcel_centroids[left_hemi_mask], parcel_hemi[left_hemi_mask]
+        # Get the spin samples
+        spins = stats.gen_spinsamples(coords, hemi, n_rotate=iterations, method='vasa', seed=1234)
+        cort_permuted = np.array(self.__cortical[spins])
+        self.__permuted[0:34, :] = cort_permuted
 
     def save_permutations(self, path):
         """Save the permutations to a csv file at a specified path.
@@ -84,11 +96,19 @@ class ImagingTranscriptomics:
 
         :param int n_iter: number of permutations to make.
         """
-        var_explained_components = self.pls_all_components()
+        self.var_components = self.pls_all_components()
         self.__permute_data(iterations=n_iter)
         self.r_boot, self.p_boot = bootstrap_pls(self.zscore_data,
                                                  self.__gene_expression,
                                                  self.__permuted,
                                                  self.n_components,
                                                  iterations=n_iter)
-        return var_explained_components
+        self.gene_results = bootstrap_genes(self.zscore_data,
+                                            self.__gene_expression,
+                                            self.n_components,
+                                            self.scan_data,
+                                            self.__gene_labels,
+                                            n_iter)
+        self.gene_results.boot_results.compute_values(self.n_components,
+                                                      self.gene_results.original_results.pls_weights,
+                                                      self.gene_results.original_results.gene_id)
