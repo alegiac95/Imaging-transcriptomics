@@ -29,7 +29,7 @@ The package is written in Python3 and requires the some libraries to run:
 
 You can install the package from ``Pypi`` by running:
 
-.. code-block:: bash
+.. code-block:: shell
     $ pip install imaging-transcriptomics
 
 
