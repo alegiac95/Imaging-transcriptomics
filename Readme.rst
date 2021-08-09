@@ -29,14 +29,14 @@ The package is written in Python3 and requires the some libraries to run:
 
 You can install the package from ``Pypi`` by running:
 
-.. code-block:: shell
+.. code:: shell
     $ pip install imaging-transcriptomics
 
 
 This Python package contains a command line interface (cli) and a library to import directly in your Python scripts.
 To run the cli the command ``imaging-transcriptomics`` is provided while to import it to a Python script you can use
 
-.. code-block:: python
+.. code:: python
     import imaging_transcriptomics as imt
 
 
