@@ -6,6 +6,7 @@ from . import bootstrap
 from . import inputs
 from . import permutations
 from . import transcriptomics
+from . import genes
 
 from .transcriptomics import ImagingTranscriptomics
 from .bootstrap import (bootstrap_pls,
@@ -15,3 +16,4 @@ from .inputs import (load_gene_expression,
                      get_components,
                      read_scan,
                      extract_average)
+from .genes import GeneResults
