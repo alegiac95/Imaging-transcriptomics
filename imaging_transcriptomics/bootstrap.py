@@ -2,10 +2,22 @@ import numpy
 import numpy as np
 from tqdm import tqdm
 
+from .genes import GeneResults
 
 def pls_regression(X, Y, n_components, **kwargs):
     """Placeholder while i understand how to incorporate the library from Ross Markello."""
     return {"varexp": np.ones(15)}
+
+
+def correlate(corr1, corr2):
+    """Return correlation similar to MATLAB corr function.
+
+    :param corr1: first element to correlate.
+    :param corr2: second element to correlate.
+    """
+    return np.corrcoef(np.hstack(
+            corr1, corr2
+    ), rowvar=False)[0, 1:]
 
 
 def bootstrap_pls(x, y, y_perm, dim, iterations=1_000):
@@ -49,5 +61,51 @@ def bootstrap_pls(x, y, y_perm, dim, iterations=1_000):
     return R_boot, p_boot
 
 
-def bootstrap_genes():
-    pass
+def bootstrap_genes(x, y, n_components, x_norm, genes, n_iterations=1000):
+    """Run a bootstrap permuting the genes as well as the data, to assess reliability.
+
+
+    :param x:
+    :param y:
+    :param n_components:
+    :param x_norm:
+    :param genes:
+    :param n_iterations:
+    :return:
+    """
+    n_genes = 15_633
+    gene_index = np.array(list(range(1, n_genes+1)))
+    results = pls_regression(x, y, n_components=n_components)
+    r1 = correlate(results.get("x_scores"), x_norm)
+    weights = results.get("x_weights")
+    gene_results = GeneResults(n_components, dim1=weights.shape[0], dim2=weights.shape[1])
+    scores = results.get("x_scores")
+    for i in range(r1.size):
+        if r1[i] < 0:
+            weights[:, i] *= -1
+            scores[:, i] *= -1
+    for idx in range(1, n_components+1):
+        x = np.argsort(weights[:, idx-1], kind='mergesort')[::-1]
+        gene_results.original_results.set_result_values(idx,
+                                                        np.sort(weights[:, idx-1], kind='mergesort')[::-1],
+                                                        x,
+                                                        genes[x],
+                                                        gene_index[x])
+
+    # Main genes bootstrap
+    for iteration in tqdm(range(n_iterations), desc="Bootstrapping gene list"):
+        my_resample = np.random.choice(41, size=41)
+        x_perm = x[my_resample, :]
+        y_perm = y[my_resample, :]
+        results = pls_regression(x_perm, y_perm, n_components=n_components)
+        _weights = results.get("x_weights")
+        for component in range(1, n_components+1):
+            __temp = _weights[:, component-1]
+            __new_weights = __temp[gene_results.original_results.x[component-1]]
+            __correlation = np.corrcoef(
+                np.hstack((gene_results.original_results.pls_weights[component-1].reshape(15633, 1),
+                           __new_weights.reshape(15633, 1)), rowvar=False)[0, 1:])
+            if __correlation < 0:
+                __new_weights *= -1
+            gene_results.boot_results.pls_weights_boot[component-1][:, component-1, iteration] = __new_weights
+    return gene_results
