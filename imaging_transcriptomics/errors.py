@@ -2,8 +2,6 @@ from pathlib import Path
 
 
 # Custom Errors to throw at the user
-
-
 class InvalidFormatError(Exception):
     """Exception raised when the format of one of the input files in not correct.
 
@@ -42,49 +40,50 @@ class InvalidSizeError(Exception):
 
 
 # Checks Decorators
-# TODO: Change decorators from functions to classes.
-
-
-def check_path_exists(func):
-    """Decorator function to check path exists.
+class CheckPath:
+    """ Decorator to check if a path exists.
     """
-    def wrapper(path, *args, **kwargs):
-        if Path(path).exists():
-            func(path, *args, **kwargs)
-        else:
+    def __init__(self, function):
+        self.function = function
+    
+    def __call__(self, path, *args, **kwargs):
+        if not Path(path).exists():
             raise FileNotFoundError
-    return wrapper
+        return self.function(path, *args, **kwargs)
 
 
-def check_correct_shape(func):
-    """Decorator to check the correct matrix size of an imaging file.
+class CheckExtension:
+    """Decorator to check the file extension of the input scan.
     """
-    def wrapper(image, *args, **kwargs):
-        if image.shape == (182, 218, 182):
-            func(image, *args, **kwargs)
-        else:
-            raise InvalidSizeError
-    return wrapper
 
+    def __init__(self, function):
+        self.function = function
 
-def check_extensions(func):
-    """Decorator to check for the correct file extension of the imaging file.
-    """
-    def wrapper(path, *args, **kwargs):
+    def __call__(self, path, *args, **kwargs):
         imaging_path = Path(path)
-        correct_suffixes = [".nii", ".nii.gz"]
-        if str().join(imaging_path.suffixes) not in correct_suffixes:
+        if str().join(imaging_path.suffixes) not in [".nii", ".nii.gz"]:
             raise InvalidFormatError
-        else:
-            func(path, *args, **kwargs)
-    return wrapper
+        return self.function(path, *args, **kwargs)
 
 
-def check_var_in_range(func):
-    """Decorator to check that the variance is in the right range"""
-    def wrapper(target_var, *args, **kwargs):
-        if 0.0 < target_var <= 1.0:
-            func(target_var, *args, **kwargs)
-        else:
-            raise AssertionError
-    return wrapper
+class CheckShape:
+    """Decorator to check the correct matrix shape of the imaging scan."""
+    def __init__(self, function):
+        self.function = function
+    
+    def __call__(self, image, *args, **kwargs):
+        if not image.shape == (182, 218, 182):
+            raise InvalidSizeError
+        return self.function(image, *args, **kwargs)
+
+
+class CheckVariance:
+    """Decorator to check that the variance is in the correct range of values.
+    """
+    def __init__(self, function):
+        self.function = function
+
+    def __call__(self, target_var, *args, **kwargs):
+        if target_var < 0.0 or target_var > 1.0:
+            raise ValueError
+        return self.function(target_var, *args, **kwargs)
