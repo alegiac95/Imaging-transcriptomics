@@ -5,15 +5,15 @@ import numpy as np
 import pandas as pd
 from scipy.stats import zscore
 
-from .errors import (check_correct_shape,
-                     check_path_exists,
-                     check_extensions,
-                     check_var_in_range)
+from .errors import (CheckShape,
+                     CheckPath,
+                     CheckExtension,
+                     CheckVariance)
 
 
 # Imaging data
-#@check_path_exists
-#@check_extensions
+@CheckPath
+@CheckExtension
 def read_scan(path):
     """Return the imaging file associated to the input scan.
 
@@ -27,7 +27,7 @@ def read_scan(path):
     return data
 
 
-@check_correct_shape
+@CheckShape
 def extract_average(imaging_matrix):
     """Extract the average value of the ROIs from the imaging scan.
 
@@ -48,7 +48,7 @@ def extract_average(imaging_matrix):
 
 
 # Other parameters
-@check_var_in_range
+@CheckVariance
 def get_components(target_variance, explained_var):
     """Return the optimal number of PLS components to explain a desired amount of the total variance.
 
