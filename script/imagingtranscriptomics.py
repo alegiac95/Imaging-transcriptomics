@@ -5,7 +5,15 @@ import imaging_transcriptomics
 
 
 def get_args():
-    """Parse the inputs to run the virtual histology script.
+    """Return the args parsed from the command line.
+
+    Reads the command line and parses the possible inputs for a match. The available inputs are:
+    * input: path of the input file to analyze.
+    * output (optional): path where to save the results.
+    * ncomp: number of components to use for PLS regression.
+    * variance: percentage of variance to extract by the PLS components.
+
+    :return: Data structure with all args parsed from the command line.
     """
     DESCRIPTION = """Perform imaging transcriptomics analysis on a neuroimaging scan. """
     EPILOG = """Check your results in the specified folder or in the file path of the input scan, if you have not 
