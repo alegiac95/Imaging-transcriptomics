@@ -102,9 +102,10 @@ def bootstrap_genes(x, y, n_components, x_norm, genes, n_iterations=1000):
         for component in range(1, n_components+1):
             __temp = _weights[:, component-1]
             __new_weights = __temp[gene_results.original_results.x[component-1]]
-            __correlation = np.corrcoef(
-                np.hstack((gene_results.original_results.pls_weights[component-1].reshape(15633, 1),
-                           __new_weights.reshape(15633, 1)), rowvar=False)[0, 1:])
+            __correlation = correlate(
+                gene_results.original_results.pls_weights[component-1].reshape(15633, 1),
+                __new_weights.reshape(15633, 1)
+            )
             if __correlation < 0:
                 __new_weights *= -1
             gene_results.boot_results.pls_weights_boot[component-1][:, component-1, iteration] = __new_weights
