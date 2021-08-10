@@ -62,16 +62,18 @@ def bootstrap_pls(x, y, y_perm, dim, iterations=1_000):
 
 
 def bootstrap_genes(x, y, n_components, x_norm, genes, n_iterations=1000):
-    """Run a bootstrap permuting the genes as well as the data, to assess reliability.
+    """Run a bootstrap permuting the genes as well as the data, to assess reliability of the results.
 
 
-    :param x:
-    :param y:
-    :param n_components:
-    :param x_norm:
-    :param genes:
-    :param n_iterations:
-    :return:
+
+    :param x: data to regress, provided as z scores (e.g., average values from ROIs).
+    :param y: data to regress against, provided as z scores (e.g. gene expression data).
+    :param n_components: number of components to use for the PLS regression.
+    :param x_norm: original x data (before z scoring).
+    :param genes: labels of the genes regressed against (e.g., the labels of the y data rows).
+    :param n_iterations: number of iterations for the bootstrapping and permutations.
+    :return gene_results: GeneResults data structure with all the results of the bootstrapping and the original
+    results as well.
     """
     n_genes = 15_633
     gene_index = np.array(list(range(1, n_genes+1)))

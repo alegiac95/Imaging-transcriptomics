@@ -42,6 +42,11 @@ class InvalidSizeError(Exception):
 # Checks Decorators
 class CheckPath:
     """ Decorator to check if a path exists.
+
+    In order to run the function decorated the path provided to the function has to exists, otehrwise an error is
+    raised.
+
+    :raises FileNotFoundError:
     """
     def __init__(self, function):
         self.function = function
@@ -54,6 +59,10 @@ class CheckPath:
 
 class CheckExtension:
     """Decorator to check the file extension of the input scan.
+
+    Extension of the imaging scan has to be in NIfTI format (compressed or not) in order to run the function.
+
+    :raises InvalidFormatError:
     """
 
     def __init__(self, function):
@@ -67,7 +76,12 @@ class CheckExtension:
 
 
 class CheckShape:
-    """Decorator to check the correct matrix shape of the imaging scan."""
+    """Decorator to check the correct matrix shape of the imaging scan.
+
+    Shape of the matrix has to be 182x218x182 in order to run the function, otherwise raises and error.
+
+    :raises InvalidSizeError:
+    """
     def __init__(self, function):
         self.function = function
     
@@ -79,6 +93,10 @@ class CheckShape:
 
 class CheckVariance:
     """Decorator to check that the variance is in the correct range of values.
+
+    Target variance has to be in the range 0.0-1.0 (equivalent to 0-100%) in order to run the function.
+
+    :raises ValueError:
     """
     def __init__(self, function):
         self.function = function
