@@ -2,8 +2,37 @@ from pathlib import Path
 
 import numpy as np
 import matplotlib.pyplot as plt
+from fpdf import FPDF
 
 from .errors import CheckPath
+
+
+class PDF(FPDF):
+    """Class to generate a PDF report for the imaging-transcriptomics script.
+    """
+    def header(self):
+        """The header will contain always the title."""
+        self.rect(10, 10, 190, 280)
+        self.line(10, 50, 200, 50)
+        self.set_font("Helvetica", "B", 14)
+        self.cell(w=0, h=15, align="C", txt="Imaging Transcriptomics Analysis Report", ln=True)
+
+    def analysis_info(self, filename, date, filepath):
+        """Info on the analysis performed. Information included are the name of
+        the scan of the input, date of the analysis and the original path of the scan."""
+        self.set_font("Courier", "", 10)
+        self.cell(w=100, h=8, align="L", txt=f"  Scan Name: {filename}")
+        self.cell(w=100, h=8, align="L", txt=f"  Date: {date}", ln=True)
+        self.cell(w=100, h=10, align="L", txt=f"  File Path: {filepath}")
+
+    def pls_regression(self, path_plots):
+        """Include the plots of the pls components."""
+        self.ln(20)
+        self.set_font("Helvetica", "BU", 12)
+        self.cell(w=0, h=10, align="L", txt="-PLS Regression")
+        self.ln(10)
+        self.image(Path(path_plots) / "individual_variance.png", x=12, w=120)
+        self.image(Path(path_plots) / "cumulative_variance.png", x=12, w=120)
 
 
 @CheckPath
