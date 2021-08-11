@@ -29,14 +29,13 @@ class InvalidSizeError(Exception):
         * message -- optional user defined error message
     """
 
-    def __init__(self, error_file, size=(182, 218, 182), message="The provided file has a wrong size."):
-        self.error_file = error_file
+    def __init__(self, shape=(182, 218, 182), message="The provided file has a wrong shape."):
         self.message = message
-        self.size = size
+        self.shape = shape
         super().__init__(self.message)
 
     def __str__(self):
-        return f"{self.message} The file {self.error_file} has size: {self.size}"
+        return f"{self.message} The file has shape: {self.shape}"
 
 
 # Checks Decorators
@@ -71,7 +70,7 @@ class CheckExtension:
     def __call__(self, path, *args, **kwargs):
         imaging_path = Path(path)
         if str().join(imaging_path.suffixes) not in [".nii", ".nii.gz"]:
-            raise InvalidFormatError
+            raise InvalidFormatError(path)
         return self.function(path, *args, **kwargs)
 
 
@@ -87,7 +86,7 @@ class CheckShape:
     
     def __call__(self, image, *args, **kwargs):
         if not image.shape == (182, 218, 182):
-            raise InvalidSizeError
+            raise InvalidSizeError(image.shape)
         return self.function(image, *args, **kwargs)
 
 
