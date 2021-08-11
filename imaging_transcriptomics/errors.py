@@ -52,7 +52,7 @@ class CheckPath:
         self.function = function
     
     def __call__(self, path, *args, **kwargs):
-        if not Path(path).exists():
+        if not Path(path).absolute().exists():
             raise FileNotFoundError
         return self.function(path, *args, **kwargs)
 
