@@ -42,8 +42,8 @@ class PDF(FPDF):
         self.set_font("Helvetica", "BU", 12)
         self.cell(w=0, h=10, align="L", txt="-PLS Regression")
         self.ln(10)
-        self.image(Path(path_plots) / "individual_variance.png", x=12, w=120)
-        self.image(Path(path_plots) / "cumulative_variance.png", x=12, w=120)
+        self.image(Path(path_plots) / "individual_variance.png", x=15, w=120)
+        self.image(Path(path_plots) / "cumulative_variance.png", x=15, w=120)
 
     def reproducibility_line(self, cli_commands, version):
         """Create a string with the command used from the command line to run the analysis.
