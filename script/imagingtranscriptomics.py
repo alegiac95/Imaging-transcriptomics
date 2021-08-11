@@ -1,7 +1,9 @@
-
+import logging
 import argparse
+from pathlib import Path
 
 import imaging_transcriptomics
+from imaging_transcriptomics import reporting
 
 
 def get_args():
@@ -55,6 +57,7 @@ def main():
     inputs = get_args()
     # TODO: use multiprocessors if the input is a list of strings.
 
+    # TODO: use logging to show info to the user instead of print functions and save this to the directory of the report
     data_to_analyse = imaging_transcriptomics.inputs.extract_average(
         imaging_transcriptomics.inputs.read_scan(inputs.input)
     )
@@ -64,6 +67,20 @@ def main():
     }
     analysis = imaging_transcriptomics.ImagingTranscriptomics(data_to_analyse, **initial_dict)
     analysis.run()
+
+    # Save the results
+    # Get IO paths to save files
+    if not inputs.output:
+        save_dir = Path(inputs.input).absolute().parent
+    else:
+        save_dir = Path(inputs.output)
+    input_path = Path(inputs.input)
+    scan_name = input_path.name.split(".")[0]
+
+    save_dir = reporting.make_folder(save_dir, f"Imt_{scan_name}")
+    reporting.make_plots(save_dir, analysis.n_components, analysis.var_components)
+    reporting.create_csv(analysis.gene_results, analysis.n_components, save_dir)
+    reporting.create_pdf(input_path, save_dir)
 
 
 if __name__ == '__main__':
