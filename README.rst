@@ -8,7 +8,7 @@ some property of brain structure or function as measured by neuroimaging (e.g., 
 An overview of the methodology is shown in figure below.
 
 .. image:: docs/chapters/images/imaging_transcriptomics.png
-    :alt: alternate-text
+    :alt: schematic representation of the imaging transcriptomics workflow
     :align: center
 
 
@@ -29,7 +29,7 @@ The package is written in Python3 and requires the some libraries to run:
 
 You can install the package from ``Pypi`` by running:
 
-.. code:: shell
+.. code:: bash
     $ pip install imaging-transcriptomics
 
 
