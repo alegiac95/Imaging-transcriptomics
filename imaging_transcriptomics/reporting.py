@@ -1,10 +1,13 @@
 from pathlib import Path
+from datetime import datetime
 
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 from fpdf import FPDF
 
 from .errors import CheckPath
+from .genes import GeneResults
 
 
 class PDF(FPDF):
@@ -21,9 +24,9 @@ class PDF(FPDF):
         """Info on the analysis performed. Information included are the name of
         the scan of the input, date of the analysis and the original path of the scan.
 
-        :param filename:
-        :param date:
-        :param filepath:
+        :param filename: name of the scan used for analysis.
+        :param date: date when the analysis was performed.
+        :param filepath: absolute path of the imaging scan used for analysis.
         """
         self.set_font("Courier", "", 10)
         self.cell(w=100, h=8, align="L", txt=f"  Scan Name: {filename}")
@@ -33,7 +36,7 @@ class PDF(FPDF):
     def pls_regression(self, path_plots):
         """Include the plots of the pls components.
 
-        :param path_plots:
+        :param path_plots: path where the .png plots are located.
         """
         self.ln(20)
         self.set_font("Helvetica", "BU", 12)
@@ -42,10 +45,11 @@ class PDF(FPDF):
         self.image(Path(path_plots) / "individual_variance.png", x=12, w=120)
         self.image(Path(path_plots) / "cumulative_variance.png", x=12, w=120)
 
-    def reproducibility_line(self, cli_commands):
+    def reproducibility_line(self, cli_commands, version):
         """Create a string with the command used from the command line to run the analysis.
 
-        :param cli_commands:
+        :param cli_commands: commands given in the cli to run the analysis.
+        :param version: version of the software used to run the analysis.
         """
         pass
 
@@ -109,5 +113,44 @@ def make_plots(path, limit_x, data_y):
     return
 
 
-def create_pdf():
-    pass
+def create_pdf(filepath, save_dir):
+    """Create a PDF report.
+
+    Creates a report for the imaging transcriptomics analysis with some plots and details of what was run by the user.
+
+    :param filepath: path of the image used for analysis.
+    :param save_dir: path where to save the report (same as where the plots are located).
+    """
+    if not isinstance(filepath, Path):
+        filepath = Path(filepath)
+    analysis_date = datetime.now().strftime("%d-%m-%Y")
+
+    report = PDF(orientation="P", unit="mm", format='A4')
+    report.add_page()
+    report.analysis_info(filename=filepath.name, date=analysis_date, filepath=filepath)
+    report.pls_regression(path_plots=save_dir)
+    report.output(save_dir / "Report.pdf", "F")
+    return
+
+
+def create_csv(analysis_results, n_comp, save_dir):
+    """Create .csv files for the results of each component.
+
+    The function creates a different csv file for each of the components used for PLS regression (if 2 components are
+    used the files 'PLS1.csv' and 'PLS2.csv' will be created.
+
+    :param analysis_results: GeneResults data structure with the results of bootstrapping.
+    :param int n_comp: number of components used in the regression.
+    :param save_dir: path where the output will be saved.
+    :return:
+    """
+    if not isinstance(analysis_results, GeneResults):
+        raise Exception  # TODO: define the right exception to throw
+
+    for i in range(n_comp):
+        data = np.vstack((analysis_results.boot_results.pls_genes[i],
+                          analysis_results.boot_results.z_scores[i],
+                          analysis_results.boot_results.pval[i],
+                          analysis_results.boot_results.pval_corrected[i])).T
+        data = pd.DataFrame(data, columns=["Gene ID", "Z", "p", "p corrected"])
+        data.csv(save_dir / f"PLS{i+1}.csv", index=False)
