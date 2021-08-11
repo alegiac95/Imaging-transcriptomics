@@ -7,6 +7,7 @@ from . import inputs
 from . import permutations
 from . import transcriptomics
 from . import genes
+from . import reporting
 
 from .transcriptomics import ImagingTranscriptomics
 from .bootstrap import (bootstrap_pls,
