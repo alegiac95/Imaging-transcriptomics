@@ -19,20 +19,35 @@ class PDF(FPDF):
 
     def analysis_info(self, filename, date, filepath):
         """Info on the analysis performed. Information included are the name of
-        the scan of the input, date of the analysis and the original path of the scan."""
+        the scan of the input, date of the analysis and the original path of the scan.
+
+        :param filename:
+        :param date:
+        :param filepath:
+        """
         self.set_font("Courier", "", 10)
         self.cell(w=100, h=8, align="L", txt=f"  Scan Name: {filename}")
         self.cell(w=100, h=8, align="L", txt=f"  Date: {date}", ln=True)
         self.cell(w=100, h=10, align="L", txt=f"  File Path: {filepath}")
 
     def pls_regression(self, path_plots):
-        """Include the plots of the pls components."""
+        """Include the plots of the pls components.
+
+        :param path_plots:
+        """
         self.ln(20)
         self.set_font("Helvetica", "BU", 12)
         self.cell(w=0, h=10, align="L", txt="-PLS Regression")
         self.ln(10)
         self.image(Path(path_plots) / "individual_variance.png", x=12, w=120)
         self.image(Path(path_plots) / "cumulative_variance.png", x=12, w=120)
+
+    def reproducibility_line(self, cli_commands):
+        """Create a string with the command used from the command line to run the analysis.
+
+        :param cli_commands:
+        """
+        pass
 
 
 @CheckPath
@@ -47,9 +62,9 @@ def make_folder(path, folder_name: str):
 
     :return folder_made: path of the folder created.
     """
-    n_folds = len(list(Path(path).absolute().glob(f"{folder_name}_*")))
+    n_folds = len(list(Path(path).absolute().glob(f"{folder_name}*")))
     if n_folds != 0:
-        folder_name = f"{folder_name}_{n_folds+1}"
+        folder_name = f"{folder_name}_{n_folds}"
     folder_made = Path(path).absolute() / folder_name
     folder_made.mkdir()
     return folder_made
