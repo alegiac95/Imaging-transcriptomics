@@ -50,8 +50,8 @@ class BootResults(dict):
         for component in range(1, n_comp+1):
             self.std[component] = self.pls_weights_boot[component][:, component-1, :].std(ddof=1, axis=1)
             __temp = original_weights[component] / self.std[component]
-            self.z_scores[component] = np.sort(__temp[component], kind='mergesort')[::-1]
-            __idx = np.argsort(__temp[component], kind='mergesort')[::-1]
+            self.z_scores[component] = np.sort(__temp, kind='mergesort')[::-1]
+            __idx = np.argsort(__temp, kind='mergesort')[::-1]
             self.pls_genes[component] = original_ids[component][__idx]
             self.pval[component] = norm.sf(abs(self.z_scores[component]))
             _, self.pval_corrected[component], _ = multipletests(self.pval[component][::-1].reshape(1, 15633),
