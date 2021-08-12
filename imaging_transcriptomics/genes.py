@@ -22,11 +22,11 @@ class OriginalResults(dict):
         :param x: 
         :return: 
         """
-        self.pls_weights[idx] = pls_weights,
-        self.pls_gene[idx] = pls_genes,
-        self.gene_id[idx] = gene_id,
-        self.index[idx] = x
-        self.pls_weights_z[idx] = zscore(pls_weights, axis=0, ddof=1)
+        self.pls_weights[idx - 1] = np.array(pls_weights),
+        self.pls_gene[idx - 1] = np.array(pls_genes),
+        self.gene_id[idx - 1] = gene_id,
+        self.index[idx - 1] = np.array(x)
+        self.pls_weights_z[idx - 1] = np.array(zscore(pls_weights, axis=0, ddof=1))
 
 
 class BootResults(dict):
@@ -50,13 +50,14 @@ class BootResults(dict):
         for component in range(1, n_comp + 1):
             self.std[component - 1] = self.pls_weights_boot[component - 1][:, component - 1, :].std(ddof=1, axis=1)
             __temp = original_weights[component - 1] / self.std[component - 1]
-            self.z_scores[component] = np.sort(__temp, kind='mergesort')[::-1]
+            self.z_scores[component - 1] = np.sort(__temp, kind='mergesort')[::-1]
             __idx = np.argsort(__temp, kind='mergesort')[::-1]
-            self.pls_genes[component - 1] = original_ids[component - 1][__idx]
-            self.pval[component - 1] = norm.sf(abs(self.z_scores[component - 1]))
-            _, self.pval_corrected[component - 1], _ = multipletests(self.pval[component][::-1].reshape(1, 15633),
-                                                                     method="fdr_bh",
-                                                                     is_sorted=True)
+            self.pls_genes[component - 1] = original_ids[component - 1][0][__idx]
+            __p = norm.sf(abs(self.z_scores[component - 1]))
+            self.pval[component - 1] = __p
+            _, __p_corr, _, _ = multipletests(__p[::-1].reshape(1, 15633),
+                                              method="fdr_bh", is_sorted=True)
+            self.pval_corrected[component - 1] = __p_corr
 
 
 class GeneResults(dict):
