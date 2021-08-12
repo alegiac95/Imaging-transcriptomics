@@ -1,6 +1,7 @@
-import pytest
 import numpy as np
-from imaging_transcriptomics.inputs import extract_average, read_scan, get_components
+import pytest
+
+from imaging_transcriptomics.inputs import extract_average, get_components, load_gene_expression, load_gene_labels
 
 
 # def test_read_scan():
@@ -37,3 +38,19 @@ def test_extract_average_len():
     """Test that the length of the returned object has the correct length (41)."""
     test_matrix = np.zeros((182, 218, 182))
     assert len(extract_average(test_matrix)) == 41
+
+
+def test_gene_expression_load():
+    """Test that the genes expression data are loaded correctly."""
+    genes = load_gene_expression()
+    assert genes.shape == (41, 15633)
+
+
+def test_gene_labels_load():
+    """Test that the genes labels are loaded correctly."""
+    labels = load_gene_labels()
+    assert labels.shape == (15633, 1)
+    assert labels[78] == "ABHD6"
+    assert labels[1635] == "C6orf106"
+    assert "audhdub" not in labels
+
