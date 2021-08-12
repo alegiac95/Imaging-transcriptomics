@@ -1,12 +1,9 @@
 import numpy
 import numpy as np
 from tqdm import tqdm
+from pyls import pls_regression
 
 from .genes import GeneResults
-
-def pls_regression(X, Y, n_components, **kwargs):
-    """Placeholder while i understand how to incorporate the library from Ross Markello."""
-    return {"varexp": np.ones(15)}
 
 
 def correlate(corr1, corr2):
@@ -77,7 +74,7 @@ def bootstrap_genes(x, y, n_components, x_norm, genes, n_iterations=1000):
     """
     n_genes = 15_633
     gene_index = np.array(list(range(1, n_genes+1)))
-    results = pls_regression(x, y, n_components=n_components)
+    results = pls_regression(x, y, n_components=n_components, n_boot=0, n_perm=0)
     r1 = correlate(results.get("x_scores"), x_norm)
     weights = results.get("x_weights")
     gene_results = GeneResults(n_components, dim1=weights.shape[0], dim2=weights.shape[1])

@@ -4,6 +4,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from scipy.stats import zscore
+from pyls import pls_regression
 
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore")
@@ -12,7 +13,7 @@ with warnings.catch_warnings():
 from .inputs import (load_gene_expression,
                      load_gene_labels,
                      get_components)
-from .bootstrap import (bootstrap_pls, pls_regression, bootstrap_genes)
+from .bootstrap import bootstrap_pls, bootstrap_genes
 
 
 class ImagingTranscriptomics:
@@ -92,7 +93,7 @@ class ImagingTranscriptomics:
         After the regression is estimated, either the number of components or the estimated percentage of variance
         given by the components is estimated, depending on what is set by the user in the __init__() method.
         """
-        results = pls_regression(self.zscore_data, self.__gene_expression, 15)
+        results = pls_regression(self.zscore_data, self.__gene_expression, n_components=15, n_perm=0, n_boot=0)
         var_exp = results.get("varexp")
         if self.n_components is None and self.var != 0.0:
             self.n_components = get_components((self.var / 100), var_exp)
