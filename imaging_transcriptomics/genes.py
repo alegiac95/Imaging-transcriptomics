@@ -47,16 +47,16 @@ class BootResults(dict):
         :param original_ids:
         :return:
         """
-        for component in range(1, n_comp+1):
-            self.std[component] = self.pls_weights_boot[component][:, component-1, :].std(ddof=1, axis=1)
-            __temp = original_weights[component] / self.std[component]
+        for component in range(1, n_comp + 1):
+            self.std[component - 1] = self.pls_weights_boot[component - 1][:, component - 1, :].std(ddof=1, axis=1)
+            __temp = original_weights[component - 1] / self.std[component - 1]
             self.z_scores[component] = np.sort(__temp, kind='mergesort')[::-1]
             __idx = np.argsort(__temp, kind='mergesort')[::-1]
-            self.pls_genes[component] = original_ids[component][__idx]
-            self.pval[component] = norm.sf(abs(self.z_scores[component]))
-            _, self.pval_corrected[component], _ = multipletests(self.pval[component][::-1].reshape(1, 15633),
-                                                                 method="fdr_bh",
-                                                                 is_sorted=True)
+            self.pls_genes[component - 1] = original_ids[component - 1][__idx]
+            self.pval[component - 1] = norm.sf(abs(self.z_scores[component - 1]))
+            _, self.pval_corrected[component - 1], _ = multipletests(self.pval[component][::-1].reshape(1, 15633),
+                                                                     method="fdr_bh",
+                                                                     is_sorted=True)
 
 
 class GeneResults(dict):
