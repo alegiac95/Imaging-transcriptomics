@@ -146,11 +146,12 @@ def create_csv(analysis_results, n_comp, save_dir):
     """
     if not isinstance(analysis_results, GeneResults):
         raise Exception  # TODO: define the right exception to throw
-
+    # TODO: fix the generation of .csv files.
     for i in range(n_comp):
-        data = np.vstack((analysis_results.boot_results.pls_genes[i],
-                          analysis_results.boot_results.z_scores[i],
-                          analysis_results.boot_results.pval[i],
-                          analysis_results.boot_results.pval_corrected[i])).T
+        data = np.vstack((np.array(analysis_results.boot_results.pls_genes[i][0]),
+                          np.array(analysis_results.boot_results.z_scores[i][0]),
+                          np.array(analysis_results.boot_results.pval[i][0]),
+                          np.array(analysis_results.boot_results.pval_corrected[i][0])
+                          )).T
         data = pd.DataFrame(data, columns=["Gene ID", "Z", "p", "p corrected"])
         data.csv(save_dir / f"PLS{i+1}.csv", index=False)
