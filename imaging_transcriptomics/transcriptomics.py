@@ -28,7 +28,7 @@ class ImagingTranscriptomics:
         self.scan_data = scan_data
         self.zscore_data = zscore(scan_data, ddof=1, axis=0)
         self.n_components = kwargs.get("n_components")
-        self.var = kwargs.get("variance")
+        self.var = self.check_in_var(kwargs.get("variance"))
         self.__cortical = self.zscore_data[0:34].reshape(34, 1)
         self.__subcortical = self.zscore_data[34:].reshape(7, 1)
         self.__gene_expression = load_gene_expression()
@@ -39,6 +39,17 @@ class ImagingTranscriptomics:
         self.p_boot = None
         self.gene_results = None
         self.var_components = None
+
+    @staticmethod
+    def check_in_var(variance):
+        if 0.0 <= variance <= 1.0 or variance is None:
+            return variance
+        elif 1.0 < variance < 100:
+            return variance / 100
+        elif variance < 0.0:
+            raise ValueError("The number cannot be negative!")
+        elif variance > 100:
+            raise ValueError("The number is too big!")
 
     def permute_data(self, iterations=1_000):
         """Permute the scan data for the analysis.
