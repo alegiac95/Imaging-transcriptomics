@@ -27,8 +27,9 @@ class ImagingTranscriptomics:
         """
         self.scan_data = scan_data
         self.zscore_data = zscore(scan_data, ddof=1, axis=0)
-        self.n_components = kwargs.get("n_components")
+        self.n_components = self.check_in_components(kwargs.get("n_components"))
         self.var = self.check_in_var(kwargs.get("variance"))
+        self.check_var_or_comp(self.var, self.n_components)
         self.__cortical = self.zscore_data[0:34].reshape(34, 1)
         self.__subcortical = self.zscore_data[34:].reshape(7, 1)
         self.__gene_expression = load_gene_expression()
@@ -42,14 +43,47 @@ class ImagingTranscriptomics:
 
     @staticmethod
     def check_in_var(variance):
-        if 0.0 <= variance <= 1.0 or variance is None:
+        """Check if the variance given as input is in the correct range.
+
+        The variance can be in the range 0-100. If the variance is greater than 1 the value is divided by 100.
+        If the variance is None it will be kept as is.
+
+        :param variance: input variance to check.
+        :raises ValueError: if below 0 ir greater than 100.
+        :return: variance if correct.
+        """
+        if variance is None:
+            return variance
+        elif 0.0 <= variance <= 1.0:
             return variance
         elif 1.0 < variance < 100:
             return variance / 100
         elif variance < 0.0:
-            raise ValueError("The number cannot be negative!")
+            raise ValueError("The input variance cannot be negative!")
         elif variance > 100:
-            raise ValueError("The number is too big!")
+            raise ValueError("The input variance is too big!")
+        elif isinstance(variance, str):
+            raise TypeError("Strings are not supported, please input a numeric value!")
+
+    @staticmethod
+    def check_in_components(components):
+        """Check if the number of components given as input is in the range 1-15
+
+        :param components: number of components given as input.
+        :raises ValueError: if the component is not in the range 1-15 or None.
+        :return: the number of components if correct.
+        """
+        if components is None:
+            return components
+        elif 1 <= components <= 15:
+            return components
+        else:
+            raise ValueError("The number of components MUST be in the range 1-15.")
+
+    @staticmethod
+    def check_var_or_comp(variance, components):
+        if variance is None and components is None:
+            raise AttributeError("You must set either the variance or the number of components!")
 
     def permute_data(self, iterations=1_000):
         """Permute the scan data for the analysis.
