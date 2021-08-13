@@ -42,9 +42,9 @@ class BootResults(dict):
     def compute_values(self, n_comp, original_weights, original_ids):
         """Compute the values of the bootstrap for each of the components.
 
-        :param n_comp:
-        :param original_weights:
-        :param original_ids:
+        :param n_comp: number of PLS components.
+        :param original_weights: weights obtained from the original analysis (non bootstrapped).
+        :param original_ids: original ids (labels) from the original analysis (non bootstrapped).
         :return:
         """
         for component in range(1, n_comp + 1):
