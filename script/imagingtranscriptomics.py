@@ -48,7 +48,6 @@ def get_args():
                        type=int,
                        help="Number of PLS components to use. The number of components has to be between 1 and 15.")
     group.add_argument("-v", "--variance",
-                       type=int,
                        help="""Variance explained by the components. The variance input should be between 10 and 
                        100, and the program will select the number of components that explain a variance closest to 
                        the desired (with the explained variance used as a minimum). """)
