@@ -7,7 +7,8 @@ from imaging_transcriptomics.errors import (
     InvalidFormatError,
     CheckShape,
     InvalidSizeError,
-    CheckVariance
+    CheckVariance,
+    CheckPath
 )
 
 
@@ -84,3 +85,13 @@ def test_check_variance_error():
         function(1.2)
     with pytest.raises(ValueError):
         function(-0.1)
+
+
+def test_check_path(tmp_path):
+    @CheckPath
+    def function(path):
+        return str(path)
+
+    assert function(tmp_path) == str(tmp_path)
+    with pytest.raises(FileNotFoundError):
+        function(tmp_path / "foo_bar")
