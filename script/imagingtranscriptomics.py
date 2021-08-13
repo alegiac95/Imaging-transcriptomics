@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import logging
 import argparse
 from pathlib import Path
@@ -61,6 +63,7 @@ def main():
     data_to_analyse = imaging_transcriptomics.inputs.extract_average(
         imaging_transcriptomics.inputs.read_scan(inputs.input)
     )
+    # Don't check inputs as checks are in the initialization of the analysis!
     initial_dict = {
         "variance": inputs.variance,
         "n_components": inputs.ncomp
@@ -78,9 +81,9 @@ def main():
     scan_name = input_path.name.split(".")[0]
 
     save_dir = reporting.make_folder(save_dir, f"Imt_{scan_name}")
-    reporting.make_plots(save_dir, analysis.n_components, analysis.var_components)
-    reporting.create_csv(analysis.gene_results, analysis.n_components, save_dir)
-    reporting.create_pdf(input_path, save_dir)
+    reporting.make_plots(save_dir, analysis.n_components, analysis.var_components)  # TODO: need to test function
+    reporting.create_csv(analysis.gene_results, analysis.n_components, save_dir)  # TODO: need to fix function
+    reporting.create_pdf(input_path, save_dir)  # should work.
 
 
 if __name__ == '__main__':
