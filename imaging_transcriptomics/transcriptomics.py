@@ -35,7 +35,7 @@ class ImagingTranscriptomics:
         self.__gene_expression = load_gene_expression()
         self.__gene_labels = load_gene_labels()
         # Initialise with defaults for later
-        self.__permuted = None
+        self.permuted = None
         self.r_boot = None
         self.p_boot = None
         self.gene_results = None
@@ -109,12 +109,12 @@ class ImagingTranscriptomics:
 
         :param int iterations: number of iterations to perform in the permutations.
         """
-        self.__permuted = np.zeros((self.zscore_data.shape[0], iterations))
+        self.permuted = np.zeros((self.zscore_data.shape[0], iterations))
         # subcortical
         sub_permuted = np.array(
             [np.random.permutation(self.__subcortical) for _ in range(iterations)]
         ).reshape(7, iterations)
-        self.__permuted[34:, :] = sub_permuted
+        self.permuted[34:, :] = sub_permuted
         # Cortical
         # Annotation file for the Desikan-Killiany atlas in fs5
         annot_lh = Path(__file__).resolve().parent.parent / "data/fsa5_lh_aparc.annot"
@@ -132,7 +132,7 @@ class ImagingTranscriptomics:
         # Get the spin samples
         spins = stats.gen_spinsamples(parcel_centroids, parcel_hemi, n_rotate=iterations, method='vasa', seed=1234)
         cort_permuted = np.array(self.__cortical[spins]).reshape(34, iterations)
-        self.__permuted[0:34, :] = cort_permuted
+        self.permuted[0:34, :] = cort_permuted
 
     def save_permutations(self, path):
         """Save the permutations to a csv file at a specified path.
@@ -140,10 +140,10 @@ class ImagingTranscriptomics:
         :param path: Path used to save the permutations, this *should* also include the name of the file, e.g.,
         "~/Documents/my_permuted.csv"
         """
-        if self.__permuted is None:
+        if self.permuted is None:
             raise AttributeError("There are no permutations of the scan available to save. Before saving the "
                                  "permutations you need to compute them.")
-        pd.DataFrame(self.__permuted).to_csv(Path(path), header=None, index=False)
+        pd.DataFrame(self.permuted).to_csv(Path(path), header=None, index=False)
 
     def pls_all_components(self):
         """Compute a PLS regression with all components.
@@ -169,7 +169,7 @@ class ImagingTranscriptomics:
         self.permute_data(iterations=n_iter)
         self.r_boot, self.p_boot = bootstrap_pls(self.__gene_expression,
                                                  self.zscore_data.reshape(41, 1),
-                                                 self.__permuted,
+                                                 self.permuted,
                                                  self.n_components,
                                                  iterations=n_iter)
         self.gene_results = bootstrap_genes(self.__gene_expression,
