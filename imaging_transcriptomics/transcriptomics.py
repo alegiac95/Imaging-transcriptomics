@@ -40,7 +40,7 @@ class ImagingTranscriptomics:
         self.gene_results = None
         self.var_components = None
 
-    def __permute_data(self, iterations=1_000):
+    def permute_data(self, iterations=1_000):
         """Permute the scan data for the analysis.
 
         The permutations are computed into cortical and subcortical regions separately and then merged. This is done
@@ -108,7 +108,7 @@ class ImagingTranscriptomics:
         :param int n_iter: number of permutations to make.
         """
         self.pls_all_components()
-        self.__permute_data(iterations=n_iter)
+        self.permute_data(iterations=n_iter)
         self.r_boot, self.p_boot = bootstrap_pls(self.__gene_expression,
                                                  self.zscore_data.reshape(41, 1),
                                                  self.__permuted,
