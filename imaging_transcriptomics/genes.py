@@ -4,6 +4,7 @@ import numpy as np
 
 
 class OriginalResults(dict):
+    """Class to hold the result from gene analysis (non bootstrapped)."""
     def __init__(self, n_comp):
         super().__init__()
         self.pls_weights = [None] * n_comp
@@ -15,11 +16,11 @@ class OriginalResults(dict):
     def set_result_values(self, idx, pls_weights, x, pls_genes, gene_id):
         """Set the values for all class attributes.
         
-        :param idx: 
-        :param pls_weights: 
-        :param pls_genes: 
-        :param gene_id: 
-        :param x: 
+        :param idx: index of the component to set the values in the array (must be in the range 0:n_components-1).
+        :param pls_weights: weights to pass to the array at the index idx.
+        :param pls_genes: genes to pass to the array at the index idx
+        :param gene_id: id of the genes to pass to the array at the index idx
+        :param x: index of the pls genes in the original gene list.
         :return: 
         """
         self.pls_weights[idx - 1] = np.array(pls_weights),
@@ -30,6 +31,7 @@ class OriginalResults(dict):
 
 
 class BootResults(dict):
+    """Class to hold the results from the bootsrapping gene analysis."""
     def __init__(self, n_comp, dim1, dim2, n_perm=1000):
         super().__init__()
         self.pls_weights_boot = [np.zeros((dim1, dim2, n_perm))] * n_comp
