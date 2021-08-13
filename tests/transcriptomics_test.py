@@ -38,3 +38,11 @@ def test_init_missing_attribute_error():
     """Test that an AttributeError is raised when both number of components and variance are missing."""
     with pytest.raises(AttributeError):
         imt.ImagingTranscriptomics(np.ones(41))
+
+
+def test_init_length_error():
+    """Test an AttributeError is raised when the length of input data is different from 41"""
+    test_param = {"n_components": 3, "variance": None}
+    with pytest.raises(AttributeError):
+        imt.ImagingTranscriptomics(np.ones(43), **test_param)
+        imt.ImagingTranscriptomics(np.ones(40), **test_param)
