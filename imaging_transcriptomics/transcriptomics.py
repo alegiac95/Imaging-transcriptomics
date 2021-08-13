@@ -25,7 +25,7 @@ class ImagingTranscriptomics:
         :param int n_components: number of components to use for the PLS regression.
         :param int variance: total explained variance by the PLS components.
         """
-        self.scan_data = scan_data
+        self.scan_data = self.check_input_length(scan_data)
         self.zscore_data = zscore(scan_data, ddof=1, axis=0)
         self.n_components = self.check_in_components(kwargs.get("n_components"))
         self.var = self.check_in_var(kwargs.get("variance"))
@@ -40,6 +40,19 @@ class ImagingTranscriptomics:
         self.p_boot = None
         self.gene_results = None
         self.var_components = None
+
+    @staticmethod
+    def check_input_length(data):
+        """Check that the length of the data given as input is correct in length (41).
+
+        :param data: array to check has the correct length.
+        :raises AttributeError: if the length of the data is not 41.
+        :return: data if it has correct length.
+        """
+        if not len(data) == 41:
+            raise AttributeError("The data must have a length of 41, corresponding to the number of regions in the "
+                                 "left brain hemisphere!")
+        return data
 
     @staticmethod
     def check_in_var(variance):
