@@ -3,6 +3,7 @@ import pytest
 import imaging_transcriptomics as imt
 
 
+# INITIALIZATION TESTS
 def test_init_basic():
     """Test basic initialisation method."""
     test_param = {"n_components": 3, "variance": None}
@@ -46,3 +47,22 @@ def test_init_length_error():
     with pytest.raises(AttributeError):
         imt.ImagingTranscriptomics(np.ones(43), **test_param)
         imt.ImagingTranscriptomics(np.ones(40), **test_param)
+
+
+# METHODS TESTS
+def test_permutations():
+    """Test the permutations are computed correctly."""
+    t_data = np.array([2.49176123, 2.12076098, 1.88912675, 2.29363057, 2.17108429,
+                       2.44944779, 1.9532944, 2.13951822, 1.81947959, 1.58996705,
+                       1.91860982, 2.30857561, 2.39706742, 2.03412347, 2.0920649,
+                       1.89473161, 2.05717326, 1.20646305, 1.72044527, 2.0083166,
+                       1.66318842, 2.06091217, 1.72413881, 2.33628019, 2.61411213,
+                       1.807411, 1.96163793, 1.85169722, 2.11455623, 1.92936416,
+                       1.28974378, 1.81579151, 2.66449885, 2.67599858, 1.13808303,
+                       1.40784474, 2.70367057, 2.00515875, 2.49107748, 1.75756543,
+                       2.29094877])
+    test = imt.ImagingTranscriptomics(t_data, n_components=1)
+    assert test.permuted is None
+    test.permute_data(10)
+    assert test.permuted.shape == (41, 10)
+    assert np.unique(test.permuted, axis=0).shape[1] == 10
