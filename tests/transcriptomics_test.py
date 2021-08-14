@@ -1,3 +1,4 @@
+from pathlib import Path
 import numpy as np
 import pytest
 import imaging_transcriptomics as imt
@@ -66,3 +67,10 @@ def test_permutations():
     test.permute_data(10)
     assert test.permuted.shape == (41, 10)
     assert np.unique(test.permuted, axis=0).shape[1] == 10
+
+
+def test_saving_error():
+    """Test that the save_permutations() method raises an error if no permutations are available."""
+    test = imt.ImagingTranscriptomics(np.zeros(41), n_components=1)
+    with pytest.raises(AttributeError):
+        test.save_permutations(Path().cwd())
