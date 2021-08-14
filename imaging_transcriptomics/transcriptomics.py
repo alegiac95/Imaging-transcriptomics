@@ -1,4 +1,5 @@
 import warnings
+import logging
 from pathlib import Path
 
 import numpy as np
@@ -70,6 +71,7 @@ class ImagingTranscriptomics:
         elif 0.0 <= variance <= 1.0:
             return variance
         elif 1.0 < variance < 100:
+            logging.warning("The variance inputted was in the range 1-100. It has been converted to the range 0.0-1.0")
             return variance / 100
         elif variance < 0.0:
             raise ValueError("The input variance cannot be negative!")
