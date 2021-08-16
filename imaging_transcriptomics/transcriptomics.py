@@ -157,7 +157,7 @@ class ImagingTranscriptomics:
                                  n_components=15, n_perm=0, n_boot=0)
         var_exp = results.get("varexp")
         if self.n_components is None and self.var != 0.0:
-            self.n_components = get_components((self.var / 100), var_exp)
+            self.n_components = get_components(self.var, var_exp)
         elif self.var is None and self.n_components != 0:
             self.var = np.cumsum(var_exp)[self.n_components-1]
         self.var_components = var_exp
