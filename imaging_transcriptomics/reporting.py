@@ -110,7 +110,6 @@ def make_plots(path, limit_x, data_y):
     plt.ylabel("Variance (%)")
     plt.savefig(path / "individual_variance.png", dpi=1200)
     plt.close()
-    return
 
 
 def create_pdf(filepath, save_dir):
@@ -130,7 +129,6 @@ def create_pdf(filepath, save_dir):
     report.analysis_info(filename=filepath.name, date=analysis_date, filepath=filepath)
     report.pls_regression(path_plots=save_dir)
     report.output(save_dir / "Report.pdf", "F")
-    return
 
 
 def create_csv(analysis_results, n_comp, save_dir):
@@ -145,13 +143,13 @@ def create_csv(analysis_results, n_comp, save_dir):
     :return:
     """
     if not isinstance(analysis_results, GeneResults):
-        raise Exception  # TODO: define the right exception to throw
+        raise TypeError("The data are not of the GeneResults class.")
     # TODO: fix the generation of .csv files.
     for i in range(n_comp):
-        data = np.vstack((np.array(analysis_results.boot_results.pls_genes[i][0]),
+        data = np.vstack((np.array(analysis_results.boot_results.pls_genes[i][0].reshape(1, 15633)),
                           np.array(analysis_results.boot_results.z_scores[i][0]),
                           np.array(analysis_results.boot_results.pval[i][0]),
                           np.array(analysis_results.boot_results.pval_corrected[i][0])
                           )).T
         data = pd.DataFrame(data, columns=["Gene ID", "Z", "p", "p corrected"])
-        data.csv(save_dir / f"PLS{i+1}.csv", index=False)
+        data.to_csv(save_dir / f"PLS{i+1}.csv", index=False)
