@@ -58,8 +58,9 @@ def main():
     inputs = get_args()
     # TODO: use multiprocessors if the input is a list of strings.
     # TODO: use logging to show info to the user instead of print functions and save this to the directory of the report
+    input_path = Path(inputs.input)
     data_to_analyse = imaging_transcriptomics.inputs.extract_average(
-        imaging_transcriptomics.inputs.read_scan(inputs.input)
+        imaging_transcriptomics.inputs.read_scan(input_path)
     )
     # Don't check inputs as checks are in the initialization of the analysis!
     initial_dict = {
@@ -68,14 +69,13 @@ def main():
     }
     # Get IO paths to save files
     if not inputs.output:
-        save_dir = Path(inputs.input).absolute().parent
+        save_dir = input_path.absolute().parent
     else:
         save_dir = Path(inputs.output)
-    input_path = Path(inputs.input)
     scan_name = input_path.name.split(".")[0]
 
     save_dir = reporting.make_folder(save_dir, f"Imt_{scan_name}")
-    logging.basicConfig(filename=f"{save_dir}/analysis.log", level=logging.WARNING)
+    logging.basicConfig(filename=f"{save_dir}/analysis.log", level=logging.INFO)
     logging.info(f"Performing imaging transcriptomics of file {inputs.input}.\n"
                  f"The selected number of components and variance are {inputs.ncomp}, {inputs.variance} respectively.")
     logging.info("Setting up the analysis.")
