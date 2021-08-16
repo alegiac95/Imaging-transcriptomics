@@ -1,1 +1,28 @@
-# File to configure the logger in the execution pf the Python script to perform imaging-transcriptomics
+# File to configure the loggers in the execution pf the Python script to perform imaging-transcriptomics
+---
+version: 1
+
+formatters:
+  simple:
+    format: "%(asctime)s %(name)s: %(message)s"
+  extended:
+    format: "[%(levelname)s] %(asctime)s %(name)s: %(message)s"
+
+handlers:
+  console:
+    class: logging.StreamHandler
+    level: INFO
+    formatter: simple
+  file_handler:
+    class: logging.FileHandler
+    level: DEBUG
+    filename: analysis.log
+    formatter: extended
+    propagate: false
+
+loggers:
+  dev:
+    handlers: [console, file_handler]
+root:
+  handlers: [console, file_handler]
+
