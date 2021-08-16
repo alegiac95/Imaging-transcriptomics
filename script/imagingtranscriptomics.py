@@ -84,7 +84,7 @@ def main():
     analysis.run()
 
     # Save the results
-    reporting.make_plots(save_dir, analysis.n_components, analysis.var_components)  # TODO: need to test function
+    reporting.make_plots(save_dir, analysis.n_components, analysis.var_components)
     reporting.create_csv(analysis.gene_results, analysis.n_components, save_dir)  # TODO: need to fix function
     reporting.create_pdf(input_path, save_dir)  # should work.
 
