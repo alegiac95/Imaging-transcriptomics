@@ -26,6 +26,7 @@ class ImagingTranscriptomics:
         :param int n_components: number of components to use for the PLS regression.
         :param int variance: total explained variance by the PLS components.
         """
+        logging.debug("Initializing ImagingTranscriptomics class.")
         self.scan_data = self.check_input_length(scan_data)
         self.zscore_data = zscore(scan_data, ddof=1, axis=0)
         self.n_components = self.check_in_components(kwargs.get("n_components"))
@@ -41,6 +42,7 @@ class ImagingTranscriptomics:
         self.p_boot = None
         self.gene_results = None
         self.var_components = None
+        logging.debug("ImagingTranscriptomics class successfully initialized.")
 
     @staticmethod
     def check_input_length(data):
@@ -113,6 +115,7 @@ class ImagingTranscriptomics:
         """
         self.permuted = np.zeros((self.zscore_data.shape[0], iterations))
         # subcortical
+        logging.debug("Starting permutations.")
         sub_permuted = np.array(
             [np.random.permutation(self.__subcortical) for _ in range(iterations)]
         ).reshape(7, iterations)
@@ -135,6 +138,7 @@ class ImagingTranscriptomics:
         spins = stats.gen_spinsamples(parcel_centroids, parcel_hemi, n_rotate=iterations, method='vasa', seed=1234)
         cort_permuted = np.array(self.__cortical[spins]).reshape(34, iterations)
         self.permuted[0:34, :] = cort_permuted
+        logging.debug("End permutations.")
 
     def save_permutations(self, path):
         """Save the permutations to a csv file at a specified path.
@@ -145,6 +149,7 @@ class ImagingTranscriptomics:
         if self.permuted is None:
             raise AttributeError("There are no permutations of the scan available to save. Before saving the "
                                  "permutations you need to compute them.")
+        logging.info("Saving permutations to file.")
         pd.DataFrame(self.permuted).to_csv(Path(path), header=None, index=False)
 
     def pls_all_components(self):
@@ -153,13 +158,16 @@ class ImagingTranscriptomics:
         After the regression is estimated, either the number of components or the estimated percentage of variance
         given by the components is estimated, depending on what is set by the user in the __init__() method.
         """
+        logging.debug("Performing PLS with all 15 components.")
         results = pls_regression(self.__gene_expression, self.zscore_data.reshape(41, 1),
                                  n_components=15, n_perm=0, n_boot=0)
         var_exp = results.get("varexp")
         if self.n_components is None and self.var != 0.0:
             self.n_components = get_components(self.var, var_exp)
+            logging.debug("Number of components has been set to: ")  # add number to set the number of components
         elif self.var is None and self.n_components != 0:
             self.var = np.cumsum(var_exp)[self.n_components-1]
+            logging.debug("Variance has been set to:")  # add number of variance set
         self.var_components = var_exp
 
     def run(self, n_iter=1_000):
@@ -167,6 +175,7 @@ class ImagingTranscriptomics:
 
         :param int n_iter: number of permutations to make.
         """
+        logging.info("Starting imaging transcriptomics analysis.")
         self.pls_all_components()
         self.permute_data(iterations=n_iter)
         self.r_boot, self.p_boot = bootstrap_pls(self.__gene_expression,
@@ -183,3 +192,4 @@ class ImagingTranscriptomics:
         self.gene_results.boot_results.compute_values(self.n_components,
                                                       self.gene_results.original_results.pls_weights,
                                                       self.gene_results.original_results.pls_gene)
+        logging.info("Imaging transcriptomics analysis completed.")
