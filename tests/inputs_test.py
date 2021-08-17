@@ -52,5 +52,6 @@ def test_gene_labels_load():
     assert labels.shape == (15633, 1)
     assert labels[78] == "ABHD6"
     assert labels[1635] == "C6orf106"
-    assert "audhdub" not in labels
+    assert "SLC7A10" in labels
+    assert "audhd49b" not in labels  # just some randoms string to mimic a gene.
 
