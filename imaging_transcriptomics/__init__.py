@@ -1,4 +1,4 @@
-__version__ = "0.1.0"
+__version__ = "0.1.0"  # Do not change line for the version or setup.py won't work
 
 from . import errors
 from . import bootstrap
