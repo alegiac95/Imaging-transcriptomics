@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+
 
 import logging
 import argparse
@@ -51,6 +51,11 @@ def get_args():
                        help="""Variance explained by the components. The variance input should be between 10 and 
                        100, and the program will select the number of components that explain a variance closest to 
                        the desired (with the explained variance used as a minimum). """)
+    verbosity = parser.add_mutually_exclusive_group(required=False)
+    verbosity.add_argument("--suppress",
+                           help="Suppress the log on console. Only shows WARNINGS if present.")
+    verbosity.add_argument("--verbose",
+                           help="Show all logging messages from the script.")
     return parser.parse_args()
 
 
@@ -76,9 +81,9 @@ def main():
 
     save_dir = reporting.make_folder(save_dir, f"Imt_{scan_name}")
     logging.basicConfig(filename=f"{save_dir}/analysis.log", level=logging.INFO)
-    logging.info(f"Performing imaging transcriptomics of file {inputs.input}.\n"
-                 f"The selected number of components and variance are {inputs.ncomp}, {inputs.variance} respectively.")
-    logging.info("Setting up the analysis.")
+    # logging.info(f"Performing imaging transcriptomics of file {inputs.input}.\n"
+    #            f"The selected number of components and variance are {inputs.ncomp}, {inputs.variance} respectively.")
+    logging.info("Setting up analysis ...")
     analysis = imaging_transcriptomics.ImagingTranscriptomics(data_to_analyse, **initial_dict)
     logging.info("Running analysis.")
     analysis.run()
@@ -86,7 +91,7 @@ def main():
     # Save the results
     reporting.make_plots(save_dir, analysis.n_components, analysis.var_components)
     reporting.create_csv(analysis.gene_results, analysis.n_components, save_dir)  # TODO: need to fix function
-    reporting.create_pdf(input_path, save_dir)  # should work.
+    reporting.create_pdf(input_path, save_dir)
 
 
 if __name__ == '__main__':
