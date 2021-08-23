@@ -1,9 +1,19 @@
+import logging
+import yaml
+
 import numpy
 import numpy as np
 from tqdm import tqdm
 from pyls import pls_regression
 
 from .genes import GeneResults
+
+
+with open("log_config.yaml", "r") as config_file:
+    log_cfg = yaml.safe_load(config_file.read())
+
+logging.config.dictConfig(log_cfg)
+logger = logging.getLogger("bootstrapping")
 
 
 def correlate(corr1, corr2):
@@ -55,6 +65,8 @@ def bootstrap_pls(x, y, y_perm, dim, iterations=1_000):
             R_sq[i] = _exp_var[component - 1]
         R_boot[component - 1] = R_squared
         p_boot[component - 1] = float(len(R_sq[numpy.nonzero(R_sq >= R_squared)])) / iterations
+    logger.debug("Computed components p value(s) and coefficient(s) of determination: \n R: %s \n p: %s",
+                 R_boot, p_boot)
     return R_boot, p_boot
 
 
@@ -76,6 +88,7 @@ def bootstrap_genes(x_data, y, n_components, y_norm, genes, n_iterations=1000):
     gene_index = np.array(list(range(1, n_genes+1)))
     results = pls_regression(x_data, y, n_components=n_components, n_boot=0, n_perm=0)
     r1 = correlate(results.get("x_scores").reshape(41, n_components), y_norm.reshape(41, 1))
+    logger.debug("Correlation between original data and regression scores: %s", r1)
     weights = results.get("x_weights")
     gene_results = GeneResults(n_components, dim1=weights.shape[0], dim2=weights.shape[1])
     scores = results.get("x_scores")

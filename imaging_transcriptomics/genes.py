@@ -1,6 +1,15 @@
+import logging
+import yaml
+
 from scipy.stats import zscore, norm
 from statsmodels.stats.multitest import multipletests
 import numpy as np
+
+with open("log_config.yaml", "r") as config_file:
+    log_cfg = yaml.safe_load(config_file.read())
+
+logging.config.dictConfig(log_cfg)
+logger = logging.getLogger("genes")
 
 
 class OriginalResults(dict):
@@ -12,6 +21,7 @@ class OriginalResults(dict):
         self.gene_id = [None] * n_comp
         self.index = [None] * n_comp
         self.pls_weights_z = [None] * n_comp
+        logger.debug("OriginalResults class initialized with %s components", n_comp)
 
     def set_result_values(self, idx, pls_weights, x, pls_genes, gene_id):
         """Set the values for all class attributes.
@@ -23,15 +33,18 @@ class OriginalResults(dict):
         :param x: index of the pls genes in the original gene list.
         :return: 
         """
-        self.pls_weights[idx - 1] = np.array(pls_weights),
-        self.pls_gene[idx - 1] = np.array(pls_genes),
-        self.gene_id[idx - 1] = gene_id,
+        self.pls_weights[idx - 1] = np.array(pls_weights)
+        logger.debug("Weights at index %s set as %s", idx-1, pls_weights)
+        self.pls_gene[idx - 1] = np.array(pls_genes)
+        logger.debug("Genes at index %s set as %s", idx-1, pls_genes)
+        self.gene_id[idx - 1] = gene_id
+        logger.debug("Genes ids at index %s set as %s", idx-1, gene_id)
         self.index[idx - 1] = np.array(x)
         self.pls_weights_z[idx - 1] = np.array(zscore(pls_weights, axis=0, ddof=1))
 
 
 class BootResults(dict):
-    """Class to hold the results from the bootsrapping gene analysis."""
+    """Class to hold the results from the bootstrapping gene analysis."""
     def __init__(self, n_comp, dim1, dim2, n_perm=1000):
         super().__init__()
         self.pls_weights_boot = [np.zeros((dim1, dim2, n_perm))] * n_comp
@@ -40,6 +53,7 @@ class BootResults(dict):
         self.pls_genes = [None] * n_comp
         self.pval = [None] * n_comp
         self.pval_corrected = [None] * n_comp
+        logger.debug("BootResult class initialised with %s components", n_comp)
 
     def compute_values(self, n_comp, original_weights, original_ids):
         """Compute the values of the bootstrap for each of the components.
@@ -49,7 +63,9 @@ class BootResults(dict):
         :param original_ids: original ids (labels) from the original analysis (non bootstrapped).
         :return:
         """
+        logger.info("Computing bootstrap gene results.")
         for component in range(1, n_comp + 1):
+            logger.debug("Computing results for component %s", component)
             self.std[component - 1] = self.pls_weights_boot[component - 1][:, component - 1, :].std(ddof=1, axis=1)
             __temp = original_weights[component - 1] / self.std[component - 1]
             self.z_scores[component - 1] = np.sort(__temp, kind='mergesort')[::-1]

@@ -1,4 +1,6 @@
 from pathlib import Path
+import logging
+import yaml
 
 import nibabel as nib
 import numpy as np
@@ -9,6 +11,13 @@ from .errors import (CheckShape,
                      CheckPath,
                      CheckExtension,
                      CheckVariance)
+
+
+with open("log_config.yaml", "r") as config_file:
+    log_cfg = yaml.safe_load(config_file.read())
+
+logging.config.dictConfig(log_cfg)
+logger = logging.getLogger("inputs")
 
 
 # Imaging data
@@ -23,6 +32,7 @@ def read_scan(path):
 
     :return: Numpy matrix with the voxel of the input scan.
     """
+    logger.debug("Reading scan: %s", path)
     data = nib.load(Path(path)).get_fdata()
     return data
 
@@ -39,11 +49,13 @@ def extract_average(imaging_matrix):
     :return: numpy array with the average value from 41 brain regions.
     """
     n_regions = 41
+    logger.debug("Extracting average from scan.")
     atlas_data = nib.load(Path(__file__).resolve().parent.parent / "data" /
                           "atlas-desikankilliany_1mm_MNI152.nii.gz").get_fdata()
     data = np.zeros(n_regions)
     for i in range(1, n_regions + 1):
         data[i - 1] = np.mean(imaging_matrix[np.where(atlas_data == i)])
+    logger.debug("Extracted values are: %s", data)
     return np.array(data)
 
 
@@ -61,6 +73,7 @@ def get_components(target_variance, explained_var):
     cumulative_var = np.cumsum(explained_var)
     while cumulative_var[dim-1] < target_variance:
         dim += 1
+    logger.debug("Extracted variance is %s with %s components", cumulative_var[dim-1], dim)
     return dim
 
 
@@ -72,6 +85,7 @@ def load_gene_expression():
 
     :return: numpy array with the gene expression data.
     """
+    logger.debug("Loading gene_expression data.")
     expression_file_path = Path(__file__).resolve().parent.parent / "data" / "gene_expression_data.csv"
     expression_data = pd.read_csv(expression_file_path, sep=',')
     my_data_x = expression_data.iloc[0:41, 2:].to_numpy()
@@ -84,5 +98,6 @@ def load_gene_labels():
 
     :return: numpy array with the labels of the genes.
     """
+    logger.debug("Loading gene labels.")
     genes_labels_path = Path(__file__).resolve().parent.parent / "data" / "gene_expression_labels.txt"
     return pd.read_fwf(genes_labels_path, header=None).to_numpy()
