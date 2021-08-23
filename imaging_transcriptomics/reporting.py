@@ -144,7 +144,6 @@ def create_csv(analysis_results, n_comp, save_dir):
     """
     if not isinstance(analysis_results, GeneResults):
         raise TypeError("The data are not of the GeneResults class.")
-    # TODO: fix the generation of .csv files.
     for i in range(n_comp):
         data = np.vstack((np.array(analysis_results.boot_results.pls_genes[i][0].reshape(1, 15633)),
                           np.array(analysis_results.boot_results.z_scores[i][0]),
