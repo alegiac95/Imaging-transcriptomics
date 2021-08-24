@@ -1,12 +1,13 @@
-import warnings
+import logging.config
 import logging
-import yaml
+import warnings
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from scipy.stats import zscore
+import yaml
 from pyls import pls_regression
+from scipy.stats import zscore
 
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore")
@@ -17,12 +18,13 @@ from .inputs import (load_gene_expression,
                      get_components)
 from .bootstrap import bootstrap_pls, bootstrap_genes
 
-
-with open("log_config.yaml", "r") as config_file:
+cfg_file_path = Path(__file__).parent / "log_config.yaml"
+with open(cfg_file_path, "r") as config_file:
     log_cfg = yaml.safe_load(config_file.read())
 
 logging.config.dictConfig(log_cfg)
 logger = logging.getLogger("transcriptomics")
+logger.setLevel(logging.DEBUG)
 
 
 class ImagingTranscriptomics:

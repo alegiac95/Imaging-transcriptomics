@@ -1,5 +1,6 @@
 from pathlib import Path
 import logging
+import logging.config
 import yaml
 
 import nibabel as nib
@@ -13,11 +14,13 @@ from .errors import (CheckShape,
                      CheckVariance)
 
 
-with open("log_config.yaml", "r") as config_file:
+cfg_file_path = Path(__file__).parent / "log_config.yaml"
+with open(cfg_file_path, "r") as config_file:
     log_cfg = yaml.safe_load(config_file.read())
 
 logging.config.dictConfig(log_cfg)
 logger = logging.getLogger("inputs")
+logger.setLevel(logging.DEBUG)
 
 
 # Imaging data
@@ -55,7 +58,7 @@ def extract_average(imaging_matrix):
     data = np.zeros(n_regions)
     for i in range(1, n_regions + 1):
         data[i - 1] = np.mean(imaging_matrix[np.where(atlas_data == i)])
-    logger.debug("Extracted values are: %s", data)
+    logger.debug("Extracted values are: \n%s", data)
     return np.array(data)
 
 

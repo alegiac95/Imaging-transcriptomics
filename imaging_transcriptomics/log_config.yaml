@@ -4,27 +4,25 @@ version: 1
 formatters:
   extended:
     format: "[%(levelname)s] %(asctime)s: %(name)s - %(funcName)s - %(lineno)d - %(message)s"
-    timefmt: "%Y-%m-%dT%H:%M:%S%z"
+    timefmt: "%Y-%m-%dT%H:%M:%S"
 
   simple:
     format: "%(asctime)s: %(message)s"
-    timefmt: "%Y-%m-%dT%H:%M:%S%z"
+    timefmt: "%Y-%m-%dT%H:%M:%S"
 
 handlers:
   module_log:
-    class: logging.RotatingFileHandler
+    class: logging.handlers.RotatingFileHandler
     level: DEBUG
-    filename: "module_logs.log"
-    maxBytes: 1024
+    filename: module_logs.log
+    maxBytes: 6164480
     backupCount: 2
     formatter: extended
-    propagate: true
 
   console:
     class: logging.StreamHandler
     level: INFO
     formatter: simple
-    propagate: true
 
 loggers:
   transcriptomics:

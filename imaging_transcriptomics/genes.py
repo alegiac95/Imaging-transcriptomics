@@ -1,15 +1,20 @@
 import logging
+import logging.config
 import yaml
+from pathlib import Path
 
 from scipy.stats import zscore, norm
 from statsmodels.stats.multitest import multipletests
 import numpy as np
 
-with open("log_config.yaml", "r") as config_file:
+
+cfg_file_path = Path(__file__).parent / "log_config.yaml"
+with open(cfg_file_path, "r") as config_file:
     log_cfg = yaml.safe_load(config_file.read())
 
 logging.config.dictConfig(log_cfg)
 logger = logging.getLogger("genes")
+logger.setLevel(logging.DEBUG)
 
 
 class OriginalResults(dict):
@@ -70,7 +75,7 @@ class BootResults(dict):
             __temp = original_weights[component - 1] / self.std[component - 1]
             self.z_scores[component - 1] = np.sort(__temp, kind='mergesort')[::-1]
             __idx = np.argsort(__temp, kind='mergesort')[::-1]
-            self.pls_genes[component - 1] = original_ids[component - 1][0][__idx]
+            self.pls_genes[component - 1] = original_ids[component - 1][__idx]
             __p = norm.sf(abs(self.z_scores[component - 1]))
             self.pval[component - 1] = __p
             _, __p_corr, _, _ = multipletests(__p[::-1].reshape(1, 15633),

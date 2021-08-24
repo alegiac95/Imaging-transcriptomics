@@ -1,5 +1,7 @@
 import logging
+import logging.config
 import yaml
+from pathlib import Path
 
 import numpy
 import numpy as np
@@ -8,12 +10,13 @@ from pyls import pls_regression
 
 from .genes import GeneResults
 
-
-with open("log_config.yaml", "r") as config_file:
+cfg_file_path = Path(__file__).parent / "log_config.yaml"
+with open(cfg_file_path, "r") as config_file:
     log_cfg = yaml.safe_load(config_file.read())
 
 logging.config.dictConfig(log_cfg)
 logger = logging.getLogger("bootstrapping")
+logger.setLevel(logging.DEBUG)
 
 
 def correlate(corr1, corr2):
