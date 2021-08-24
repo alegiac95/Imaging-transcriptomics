@@ -12,8 +12,14 @@ The `imaging-transcriptomics` package allows performing imaging transcriptomics 
 (e.g., PET, MRI, fMRI...). 
 
 The software is implemented in Python3 (v.3.7), its source code is available on GitHub, it can be installed via Pypi and
-is released under the __MAH__ license.
+is released under the __MAH__ license. 
 
+[//]: # (Figure out the license type.)
+
+
+> **NOTE** Versions from v1.0.0 are or will be maintained. The original script linked by the BioRxiv preprint (v0.0) is 
+> still available on GitHub but no changes will be made to that code. If you have downloaded or used that script please 
+> update to the newer version by installing this new version.
 
 ## Usage
 
@@ -37,7 +43,7 @@ The `options` available are:
     > *__NOTE__*: if the variance given as input is in the range 0-1  the script will treat this as 30% the same way as if the number was in the range 10-100 (e.g., the script treats the inputs `-v 30` and `-v 0.3` in the exact same way and the resulting components will explain 30% of the variance).
 - `-n (--ncomp)`: Number of components to be used in the PLS regression. The number _MUST_ be in the range 1-15.
 - `-o (--output)` *(optional)*: Path where to save the results. If none is provided the results will be saved in the same directory as the input scan.
-> *__WARNING__*: The `-i` flag is _MANDATORY_ to run the script, and so is one, and only one, of the `-n` or `-v` flags. These lasts are mutually exclusive, meaning that _ONLY_ one of the two has to be given as input.
+> *__WARNING__*: The `-i` flag is _MANDATORY_ to run the script, and so is one, and only one, of the `-n` or `-v` flags. These last two are mutually exclusive, meaning that _ONLY_ one of the two has to be given as input.
 
 ### Part of Python script
 
@@ -63,3 +69,14 @@ analysis.run()
 Once completed the results will be part of the `analysis` object and can be accessed with `analysis.gene_results`.
 
 The import of the `imaging_transcriptomics` package will import other helpful functions for input and reporting. For a complete explanation of this please refer to the [official documentation]()) of the package.
+
+
+### Documentation
+
+The documentation of the script is available at [](). 
+
+### Citing
+
+If you publish work using `imaging-transcriptomics` as part of your analysis please cite:
+
+>*Imaging transcriptomics: Convergent cellular, transcriptomic, and molecular neuroimaging signatures in the healthy adult human brain.* Daniel Martins, Alessio Giacomel, Steven CR Williams, Federico Turkheimer, Ottavia Dipasquale, Mattia Veronese, PET templates working group. bioRxiv 2021.06.18.448872; doi: [https://doi.org/10.1101/2021.06.18.448872](https://doi.org/10.1101/2021.06.18.448872)
