@@ -10,7 +10,7 @@ Imaging transcriptomics is a methodology that allows to identify patterns of cor
 An overview of the methodology can be seen in the figure below.
 
 .. image:: images/imaging_transcriptomics.png
-    :alt: alternate-text
+    :alt: imaging transcriptomics workflow overview
     :align: center
 
 
