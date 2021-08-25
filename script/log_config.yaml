@@ -1,0 +1,25 @@
+---
+version: 1
+
+formatters:
+  simple:
+    format: "[%(levelname)s] %(asctime)s: %(message)s"
+    timefmt: "%Y-%m-%dT%H:%M:%S"
+
+  extended:
+    format: "[%(levelname)s] %(asctime)s: %(name)s - %(funcName)s - %(lineno)d - %(message)s"
+    timefmt: "%Y-%m-%dT%H:%M:%S"
+
+
+handlers:
+  file_log:
+
+  console:
+
+loggers:
+  info:
+    handlers: [console]
+  verbose:
+    handlers: [file_log, console]
+  warning:
+    handlers: [console]

@@ -1,6 +1,7 @@
 
 
 import logging
+import logging.config
 import argparse
 from pathlib import Path
 
@@ -59,10 +60,27 @@ def get_args():
     return parser.parse_args()
 
 
+def set_log_level(inputs):
+    """Set the logging level based on the input form the user.
+
+    :param inputs: Inputs read from the CLI (from argparse.parse_args())
+
+    :return logger: Logger to use for the script execution.
+    """
+    if inputs.verbose:
+        logger = logging.getLogger("verbose")
+    elif inputs.suppress:
+        logger = logging.getLogger("suppress")
+    else:
+        logger = logging.getLogger("standard")
+    return logger
+
+
 def main():
+
     inputs = get_args()
     # TODO: use multiprocessors if the input is a list of strings.
-    # TODO: use logging to show info to the user instead of print functions and save this to the directory of the report
+    logger = set_log_level(inputs)
     input_path = Path(inputs.input)
     data_to_analyse = imaging_transcriptomics.inputs.extract_average(
         imaging_transcriptomics.inputs.read_scan(input_path)
@@ -72,6 +90,7 @@ def main():
         "variance": inputs.variance,
         "n_components": inputs.ncomp
     }
+
     # Get IO paths to save files
     if not inputs.output:
         save_dir = input_path.absolute().parent
@@ -80,17 +99,14 @@ def main():
     scan_name = input_path.name.split(".")[0]
 
     save_dir = reporting.make_folder(save_dir, f"Imt_{scan_name}")
-    logging.basicConfig(filename=f"{save_dir}/analysis.log", level=logging.INFO)
-    # logging.info(f"Performing imaging transcriptomics of file {inputs.input}.\n"
-    #            f"The selected number of components and variance are {inputs.ncomp}, {inputs.variance} respectively.")
-    logging.info("Setting up analysis ...")
+    logger.info("Setting up analysis ...")
     analysis = imaging_transcriptomics.ImagingTranscriptomics(data_to_analyse, **initial_dict)
-    logging.info("Running analysis.")
+    logger.info("Running analysis.")
     analysis.run()
 
     # Save the results
     reporting.make_plots(save_dir, analysis.n_components, analysis.var_components)
-    reporting.create_csv(analysis.gene_results, analysis.n_components, save_dir)  # TODO: need to fix function
+    reporting.create_csv(analysis.gene_results, analysis.n_components, save_dir)
     reporting.create_pdf(input_path, save_dir)
 
 
