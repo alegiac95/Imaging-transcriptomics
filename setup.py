@@ -18,7 +18,7 @@ def get_version_number():
     """
     with open("imaging_transcriptomics/__init__.py", "r") as f:
         line = f.readline()
-        version = line.split(" = ")[1]
+        version = line.split(" = ")[1].strip('"')
         return version
 
 
@@ -32,8 +32,8 @@ def get_requirements():
 
 
 setup(name="imaging-transcriptomics",
-      author="Daniel Martins, MD, PhD; Alessio Giacomel",
-      author_email=["daniel.martins@kcl.ac.uk", "alessio.giacomel@kcl.ac.uk"],
+      author="Alessio Giacomel, Daniel Martins",
+      author_email=["alessio.giacomel@kcl.ac.uk", "daniel.martins@kcl.ac.uk"],
       version=get_version_number(),
       description="A package to perform imaging transcriptomics on a neuroimaging brain scan.",
       long_description=read_long_description(),
@@ -50,6 +50,5 @@ setup(name="imaging-transcriptomics",
       install_requires=get_requirements(),
       packages=find_packages(),
       include_package_data=True,
-      scripts=glob("scripts/*"),
-      entry_points={"console_scripts": ["imaging-transcriptomics = scripts.imagingtranscriptomics:main"]}
+      scripts=glob("script/imagingtranscriptomics")
       )
