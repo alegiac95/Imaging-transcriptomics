@@ -92,10 +92,10 @@ def main():
     }
 
     # Get IO paths to save files
-    if not inputs.output:
+    if not inputs.out:
         save_dir = input_path.absolute().parent
     else:
-        save_dir = Path(inputs.output)
+        save_dir = Path(inputs.out)
     scan_name = input_path.name.split(".")[0]
 
     save_dir = reporting.make_folder(save_dir, f"Imt_{scan_name}")
