@@ -145,10 +145,10 @@ def create_csv(analysis_results, n_comp, save_dir):
     if not isinstance(analysis_results, GeneResults):
         raise TypeError("The data are not of the GeneResults class.")
     for i in range(n_comp):
-        data = np.vstack((np.array(analysis_results.boot_results.pls_genes[i][0].reshape(1, 15633)),
-                          np.array(analysis_results.boot_results.z_scores[i][0]),
-                          np.array(analysis_results.boot_results.pval[i][0]),
-                          np.array(analysis_results.boot_results.pval_corrected[i][0])
+        data = np.vstack((np.array(analysis_results.boot_results.pls_genes[i].reshape(1, 15633)),
+                          np.array(analysis_results.boot_results.z_scores[i]),
+                          np.array(analysis_results.boot_results.pval[i]),
+                          np.array(analysis_results.boot_results.pval_corrected[i])
                           )).T
         data = pd.DataFrame(data, columns=["Gene ID", "Z", "p", "p corrected"])
         data.to_csv(save_dir / f"PLS{i+1}.csv", index=False)
