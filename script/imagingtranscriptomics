@@ -74,14 +74,13 @@ def set_log_level(inputs):
     elif inputs.suppress:
         logger = logging.getLogger("suppress")
     else:
-        logger = logging.getLogger("standard")
+        logger = logging.getLogger("info")
     return logger
 
 
 def main():
 
     inputs = get_args()
-    # TODO: use multiprocessors if the input is a list of strings.
     logger = set_log_level(inputs)
     input_path = Path(inputs.input)
     data_to_analyse = imaging_transcriptomics.inputs.extract_average(
@@ -101,6 +100,8 @@ def main():
     scan_name = input_path.name.split(".")[0]
 
     save_dir = reporting.make_folder(save_dir, f"Imt_{scan_name}")
+    file_handler = logging.FileHandler(save_dir / "logs.log", "a")
+    logger.addHandler(file_handler)
     logger.info("Setting up analysis ...")
     analysis = imaging_transcriptomics.ImagingTranscriptomics(data_to_analyse, **initial_dict)
     logger.info("Running analysis.")

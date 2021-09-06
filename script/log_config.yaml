@@ -12,14 +12,25 @@ formatters:
 
 
 handlers:
-  file_log:
+  console_info:
+    class: logging.StreamHandler
+    formatter: simple
+    level: INFO
 
-  console:
+  console_warning:
+    class: logging.StreamHandler
+    level: WARNING
+    formatter: simple
+
+  console_verbose:
+    class: logging.StreamHandler
+    level: DEBUG
+    formatter: simple
 
 loggers:
   info:
-    handlers: [console]
+    handlers: [console_info]
   verbose:
-    handlers: [file_log, console]
+    handlers: [console_verbose]
   warning:
-    handlers: [console]
+    handlers: [console_warning]
