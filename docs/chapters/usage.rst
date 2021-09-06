@@ -32,8 +32,23 @@ The parameters of the script are:
 
 Optional additional parameters that can be provided are:
 
-``-o`` (``--output``)   Path where you want to save the results, if no path is provided the results will be saved in the same path as the input scan. When the code is finished running the results will be saved in a folder named *vh_myscanname* and will contain all the results (.csv files, .pdf report and images in .png format). If you run the script multiple times you will have more than one results folder with a trailing number for the run (e.g., *vh_myscanname* for the first run and *vh_myscanname_1* for the second run).
+``-o`` (``--out``)   Path where you want to save the results, if no path is provided the results will be saved in the same path as the input scan. When the code is finished running the results will be saved in a folder named *Imt_myscanname* and will contain all the results (.csv files, .pdf report and images in .png format). If you run the script multiple times you will have more than one results folder with a trailing number for the run (e.g., *Imt_myscanname* for the first run and *Imt_myscanname_1* for the second run).
 
 ``--verbose`` Sets the output logging level to debug mode and shows all debug values and steps
 
 ``--suppress`` Sets the logging level to warning and will display only eventual warning messages.
+
+
+
+=======================
+Usage as python library
+=======================
+
+Once installed the library can be used like any other Python package in custom written analysis pipelines.
+To the library can be imported by running:
+
+.. code:: python
+
+    import imaging_transcriptomics as imt
+
+

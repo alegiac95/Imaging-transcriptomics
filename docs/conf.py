@@ -18,8 +18,8 @@
 # -- Project information -----------------------------------------------------
 
 project = 'imaging-transcriptomics'
-copyright = '2021, Daniel Martins, MD, PhD; Alessio Giacomel'
-author = 'Daniel Martins, MD, PhD; Alessio Giacomel'
+copyright = '2021, Alessio Giacomel, Daniel Martins'
+author = 'Alessio Giacomel, Daniel Martins'
 
 # The full version, including alpha/beta/rc tags
 release = '0.1.0'
