@@ -42,10 +42,10 @@ class ImagingTranscriptomics:
         self.n_components = self.check_in_components(kwargs.get("n_components"))
         self.var = self.check_in_var(kwargs.get("variance"))
         self.check_var_or_comp(self.var, self.n_components)
-        self.__cortical = self.zscore_data[0:34].reshape(34, 1)
-        self.__subcortical = self.zscore_data[34:].reshape(7, 1)
-        self.__gene_expression = load_gene_expression()
-        self.__gene_labels = load_gene_labels()
+        self._cortical = self.zscore_data[0:34].reshape(34, 1)
+        self._subcortical = self.zscore_data[34:].reshape(7, 1)
+        self._gene_expression = load_gene_expression()
+        self._gene_labels = load_gene_labels()
         # Initialise with defaults for later
         self.permuted = None
         self.r_boot = None
@@ -127,7 +127,7 @@ class ImagingTranscriptomics:
         # subcortical
         logger.debug("Starting permutations.")
         sub_permuted = np.array(
-            [np.random.permutation(self.__subcortical) for _ in range(iterations)]
+            [np.random.permutation(self._subcortical) for _ in range(iterations)]
         ).reshape(7, iterations)
         self.permuted[34:, :] = sub_permuted
         # Cortical
@@ -146,7 +146,7 @@ class ImagingTranscriptomics:
         parcel_centroids, parcel_hemi = parcel_centroids[left_hemi_mask], parcel_hemi[left_hemi_mask]
         # Get the spin samples
         spins = stats.gen_spinsamples(parcel_centroids, parcel_hemi, n_rotate=iterations, method='vasa', seed=1234)
-        cort_permuted = np.array(self.__cortical[spins]).reshape(34, iterations)
+        cort_permuted = np.array(self._cortical[spins]).reshape(34, iterations)
         self.permuted[0:34, :] = cort_permuted
         logger.debug("End permutations.")
 
@@ -169,7 +169,7 @@ class ImagingTranscriptomics:
         given by the components is estimated, depending on what is set by the user in the __init__() method.
         """
         logger.debug("Performing PLS with all 15 components.")
-        results = pls_regression(self.__gene_expression, self.zscore_data.reshape(41, 1),
+        results = pls_regression(self._gene_expression, self.zscore_data.reshape(41, 1),
                                  n_components=15, n_perm=0, n_boot=0)
         var_exp = results.get("varexp")
         if self.n_components is None and self.var != 0.0:
@@ -188,16 +188,16 @@ class ImagingTranscriptomics:
         logger.info("Starting imaging transcriptomics analysis.")
         self.pls_all_components()
         self.permute_data(iterations=n_iter)
-        self.r_boot, self.p_boot = bootstrap_pls(self.__gene_expression,
+        self.r_boot, self.p_boot = bootstrap_pls(self._gene_expression,
                                                  self.zscore_data.reshape(41, 1),
                                                  self.permuted,
                                                  self.n_components,
                                                  iterations=n_iter)
-        self.gene_results = bootstrap_genes(self.__gene_expression,
+        self.gene_results = bootstrap_genes(self._gene_expression,
                                             self.zscore_data.reshape(41, 1),
                                             self.n_components,
                                             self.scan_data,
-                                            self.__gene_labels,
+                                            self._gene_labels,
                                             n_iter)
         self.gene_results.boot_results.compute_values(self.n_components,
                                                       self.gene_results.original_results.pls_weights,
