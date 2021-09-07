@@ -25,14 +25,12 @@ is released under the GPL v3 license.
 
 ## Usage
 
----
 
 Once installed the software can be used in two ways:
 - as standalone script
 - as part of some python script
 
 ### Standalone script
-
 ---
 To run the standalone script from the terminal use the command:
 ```shell
