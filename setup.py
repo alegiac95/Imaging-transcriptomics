@@ -1,4 +1,5 @@
 from setuptools import setup, find_packages
+from pathlib import Path
 from glob import glob
 
 
@@ -24,8 +25,9 @@ def get_version_number():
 
 def get_requirements():
     """Get the requirements for the installation."""
+    req_file = Path(__file__).absolute().parent / "requirements.txt"
     required = []
-    with open("requirements.txt", "r") as f:
+    with open(req_file, "r") as f:
         for line in f:
             required.append(line.strip("\n"))
     return required
