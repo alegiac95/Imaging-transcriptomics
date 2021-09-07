@@ -70,18 +70,19 @@ def set_log_level(inputs):
     :return logger: Logger to use for the script execution.
     """
     if inputs.verbose:
-        logger = logging.getLogger("verbose")
+        logger_name ="verbose"
     elif inputs.suppress:
-        logger = logging.getLogger("suppress")
+        logger_name ="suppress"
     else:
-        logger = logging.getLogger("info")
-    return logger
+        logger_name = "info"
+    return logger_name
 
 
 def main():
 
     inputs = get_args()
-    logger = set_log_level(inputs)
+    logger_name = set_log_level(inputs)
+    logger = logging.getLogger(logger_name)
     input_path = Path(inputs.input)
     data_to_analyse = imaging_transcriptomics.inputs.extract_average(
         imaging_transcriptomics.inputs.read_scan(input_path)
