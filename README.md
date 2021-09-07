@@ -1,5 +1,8 @@
 # Imaging Transcriptomics
 
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+
+
 ![Imaging-transcriptomics_overwiew](docs/chapters/images/imaging_transcriptomics.png "Overview of the imaging 
 transcriptomics methodology")
 
