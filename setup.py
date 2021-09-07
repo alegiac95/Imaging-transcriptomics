@@ -36,7 +36,7 @@ def get_requirements():
 
 setup(name="imaging-transcriptomics",
       author="Alessio Giacomel, Daniel Martins",
-      author_email=["alessio.giacomel@kcl.ac.uk", "daniel.martins@kcl.ac.uk"],
+      author_email="alessio.giacomel@kcl.ac.uk , daniel.martins@kcl.ac.uk",
       version=get_version_number(),
       description="A package to perform imaging transcriptomics on a neuroimaging brain scan.",
       long_description=read_long_description(),
