@@ -19,7 +19,7 @@ def get_version_number():
     """
     with open("imaging_transcriptomics/__init__.py", "r") as f:
         line = f.readline()
-        version = line.split(" = ")[1].strip('"')
+        version = line.split(" = ")[1]
         return version
 
 
