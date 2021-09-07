@@ -25,9 +25,8 @@ def get_version_number():
 
 def get_requirements():
     """Get the requirements for the installation."""
-    req_file = Path(__file__).absolute().parent / "requirements.txt"
     required = []
-    with open(req_file, "r") as f:
+    with open("requirements.txt", "r") as f:
         for line in f:
             required.append(line.strip("\n"))
     return required
