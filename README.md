@@ -15,9 +15,8 @@ The `imaging-transcriptomics` package allows performing imaging transcriptomics 
 (e.g., PET, MRI, fMRI...). 
 
 The software is implemented in Python3 (v.3.7), its source code is available on GitHub, it can be installed via Pypi and
-is released under the __MAH__ license. 
+is released under the GPL v3 license. 
 
-[//]: # (Figure out the license type.)
 
 
 > **NOTE** Versions from v1.0.0 are or will be maintained. The original script linked by the BioRxiv preprint (v0.0) is 
