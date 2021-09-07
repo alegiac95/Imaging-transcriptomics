@@ -18,8 +18,10 @@ def get_version_number():
     :return version: version of the package.
     """
     with open("imaging_transcriptomics/__init__.py", "r") as f:
-        line = f.readline()
-        version = line.split(" = ")[1]
+        for line in f:
+            if '__version__' in line:
+                _, version, _ = line.split('"')
+                break
         return version
 
 
