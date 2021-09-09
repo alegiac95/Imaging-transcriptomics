@@ -70,9 +70,9 @@ def set_log_level(inputs):
     :return logger: Logger to use for the script execution.
     """
     if inputs.verbose:
-        logger_name ="verbose"
+        logger_name = "verbose"
     elif inputs.suppress:
-        logger_name ="suppress"
+        logger_name = "suppress"
     else:
         logger_name = "info"
     return logger_name
