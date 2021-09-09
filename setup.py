@@ -33,14 +33,16 @@ def get_requirements():
             if line[0] == '#':
                 continue
             requirements.append(line.rstrip('\n'))
+    return requirements
 
 
 setup(name="imaging-transcriptomics",
       author="Alessio Giacomel, Daniel Martins",
       author_email="alessio.giacomel@kcl.ac.uk , daniel.martins@kcl.ac.uk",
       version=get_version_number(),
-      url="",
+      url="https://github.com/alegiac95/imt",
       description="A package to perform imaging transcriptomics on a neuroimaging brain scan.",
+      license="GPLv3",
       long_description=read_long_description(),
       long_description_content_type="text/markdown",
       classifiers=["Intended Audience :: Healthcare Industry",
