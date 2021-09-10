@@ -3,7 +3,8 @@
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
 
-![Imaging-transcriptomics_overwiew](docs/chapters/images/imaging_transcriptomics.png "Overview of the imaging 
+![Imaging-transcriptomics_overwiew](https://raw.githubusercontent.com/alegiac95/imt/main/.github/images/imaging_transcriptomics.png
+ "Overview of the imaging 
 transcriptomics methodology")
 
 Imaging transcriptomics is a methodology that allows to identify patterns of correlation between gene expression and  
