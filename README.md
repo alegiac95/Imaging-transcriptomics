@@ -24,6 +24,26 @@ is released under the GPL v3 license.
 > still available on GitHub but no changes will be made to that code. If you have downloaded or used that script please 
 > update to the newer version by installing this new version.
 
+## Installation
+
+> **NOTE** We recommend to install the package in a dedicated environment of you choice 
+> (e.g., [venv](https://docs.python.org/3/library/venv.html) or [anaconda](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html)). Once you have created your environment and you
+> have activated it, you can follow the below guide to install the package and dependencies. This process will avoid 
+> clashes between conflicting packages that could happen during/after the installation.
+
+To install the `imaging-transcriptomics` Python package, first you will need to install a packages that can't be installed directly from PyPi, but require to be downloaded from GitHub.
+The  package to install is [pypyls](https://github.com/netneurolab/pypyls). To install this package you can follow the installation on the documentation for the package or simply run the command
+```shell
+pip install -e git+https://github.com/netneurolab/pypyls.git/#egg=pyls
+```
+to download the package, and its dependencies directly from GitHub by using `pip`.
+
+Once this package is installed you can install the `imaging-transcriptomics` package by running
+```shell
+pip install imaging-transcriptomics
+```
+
+
 ## Usage
 
 
@@ -31,11 +51,14 @@ Once installed the software can be used in two ways:
 - as standalone script
 - as part of some python script
 
+> **WARNING** Before running the script make sure the Pyhton environment where you have installed the package is activated.
+
+
 ### Standalone script
 ---
 To run the standalone script from the terminal use the command:
 ```shell
-imaging-transcriptomics options
+imagingtranscriptomics options
 ```
 
 The `options` available are:
