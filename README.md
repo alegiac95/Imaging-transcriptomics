@@ -1,8 +1,9 @@
 # Imaging Transcriptomics
 
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-[![Maintainer](https://img.shields.io/badge/maintainer-alegiac95-blue)](https://github.com/alegiac95)
-[![Generic badge](https://img.shields.io/badge/python->=3.6-blue.svg)](https://www.python.org/doc/versions/)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5507506.svg)](https://doi.org/10.5281/zenodo.5507506)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-red.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![Maintainer](https://img.shields.io/badge/maintainer-alegiac95-orange)](https://github.com/alegiac95)
+[![Generic badge](https://img.shields.io/badge/python->=3.6-yellow.svg)](https://www.python.org/doc/versions/)
 
 
 ![Imaging-transcriptomics_overwiew](https://raw.githubusercontent.com/alegiac95/imt/main/.github/images/imaging_transcriptomics.png
