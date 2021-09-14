@@ -58,5 +58,10 @@ setup(name="imaging-transcriptomics",
       packages=["imaging_transcriptomics"],
       include_package_data=True,
       package_data={"imaging_transcriptomics": ["*.yaml", "*.nii.gz", "*.csv", "*.txt", "*.annot"]},
-      scripts=glob("script/imagingtranscriptomics")
+      scripts=glob("script/imagingtranscriptomics"),
+      project_urls={
+        "Source": "https://github.com/alegiac95/Imaging-transcriptomics",
+        "Bug Reports": "https://github.com/alegiac95/Imaging-transcriptomics/issues",
+        "Documentation": "https://imaging-transcriptomics.rtfd.io/"
+      },
       )
