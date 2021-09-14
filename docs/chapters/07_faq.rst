@@ -4,6 +4,8 @@
 Frequently asked questions
 ==========================
 
+
+
 #. **How can I install the imaging transcriptomics package?**
     The short answer is: you can install it via ``pip``. For more details on how to install refer to the :ref:`installation section. <Installation>`
 
