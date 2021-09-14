@@ -55,8 +55,8 @@ setup(name="imaging-transcriptomics",
                    ],
       keywords="Image analysis, Neuroimaging, Imaging Transcriptomics, Medical Imaging, Research, Multimodal Imaging",
       install_requires=get_requirements(),
-      packages=find_packages(),
+      packages=["imaging_transcriptomics"],
       include_package_data=True,
-      package_data={"": ["*.yaml"]},
+      package_data={"imaging_transcriptomics": ["*.yaml", "*.nii.gz", "*.csv", "*.txt", "*.annot"]},
       scripts=glob("script/imagingtranscriptomics")
       )

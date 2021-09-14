@@ -1,3 +1,3 @@
-include data/*
+include imaging_transcriptomics/data/*
 include requirements.txt
 include ./**/*.yaml

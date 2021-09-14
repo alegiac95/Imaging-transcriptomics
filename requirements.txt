@@ -12,3 +12,4 @@ scikit-learn>=0.24.2
 joblib>=1.0.1
 pyyaml>=5.4.1
 netneurotools>=0.1.0
+fpdf2>=2.0.0
