@@ -57,5 +57,6 @@ setup(name="imaging-transcriptomics",
       install_requires=get_requirements(),
       packages=find_packages(),
       include_package_data=True,
+      package_data={"": ["*.yaml"]},
       scripts=glob("script/imagingtranscriptomics")
       )
