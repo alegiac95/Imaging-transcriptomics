@@ -25,5 +25,5 @@ If you use our software or methods in your research please cite our work:
 
 
 
-For more information about ongoing research please visit our website at `https://molecular-neuroimaging.com
-<https://molecular-neuroimaging.com>`_.
+For more information about ongoing research please visit our website at:
+`https://molecular-neuroimaging.com <https://molecular-neuroimaging.com>`_
