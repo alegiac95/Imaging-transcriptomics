@@ -23,12 +23,12 @@ is released under the GPL v3 license.
 
 
 > **NOTE** Versions from v1.0.0 are or will be maintained. The original script linked by the BioRxiv preprint (v0.0) is 
-> still available on GitHub but no changes will be made to that code. If you have downloaded or used that script please 
+> [still available on GitHub](https://github.com/alegiac95/Imaging_Transcriptomics_preprint) but no changes will be made to that code. If you have downloaded or used that script please 
 > update to the newer version by installing this new version.
 
 ## Installation
 
-> **NOTE** We recommend to install the package in a dedicated environment of you choice 
+> **NOTE** We recommend to install the package in a dedicated environment of your choice 
 > (e.g., [venv](https://docs.python.org/3/library/venv.html) or [anaconda](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html)). Once you have created your environment and you
 > have activated it, you can follow the below guide to install the package and dependencies. This process will avoid 
 > clashes between conflicting packages that could happen during/after the installation.
