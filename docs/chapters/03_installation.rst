@@ -13,7 +13,7 @@ To install the ``imaging-transcriptomics`` Python package you must first of all 
 
 .. note::
 
-    All following steps assume that, if you have created a dedicated environment, this is currently active. If you are unsure you can check with ``which python`` from your terminal or activate your environment via the `` source activate`` (for conda managed environments) or ``source venv/bin/activate`` (for venv managed environments).
+    All following steps assume that, if you have created a dedicated environment, this is currently active. If you are unsure you can check with ``which python`` from your terminal or activate your environment via the ``source activate`` (for conda managed environments) or ``source venv/bin/activate`` (for venv managed environments).
 
 Before installing the ``imaging-transcriptomics`` package we need to install a package that is not available through PyPi but from GitHub only.
 This package is `pypls <https://github.com/netneurolab/pypyls>`_ and is used in the script to perform all PLS regressions.
@@ -27,7 +27,7 @@ This will install install the GitHub repository directly using pip and it will m
 
 .. warning::
 
-    Do not install ``pyls`` directly from ``pip`` with the command ``pip install pyls`` as this is a completely different package!
+    Do not install pyls directly from pip with the command ``pip install pyls`` as this is a completely different package!
 
 Once this package is installed you can install the ``imaging-transcriptomics`` package by running:
 

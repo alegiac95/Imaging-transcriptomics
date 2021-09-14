@@ -18,3 +18,5 @@ components independently and cumulatively, that can be used to tune consequent a
 
 For more information on the use have a look at the :ref:`usage <Usage>` page. You can also have a  deeper look at the
 :ref:`methods <imgtrans>` and on :ref:`what to do with the results from the script <whatdo>`.
+
+For more advanced use, or to integrate it in your python workflow, you can use the :ref:`python module <library>`.
