@@ -16,6 +16,11 @@ senior authors of the paper `Dr Ottavia Dipasquale <ottavia.dipasquale@kcl.ac.uk
 For questions about the software you  can contact `Alessio Giacomel <alessio.giacomel@kcl.ac.uk>`_ or any of the
 authors above.
 
+.. seealso::
+
+    For questions regarding the software you can also check out our :ref:`FAQ <faq>` section or open a new issue on `GitHub <https://github.com/alegiac95/Imaging-transcriptomics/issues>`_.
+
+
 Cite our work
 -------------
 If you use our software or methods in your research please cite our work:
