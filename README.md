@@ -101,6 +101,10 @@ The import of the `imaging_transcriptomics` package will import other helpful fu
 
 The documentation of the script is available at [imaging-transcriptomics.rtfd.io/](https://imaging-transcriptomics.rtfd.io/en/latest/). 
 
+### Troubleshooting
+
+For any problems with the software you can [open an issue in GitHub](https://github.com/alegiac95/Imaging-transcriptomics/issues) or [contact the maintainer](mailto:alessio.giacomel@kcl.ac.uk)) of the package.
+
 ### Citing
 
 If you publish work using `imaging-transcriptomics` as part of your analysis please cite:
