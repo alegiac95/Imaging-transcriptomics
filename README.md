@@ -94,7 +94,7 @@ analysis.run()
 
 Once completed the results will be part of the `analysis` object and can be accessed with `analysis.gene_results`.
 
-The import of the `imaging_transcriptomics` package will import other helpful functions for input and reporting. For a complete explanation of this please refer to the [official documentation](https://imaging-transcriptomics.readthedocs.io/en/latest/)) of the package.
+The import of the `imaging_transcriptomics` package will import other helpful functions for input and reporting. For a complete explanation of this please refer to the [official documentation](https://imaging-transcriptomics.readthedocs.io/en/latest/) of the package.
 
 
 ### Documentation
