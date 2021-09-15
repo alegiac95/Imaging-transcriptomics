@@ -63,8 +63,9 @@ class ImagingTranscriptomics:
         :return: data if it has correct length.
         """
         if not len(data) == 41:
-            raise AttributeError("The data must have a length of 41, corresponding to the number of regions in the "
-                                 "left brain hemisphere!")
+            raise AttributeError(
+                "The data must have a length of 41, corresponding to the number of regions in the "
+                "left brain hemisphere!")
         return data
 
     @staticmethod
@@ -83,14 +84,16 @@ class ImagingTranscriptomics:
         elif 0.0 <= variance <= 1.0:
             return variance
         elif 1.0 < variance < 100:
-            logger.warning("The variance inputted was in the range 1-100. It has been converted to the range 0.0-1.0")
+            logger.warning(
+                "The variance inputted was in the range 1-100. It has been converted to the range 0.0-1.0")
             return variance / 100
         elif variance < 0.0:
             raise ValueError("The input variance cannot be negative!")
         elif variance > 100:
             raise ValueError("The input variance is too big!")
         elif isinstance(variance, str):
-            raise TypeError("Strings are not supported, please input a numeric value!")
+            raise TypeError(
+                "Strings are not supported, please input a numeric value!")
 
     @staticmethod
     def check_in_components(components):
@@ -105,12 +108,14 @@ class ImagingTranscriptomics:
         elif 1 <= components <= 15:
             return components
         else:
-            raise ValueError("The number of components MUST be in the range 1-15.")
+            raise ValueError(
+                "The number of components MUST be in the range 1-15.")
 
     @staticmethod
     def check_var_or_comp(variance, components):
         if variance is None and components is None:
-            raise AttributeError("You must set either the variance or the number of components!")
+            raise AttributeError(
+                "You must set either the variance or the number of components!")
 
     def permute_data(self, iterations=1_000):
         """Permute the scan data for the analysis.
@@ -127,13 +132,16 @@ class ImagingTranscriptomics:
         # subcortical
         logger.debug("Starting permutations.")
         sub_permuted = np.array(
-            [np.random.permutation(self._subcortical) for _ in range(iterations)]
+            [np.random.permutation(self._subcortical) for _ in
+             range(iterations)]
         ).reshape(7, iterations)
         self.permuted[34:, :] = sub_permuted
         # Cortical
         # Annotation file for the Desikan-Killiany atlas in fs5
-        annot_lh = Path(__file__).resolve().parent.parent / "data/fsa5_lh_aparc.annot"
-        annot_rh = Path(__file__).resolve().parent.parent / "data/fsa5_rh_aparc.annot"
+        annot_lh = Path(
+            __file__).resolve().parent.parent / "data/fsa5_lh_aparc.annot"
+        annot_rh = Path(
+            __file__).resolve().parent.parent / "data/fsa5_rh_aparc.annot"
         # Get the parcel centroids of the Desikan-Killiany atlas
         parcel_centroids, parcel_hemi = freesurfer.find_parcel_centroids(
             lhannot=annot_lh,
@@ -143,9 +151,12 @@ class ImagingTranscriptomics:
             method="surface")
         # Mask the results to have only the left hemisphere
         left_hemi_mask = parcel_hemi == 0
-        parcel_centroids, parcel_hemi = parcel_centroids[left_hemi_mask], parcel_hemi[left_hemi_mask]
+        parcel_centroids, parcel_hemi = parcel_centroids[left_hemi_mask], \
+                                        parcel_hemi[left_hemi_mask]
         # Get the spin samples
-        spins = stats.gen_spinsamples(parcel_centroids, parcel_hemi, n_rotate=iterations, method='vasa', seed=1234)
+        spins = stats.gen_spinsamples(parcel_centroids, parcel_hemi,
+                                      n_rotate=iterations, method='vasa',
+                                      seed=1234)
         cort_permuted = np.array(self._cortical[spins]).reshape(34, iterations)
         self.permuted[0:34, :] = cort_permuted
         logger.debug("End permutations.")
@@ -157,8 +168,9 @@ class ImagingTranscriptomics:
         "~/Documents/my_permuted.csv"
         """
         if self.permuted is None:
-            raise AttributeError("There are no permutations of the scan available to save. Before saving the "
-                                 "permutations you need to compute them.")
+            raise AttributeError(
+                "There are no permutations of the scan available to save. Before saving the "
+                "permutations you need to compute them.")
         logger.info("Saving permutations to file %s", path)
         pd.DataFrame(self.permuted).to_csv(Path(path), header=None, index=False)
 
@@ -169,15 +181,18 @@ class ImagingTranscriptomics:
         given by the components is estimated, depending on what is set by the user in the __init__() method.
         """
         logger.debug("Performing PLS with all 15 components.")
-        results = pls_regression(self._gene_expression, self.zscore_data.reshape(41, 1),
+        results = pls_regression(self._gene_expression,
+                                 self.zscore_data.reshape(41, 1),
                                  n_components=15, n_perm=0, n_boot=0)
         var_exp = results.get("varexp")
         if self.n_components is None and self.var != 0.0:
             self.n_components = get_components(self.var, var_exp)
-            logger.debug("Number of components has been set to: %s", self.n_components)
+            logger.debug("Number of components has been set to: %s",
+                         self.n_components)
         elif self.var is None and self.n_components != 0:
-            self.var = np.cumsum(var_exp)[self.n_components-1]
-            logger.debug("Variance has been set to: %s", self.var)  # add number of variance set
+            self.var = np.cumsum(var_exp)[self.n_components - 1]
+            logger.debug("Variance has been set to: %s",
+                         self.var)  # add number of variance set
         self.var_components = var_exp
 
     def run(self, n_iter=1_000):
@@ -189,7 +204,8 @@ class ImagingTranscriptomics:
         self.pls_all_components()
         self.permute_data(iterations=n_iter)
         self.r_boot, self.p_boot = bootstrap_pls(self._gene_expression,
-                                                 self.zscore_data.reshape(41, 1),
+                                                 self.zscore_data.reshape(41,
+                                                                          1),
                                                  self.permuted,
                                                  self.n_components,
                                                  iterations=n_iter)

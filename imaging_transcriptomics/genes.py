@@ -1,12 +1,11 @@
-import logging
 import logging.config
-import yaml
+import logging.config
 from pathlib import Path
 
+import numpy as np
+import yaml
 from scipy.stats import zscore, norm
 from statsmodels.stats.multitest import multipletests
-import numpy as np
-
 
 cfg_file_path = Path(__file__).parent / "log_config.yaml"
 with open(cfg_file_path, "r") as config_file:
@@ -19,6 +18,7 @@ logger.setLevel(logging.DEBUG)
 
 class OriginalResults(dict):
     """Class to hold the result from gene analysis (non bootstrapped)."""
+
     def __init__(self, n_comp):
         super().__init__()
         self.pls_weights = [None] * n_comp
@@ -26,12 +26,14 @@ class OriginalResults(dict):
         self.gene_id = [None] * n_comp
         self.index = [None] * n_comp
         self.pls_weights_z = [None] * n_comp
-        logger.debug("OriginalResults class initialized with %s components", n_comp)
+        logger.debug("OriginalResults class initialized with %s components",
+                     n_comp)
 
     def set_result_values(self, idx, pls_weights, x, pls_genes, gene_id):
         """Set the values for all class attributes.
         
-        :param idx: index of the component to set the values in the array (must be in the range 0:n_components-1).
+        :param idx: index of the component to set the values in the array (must
+            be in the range 0:n_components-1).
         :param pls_weights: weights to pass to the array at the index idx.
         :param pls_genes: genes to pass to the array at the index idx
         :param gene_id: id of the genes to pass to the array at the index idx
@@ -39,17 +41,19 @@ class OriginalResults(dict):
         :return: 
         """
         self.pls_weights[idx - 1] = np.array(pls_weights)
-        logger.debug("Weights at index %s set as %s", idx-1, pls_weights)
+        logger.debug("Weights at index %s set as %s", idx - 1, pls_weights)
         self.pls_gene[idx - 1] = np.array(pls_genes)
-        logger.debug("Genes at index %s set as %s", idx-1, pls_genes)
+        logger.debug("Genes at index %s set as %s", idx - 1, pls_genes)
         self.gene_id[idx - 1] = gene_id
-        logger.debug("Genes ids at index %s set as %s", idx-1, gene_id)
+        logger.debug("Genes ids at index %s set as %s", idx - 1, gene_id)
         self.index[idx - 1] = np.array(x)
-        self.pls_weights_z[idx - 1] = np.array(zscore(pls_weights, axis=0, ddof=1))
+        self.pls_weights_z[idx - 1] = np.array(
+            zscore(pls_weights, axis=0, ddof=1))
 
 
 class BootResults(dict):
     """Class to hold the results from the bootstrapping gene analysis."""
+
     def __init__(self, n_comp, dim1, dim2, n_perm=1000):
         super().__init__()
         self.pls_weights_boot = [np.zeros((dim1, dim2, n_perm))] * n_comp
@@ -64,16 +68,20 @@ class BootResults(dict):
         """Compute the values of the bootstrap for each of the components.
 
         :param n_comp: number of PLS components.
-        :param original_weights: weights obtained from the original analysis (non bootstrapped).
-        :param original_ids: original ids (labels) from the original analysis (non bootstrapped).
+        :param original_weights: weights obtained from the original analysis
+            (non bootstrapped).
+        :param original_ids: original ids (labels) from the original analysis
+            (non bootstrapped).
         :return:
         """
         logger.info("Computing bootstrap gene results.")
         for component in range(1, n_comp + 1):
             logger.debug("Computing results for component %s", component)
-            self.std[component - 1] = self.pls_weights_boot[component - 1][:, component - 1, :].std(ddof=1, axis=1)
+            self.std[component - 1] = self.pls_weights_boot[component - 1][:,
+                                      component - 1, :].std(ddof=1, axis=1)
             __temp = original_weights[component - 1] / self.std[component - 1]
-            self.z_scores[component - 1] = np.sort(__temp, kind='mergesort')[::-1]
+            self.z_scores[component - 1] = np.sort(__temp, kind='mergesort')[
+                                           ::-1]
             __idx = np.argsort(__temp, kind='mergesort')[::-1]
             self.pls_genes[component - 1] = original_ids[component - 1][__idx]
             __p = norm.sf(abs(self.z_scores[component - 1]))
@@ -85,6 +93,7 @@ class BootResults(dict):
 
 class GeneResults(dict):
     """Class to save the gene results."""
+
     def __init__(self, n_comp, dim1, dim2):
         super().__init__()
         self.original_results = OriginalResults(n_comp)

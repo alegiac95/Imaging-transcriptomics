@@ -1,18 +1,16 @@
-from pathlib import Path
-import logging
 import logging.config
-import yaml
+from pathlib import Path
 
 import nibabel as nib
 import numpy as np
 import pandas as pd
+import yaml
 from scipy.stats import zscore
 
 from .errors import (CheckShape,
                      CheckPath,
                      CheckExtension,
                      CheckVariance)
-
 
 cfg_file_path = Path(__file__).parent / "log_config.yaml"
 with open(cfg_file_path, "r") as config_file:
@@ -74,9 +72,10 @@ def get_components(target_variance, explained_var):
     """
     dim = 1
     cumulative_var = np.cumsum(explained_var)
-    while cumulative_var[dim-1] < target_variance:
+    while cumulative_var[dim - 1] < target_variance:
         dim += 1
-    logger.debug("Extracted variance is %s with %s components", cumulative_var[dim-1], dim)
+    logger.debug("Extracted variance is %s with %s components",
+                 cumulative_var[dim - 1], dim)
     return dim
 
 
@@ -89,7 +88,8 @@ def load_gene_expression():
     :return: numpy array with the gene expression data.
     """
     logger.debug("Loading gene_expression data.")
-    expression_file_path = Path(__file__).resolve().parent.parent / "data" / "gene_expression_data.csv"
+    expression_file_path = Path(
+        __file__).resolve().parent.parent / "data" / "gene_expression_data.csv"
     expression_data = pd.read_csv(expression_file_path, sep=',')
     my_data_x = expression_data.iloc[0:41, 2:].to_numpy()
     return zscore(my_data_x, ddof=1)
@@ -102,5 +102,6 @@ def load_gene_labels():
     :return: numpy array with the labels of the genes.
     """
     logger.debug("Loading gene labels.")
-    genes_labels_path = Path(__file__).resolve().parent.parent / "data" / "gene_expression_labels.txt"
+    genes_labels_path = Path(
+        __file__).resolve().parent.parent / "data" / "gene_expression_labels.txt"
     return pd.read_fwf(genes_labels_path, header=None).to_numpy()

@@ -1,6 +1,6 @@
-from setuptools import setup, find_packages
-from pathlib import Path
 from glob import glob
+
+from setuptools import setup, find_packages
 
 
 def read_long_description():
@@ -36,26 +36,29 @@ def get_requirements():
     return requirements
 
 
-setup(name="imaging-transcriptomics",
-      author="Alessio Giacomel, Daniel Martins",
-      author_email="alessio.giacomel@kcl.ac.uk , daniel.martins@kcl.ac.uk",
-      version=get_version_number(),
-      url="https://github.com/alegiac95/imt",
-      description="A package to perform imaging transcriptomics on a neuroimaging brain scan.",
-      license="GPLv3",
-      long_description=read_long_description(),
-      long_description_content_type="text/markdown",
-      classifiers=["Intended Audience :: Healthcare Industry",
-                   "Intended Audience :: Science/Research",
-                   "Topic :: Scientific/Engineering :: Image Processing",
-                   "Topic :: Scientific/Engineering :: Medical Science Apps.",
-                   "Development Status :: 4 - Beta",
-                   "Programming Language :: Python :: 3",
-                   "Programming Language :: Python :: 3.6",
-                   ],
-      keywords="Image analysis, Neuroimaging, Imaging Transcriptomics, Medical Imaging, Research, Multimodal Imaging",
-      install_requires=get_requirements(),
-      packages=find_packages(),
-      include_package_data=True,
-      scripts=glob("script/imagingtranscriptomics")
-      )
+setup(
+    name="imaging-transcriptomics",
+    author="Alessio Giacomel, Daniel Martins",
+    author_email="alessio.giacomel@kcl.ac.uk , daniel.martins@kcl.ac.uk",
+    version=get_version_number(),
+    url="https://github.com/alegiac95/imt",
+    description="A package to perform imaging transcriptomics on a "
+                "neuroimaging brain scan.",
+    license="GPLv3",
+    long_description=read_long_description(),
+    long_description_content_type="text/markdown",
+    classifiers=["Intended Audience :: Healthcare Industry",
+                 "Intended Audience :: Science/Research",
+                 "Topic :: Scientific/Engineering :: Image Processing",
+                 "Topic :: Scientific/Engineering :: Medical Science Apps.",
+                 "Development Status :: 4 - Beta",
+                 "Programming Language :: Python :: 3",
+                 "Programming Language :: Python :: 3.6",
+                 ],
+    keywords="Image analysis, Neuroimaging, Imaging Transcriptomics, Medical "
+             "Imaging, Research, Multimodal Imaging",
+    install_requires=get_requirements(),
+    packages=find_packages(),
+    include_package_data=True,
+    scripts=glob("script/imagingtranscriptomics")
+)
