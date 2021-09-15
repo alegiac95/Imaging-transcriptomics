@@ -111,5 +111,7 @@ For any problems with the software you can [open an issue in GitHub](https://git
 If you publish work using `imaging-transcriptomics` as part of your analysis please cite:
 
 >*Imaging transcriptomics: Convergent cellular, transcriptomic, and molecular neuroimaging signatures in the healthy adult human brain.* Daniel Martins, Alessio Giacomel, Steven CR Williams, Federico Turkheimer, Ottavia Dipasquale, Mattia Veronese, PET templates working group. bioRxiv 2021.06.18.448872; doi: [https://doi.org/10.1101/2021.06.18.448872](https://doi.org/10.1101/2021.06.18.448872)
+
+
 >*Imaging-transcriptomics: python package (v1.0.0).* Alessio Giacomel, Daniel Martins.
   Zenodo 2021. [https://doi.org/10.5281/zenodo.5507506](https://doi.org/10.5281/zenodo.5507506)
