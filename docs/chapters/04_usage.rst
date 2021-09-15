@@ -9,11 +9,11 @@ Once you have installed the package you can run the script as
 
 .. code:: bash
 
-    imaging-transcriptomics -i path_to_file -n 2
+    imagingtranscriptomics -i path_to_file -n 2
 
 
 The script has some parameters that can be tuned according to the necessity of the analysis, which can be viewed by calling the help function from the script as
-:code:`imaging-transcriptomics -h` or :code:`imaging-transcriptomics --help`.
+:code:`imagingtranscriptomics -h` or :code:`imagingtranscriptomics --help`.
 
 
 Here we will describe in more details all the parameters of the script.

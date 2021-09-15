@@ -26,7 +26,7 @@ Cite our work
 If you use our software or methods in your research please cite our work:
 
 * **Imaging transcriptomics: Convergent cellular, transcriptomic, and molecular neuroimaging signatures in the healthy adult human brain.** *Daniel Martins, Alessio Giacomel, Steven CR Williams, Federico Turkheimer, Ottavia Dipasquale, Mattia Veronese, PET templates working group*. bioRxiv 2021.06.18.448872; doi: `https://doi.org/10.1101/2021.06.18.448872 <https://doi.org/10.1101/2021.06.18.448872>`_
-* **Imaging-transcriptomics** zenodo - TO ADD.
+* **Imaging-transcriptomics: python package (v1.0.0).** Alessio Giacomel, Daniel Martins. Zenodo 2021. `https://doi.org/10.5281/zenodo.5507506 <https://doi.org/10.5281/zenodo.5507506>`_
 
 
 
