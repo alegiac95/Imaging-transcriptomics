@@ -138,10 +138,8 @@ class ImagingTranscriptomics:
         self.permuted[34:, :] = sub_permuted
         # Cortical
         # Annotation file for the Desikan-Killiany atlas in fs5
-        annot_lh = Path(
-            __file__).resolve().parent.parent / "data/fsa5_lh_aparc.annot"
-        annot_rh = Path(
-            __file__).resolve().parent.parent / "data/fsa5_rh_aparc.annot"
+        annot_lh = Path(__file__).resolve().parent / "data/fsa5_lh_aparc.annot"
+        annot_rh = Path(__file__).resolve().parent / "data/fsa5_rh_aparc.annot"
         # Get the parcel centroids of the Desikan-Killiany atlas
         parcel_centroids, parcel_hemi = freesurfer.find_parcel_centroids(
             lhannot=annot_lh,

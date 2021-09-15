@@ -51,7 +51,7 @@ def extract_average(imaging_matrix):
     """
     n_regions = 41
     logger.debug("Extracting average from scan.")
-    atlas_data = nib.load(Path(__file__).resolve().parent.parent / "data" /
+    atlas_data = nib.load(Path(__file__).resolve().parent / "data" /
                           "atlas-desikankilliany_1mm_MNI152.nii.gz").get_fdata()
     data = np.zeros(n_regions)
     for i in range(1, n_regions + 1):
@@ -90,6 +90,7 @@ def load_gene_expression():
     logger.debug("Loading gene_expression data.")
     expression_file_path = Path(
         __file__).resolve().parent.parent / "data" / "gene_expression_data.csv"
+
     expression_data = pd.read_csv(expression_file_path, sep=',')
     my_data_x = expression_data.iloc[0:41, 2:].to_numpy()
     return zscore(my_data_x, ddof=1)

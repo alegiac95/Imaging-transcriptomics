@@ -1,14 +1,17 @@
 # Imaging Transcriptomics
 
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5507506.svg)](https://doi.org/10.5281/zenodo.5507506)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-red.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![Maintainer](https://img.shields.io/badge/maintainer-alegiac95-orange)](https://github.com/alegiac95)
+[![Generic badge](https://img.shields.io/badge/python->=3.6-yellow.svg)](https://www.python.org/doc/versions/)
 
 
 ![Imaging-transcriptomics_overwiew](https://raw.githubusercontent.com/alegiac95/imt/main/.github/images/imaging_transcriptomics.png
  "Overview of the imaging 
 transcriptomics methodology")
 
-Imaging transcriptomics is a methodology that allows to identify patterns of correlation between gene expression and  
-some property of brain structure or function as measured by neuroimaging (e.g., MRI, fMRI, PET).
+Imaging transcriptomics is a methodology that allows to identify patterns of correlation between gene expression and some
+property of brain structure or function as measured by neuroimaging (e.g., MRI, fMRI, PET).
 
 ---
 
@@ -21,8 +24,28 @@ is released under the GPL v3 license.
 
 
 > **NOTE** Versions from v1.0.0 are or will be maintained. The original script linked by the BioRxiv preprint (v0.0) is 
-> still available on GitHub but no changes will be made to that code. If you have downloaded or used that script please 
+> [still available on GitHub](https://github.com/alegiac95/Imaging_Transcriptomics_preprint) but no changes will be made to that code. If you have downloaded or used that script please 
 > update to the newer version by installing this new version.
+
+## Installation
+
+> **NOTE** We recommend to install the package in a dedicated environment of your choice 
+> (e.g., [venv](https://docs.python.org/3/library/venv.html) or [anaconda](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html)). Once you have created your environment and you
+> have activated it, you can follow the below guide to install the package and dependencies. This process will avoid 
+> clashes between conflicting packages that could happen during/after the installation.
+
+To install the `imaging-transcriptomics` Python package, first you will need to install a packages that can't be installed directly from PyPi, but require to be downloaded from GitHub.
+The  package to install is [pypyls](https://github.com/netneurolab/pypyls). To install this package you can follow the installation on the documentation for the package or simply run the command
+```shell
+pip install -e git+https://github.com/netneurolab/pypyls.git/#egg=pyls
+```
+to download the package, and its dependencies directly from GitHub by using `pip`.
+
+Once this package is installed you can install the `imaging-transcriptomics` package by running
+```shell
+pip install imaging-transcriptomics
+```
+
 
 ## Usage
 
@@ -31,11 +54,14 @@ Once installed the software can be used in two ways:
 - as standalone script
 - as part of some python script
 
+> **WARNING** Before running the script make sure the Pyhton environment where you have installed the package is activated.
+
+
 ### Standalone script
 ---
 To run the standalone script from the terminal use the command:
 ```shell
-imaging-transcriptomics options
+imagingtranscriptomics options
 ```
 
 The `options` available are:
@@ -69,15 +95,23 @@ analysis.run()
 
 Once completed the results will be part of the `analysis` object and can be accessed with `analysis.gene_results`.
 
-The import of the `imaging_transcriptomics` package will import other helpful functions for input and reporting. For a complete explanation of this please refer to the [official documentation]()) of the package.
+The import of the `imaging_transcriptomics` package will import other helpful functions for input and reporting. For a complete explanation of this please refer to the [official documentation](https://imaging-transcriptomics.readthedocs.io/en/latest/) of the package.
 
 
 ### Documentation
 
-The documentation of the script is available at [](). 
+The documentation of the script is available at [imaging-transcriptomics.rtfd.io/](https://imaging-transcriptomics.rtfd.io/en/latest/). 
+
+### Troubleshooting
+
+For any problems with the software you can [open an issue in GitHub](https://github.com/alegiac95/Imaging-transcriptomics/issues) or [contact the maintainer](mailto:alessio.giacomel@kcl.ac.uk)) of the package.
 
 ### Citing
 
 If you publish work using `imaging-transcriptomics` as part of your analysis please cite:
 
 >*Imaging transcriptomics: Convergent cellular, transcriptomic, and molecular neuroimaging signatures in the healthy adult human brain.* Daniel Martins, Alessio Giacomel, Steven CR Williams, Federico Turkheimer, Ottavia Dipasquale, Mattia Veronese, PET templates working group. bioRxiv 2021.06.18.448872; doi: [https://doi.org/10.1101/2021.06.18.448872](https://doi.org/10.1101/2021.06.18.448872)
+
+
+>*Imaging-transcriptomics: python package (v1.0.0).* Alessio Giacomel, Daniel Martins.
+  Zenodo 2021. [https://doi.org/10.5281/zenodo.5507506](https://doi.org/10.5281/zenodo.5507506)
