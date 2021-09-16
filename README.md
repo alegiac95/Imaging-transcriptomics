@@ -4,6 +4,7 @@
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-red.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Maintainer](https://img.shields.io/badge/maintainer-alegiac95-orange)](https://github.com/alegiac95)
 [![Generic badge](https://img.shields.io/badge/python->=3.6-yellow.svg)](https://www.python.org/doc/versions/)
+[![Documentation Status](https://readthedocs.org/projects/imaging-transcriptomics/badge/?version=latest)](https://imaging-transcriptomics.readthedocs.io/en/latest/?badge=latest)
 
 
 ![Imaging-transcriptomics_overwiew](https://raw.githubusercontent.com/alegiac95/imt/main/.github/images/imaging_transcriptomics.png
