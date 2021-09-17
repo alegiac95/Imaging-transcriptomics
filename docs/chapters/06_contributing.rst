@@ -15,7 +15,7 @@ If you want to contribute to the project there are some general guidelines we as
 * When you write some functionality you MUST document that functionality with docstrings. The docstrings should include a description of the functionality along with a description of the parameters of the function and returns using the ``:param:`` and ``:return:`` parameters.
 * All your code SHOULD be compliant with the `PEP8 <https://www.python.org/dev/peps/pep-0008/>`_ python styling guide.
 
-
+====================================
 Contributor Covenant Code of Conduct
 ====================================
 
