@@ -11,14 +11,7 @@ Welcome to imaging-transcriptomics's documentation!
    :caption: Contents:
    :glob:
 
-   chapters/getting_started.rst
-   chapters/theory.rst
-   chapters/installation.rst
-   chapters/usage.rst
-   chapters/what_to_do.rst
-   chapters/contributing.rst
-   chapters/contact_us.rst
-   chapters/faq.rst
+   chapters/*
 
 
 Indices and tables
