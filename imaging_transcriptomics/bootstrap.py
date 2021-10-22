@@ -25,9 +25,7 @@ def correlate(corr1, corr2):
     :param corr1: first element to correlate.
     :param corr2: second element to correlate.
     """
-    return np.corrcoef(np.hstack(
-        (corr1, corr2)
-    ), rowvar=False)[0, 1:]
+    return np.corrcoef(np.hstack((corr1, corr2)), rowvar=False)[0, 1:]
 
 
 def bootstrap_pls(x, y, y_perm, dim, iterations=1_000):
@@ -50,26 +48,31 @@ def bootstrap_pls(x, y, y_perm, dim, iterations=1_000):
     R_boot = np.zeros(dim)
     p_boot = np.zeros(dim)
     for component in range(1, dim + 1):
-        pls_results = pls_regression(x, y,
-                                     n_components=component,
-                                     n_perm=0,
-                                     n_boot=0)
+        pls_results = pls_regression(x, y, n_components=component, n_perm=0, n_boot=0)
         exp_var = pls_results.get("varexp")
         temp = 100 * exp_var.cumsum(axis=0)
         R_squared = temp[component - 1]
         R_sq = np.zeros(iterations)
-        for i in tqdm(range(1000), desc=f"Bootstrapping on PLS component {component}", unit=" iterations"):
+        for i in tqdm(
+            range(1000),
+            desc=f"Bootstrapping on PLS component {component}",
+            unit=" iterations",
+        ):
             y_data = y_perm[:, i].reshape(41, 1)
-            _result = pls_regression(x, y_data,
-                                     n_components=component,
-                                     n_perm=0,
-                                     n_boot=0)
+            _result = pls_regression(
+                x, y_data, n_components=component, n_perm=0, n_boot=0
+            )
             _exp_var = 100 * np.cumsum(_result.get("varexp"))
             R_sq[i] = _exp_var[component - 1]
         R_boot[component - 1] = R_squared
-        p_boot[component - 1] = float(len(R_sq[numpy.nonzero(R_sq >= R_squared)])) / iterations
-    logger.debug("Computed components p value(s) and coefficient(s) of determination: \n R: %s \n p: %s",
-                 R_boot, p_boot)
+        p_boot[component - 1] = (
+            float(len(R_sq[numpy.nonzero(R_sq >= R_squared)])) / iterations
+        )
+    logger.debug(
+        "Computed components p value(s) and coefficient(s) of determination: \n R: %s \n p: %s",
+        R_boot,
+        p_boot,
+    )
     return R_boot, p_boot
 
 
@@ -88,41 +91,54 @@ def bootstrap_genes(x_data, y, n_components, y_norm, genes, n_iterations=1000):
     results as well.
     """
     n_genes = 15_633
-    gene_index = np.array(list(range(1, n_genes+1)))
+    gene_index = np.array(list(range(1, n_genes + 1)))
     results = pls_regression(x_data, y, n_components=n_components, n_boot=0, n_perm=0)
-    r1 = correlate(results.get("x_scores").reshape(41, n_components), y_norm.reshape(41, 1))
+    r1 = correlate(
+        results.get("x_scores").reshape(41, n_components), y_norm.reshape(41, 1)
+    )
     logger.debug("Correlation between original data and regression scores: %s", r1)
     weights = results.get("x_weights")
-    gene_results = GeneResults(n_components, dim1=weights.shape[0], dim2=weights.shape[1])
+    gene_results = GeneResults(
+        n_components, dim1=weights.shape[0], dim2=weights.shape[1]
+    )
     scores = results.get("x_scores")
     for i in range(r1.size):
         if r1[i] < 0:
             weights[:, i] *= -1
             scores[:, i] *= -1
-    for idx in range(1, n_components+1):
-        x = np.argsort(weights[:, idx-1], kind='mergesort')[::-1]
-        gene_results.original_results.set_result_values(idx,
-                                                        np.sort(weights[:, idx-1], kind='mergesort')[::-1],
-                                                        x,
-                                                        genes[x],
-                                                        gene_index[x])
+    for idx in range(1, n_components + 1):
+        x = np.argsort(weights[:, idx - 1], kind="mergesort")[::-1]
+        gene_results.original_results.set_result_values(
+            idx,
+            np.sort(weights[:, idx - 1], kind="mergesort")[::-1],
+            x,
+            genes[x],
+            gene_index[x],
+        )
 
     # Main genes bootstrap
-    for iteration in tqdm(range(n_iterations), desc="Bootstrapping gene list", unit=" iterations"):
+    for iteration in tqdm(
+        range(n_iterations), desc="Bootstrapping gene list", unit=" iterations"
+    ):
         my_resample = np.random.choice(41, size=41)
         x_perm = x_data[my_resample, :]
         y_perm = y[my_resample].reshape(41, 1)
-        results = pls_regression(x_perm, y_perm, n_components=n_components, n_perm=0, n_boot=0)
+        results = pls_regression(
+            x_perm, y_perm, n_components=n_components, n_perm=0, n_boot=0
+        )
         _weights = results.get("x_weights")
-        for component in range(1, n_components+1):
-            __temp = _weights[:, component-1]
-            __new_weights = __temp[gene_results.original_results.index[component-1]]
-            __t_genes = np.array(gene_results.original_results.pls_weights[component-1])
+        for component in range(1, n_components + 1):
+            __temp = _weights[:, component - 1]
+            __new_weights = __temp[gene_results.original_results.index[component - 1]]
+            __t_genes = np.array(
+                gene_results.original_results.pls_weights[component - 1]
+            )
             __correlation = correlate(
-                __t_genes.reshape(15633, 1),
-                __new_weights.reshape(15633, 1)
+                __t_genes.reshape(15633, 1), __new_weights.reshape(15633, 1)
             )
             if __correlation < 0:
                 __new_weights *= -1
-            gene_results.boot_results.pls_weights_boot[component-1][:, component-1, iteration] = __new_weights
+            gene_results.boot_results.pls_weights_boot[component - 1][
+                :, component - 1, iteration
+            ] = __new_weights
     return gene_results

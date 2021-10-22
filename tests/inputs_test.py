@@ -1,7 +1,12 @@
 import numpy as np
 import pytest
 
-from imaging_transcriptomics.inputs import extract_average, get_components, load_gene_expression, load_gene_labels
+from imaging_transcriptomics.inputs import (
+    extract_average,
+    get_components,
+    load_gene_expression,
+    load_gene_labels,
+)
 
 
 # def test_read_scan():
@@ -54,4 +59,3 @@ def test_gene_labels_load():
     assert labels[1635] == "C6orf106"
     assert "SLC7A10" in labels
     assert "audhd49b" not in labels  # just some randoms string to mimic a gene.
-
