@@ -7,14 +7,14 @@ import numpy as np
 import pandas as pd
 import yaml
 from pyls import pls_regression
-from scipy.stats import zscore
+from scipy.stats import zscore, pearsonr
 
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore")
     from netneurotools import freesurfer, stats
 
 from .inputs import load_gene_expression, load_gene_labels, get_components
-from .bootstrap import bootstrap_pls, bootstrap_genes
+from .bootstrap import bootstrap_pls, bootstrap_genes, bootstrap_correlation
 
 cfg_file_path = Path(__file__).parent / "log_config.yaml"
 with open(cfg_file_path, "r") as config_file:
@@ -174,6 +174,18 @@ class ImagingTranscriptomics:
         logger.info("Saving permutations to file %s", path)
         pd.DataFrame(self.permuted).to_csv(Path(path), header=None, index=False)
 
+    def correlation(self):
+        """ Calculate the correlation between the imaging and genetic data.
+
+        :return corr_: pearson correlation coefficient
+        :return p_val: p_val of the correlation
+        """
+        corr_ = np.zeros(self._gene_expression.shape)
+        p_val = np.zeros(self._gene_expression.shape)
+        for gene in range(15633):
+            corr_[:,gene], p_val[:,gene] = pearsonr(self.zscore_data, self._gene_expression[:,gene])
+        return corr_, p_val
+
     def pls_all_components(self):
         """Compute a PLS regression with all components.
 
@@ -199,32 +211,47 @@ class ImagingTranscriptomics:
             )  # add number of variance set
         self.var_components = var_exp
 
-    def run(self, n_iter=1_000):
+    def run(self, n_iter=1_000, method="pls"):
         """Run the analysis of the imaging scan.
 
         :param int n_iter: number of permutations to make.
+        :param str method: method to run the analysis, can be either "pls"
+        for pls regression or "corr" cor simple correlation analysis.
         """
         logger.info("Starting imaging transcriptomics analysis.")
-        self.pls_all_components()
-        self.permute_data(iterations=n_iter)
-        self.r_boot, self.p_boot = bootstrap_pls(
-            self._gene_expression,
-            self.zscore_data.reshape(41, 1),
-            self.permuted,
-            self.n_components,
-            iterations=n_iter,
-        )
-        self.gene_results = bootstrap_genes(
-            self._gene_expression,
-            self.zscore_data.reshape(41, 1),
-            self.n_components,
-            self.scan_data,
-            self._gene_labels,
-            n_iter,
-        )
-        self.gene_results.boot_results.compute_values(
-            self.n_components,
-            self.gene_results.original_results.pls_weights,
-            self.gene_results.original_results.pls_gene,
-        )
+        if method is "pls":
+            logger.info("Running analysis with PLS regression")
+            self.pls_all_components()
+            self.permute_data(iterations=n_iter)
+            self.r_boot, self.p_boot = bootstrap_pls(
+                self._gene_expression,
+                self.zscore_data.reshape(41, 1),
+                self.permuted,
+                self.n_components,
+                iterations=n_iter,
+            )
+            self.gene_results = bootstrap_genes(
+                self._gene_expression,
+                self.zscore_data.reshape(41, 1),
+                self.n_components,
+                self.scan_data,
+                self._gene_labels,
+                n_iter,
+            )
+            self.gene_results.boot_results.compute_values(
+                self.n_components,
+                self.gene_results.original_results.pls_weights,
+                self.gene_results.original_results.pls_gene,
+            )
+        elif method is "corr":
+            logger.info("Running analysis with correlation.")
+            # run first analysis
+            self.permute_data(iterations=n_iter)
+            # bootstrap analysis
+            self.gene_results = bootstrap_correlation()
+            pass
+        else:
+            raise NotImplementedError(f"The method {method} does not exist. "
+                                      f"Please choose either pls or corr as "
+                                      f"method to run the analysis.")
         logger.info("Imaging transcriptomics analysis completed.")
