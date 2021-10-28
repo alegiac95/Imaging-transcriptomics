@@ -177,14 +177,18 @@ class ImagingTranscriptomics:
     def correlation(self):
         """ Calculate the correlation between the imaging and genetic data.
 
-        :return corr_: pearson correlation coefficient
-        :return p_val: p_val of the correlation
+        :return corr_genes: pearson correlation coefficient ordered in
+        descending order.
+        :return corr_gene_labels: labels of the genes ordered by correlation coefficient.
         """
-        corr_ = np.zeros(self._gene_expression.shape)
-        p_val = np.zeros(self._gene_expression.shape)
+        corr_ = np.zeros(self._gene_expression.shape[1])
+        p_val = np.zeros(self._gene_expression.shape[1])
         for gene in range(15633):
-            corr_[:,gene], p_val[:,gene] = pearsonr(self.zscore_data, self._gene_expression[:,gene])
-        return corr_, p_val
+            corr_[gene], p_val[gene] = pearsonr(self.zscore_data,
+                                                    self._gene_expression[:,gene])
+        corr_genes = np.sort(corr_)
+        corr_gene_labels = self._gene_labels[np.argsort(corr_)]
+        return corr_genes, corr_gene_labels
 
     def pls_all_components(self):
         """Compute a PLS regression with all components.
@@ -248,7 +252,9 @@ class ImagingTranscriptomics:
             # run first analysis
             self.permute_data(iterations=n_iter)
             # bootstrap analysis
-            self.gene_results = bootstrap_correlation()
+            self.gene_results = bootstrap_correlation(self.zscore_data,
+                                                      self._gene_results,
+                                                      self._gene_labels)
             pass
         else:
             raise NotImplementedError(f"The method {method} does not exist. "
