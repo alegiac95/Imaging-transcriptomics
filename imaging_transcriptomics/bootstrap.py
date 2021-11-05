@@ -2,7 +2,11 @@ import logging
 import logging.config
 import yaml
 from pathlib import Path
+from itertools import product
+from multiprocessing import Pool
+from functools import partial
 
+from scipy.stats import spearmanr
 import numpy
 import numpy as np
 from tqdm import tqdm
@@ -141,4 +145,44 @@ def bootstrap_genes(x_data, y, n_components, y_norm, genes, n_iterations=1000):
             gene_results.boot_results.pls_weights_boot[component - 1][
                 :, component - 1, iteration
             ] = __new_weights
+    return gene_results
+
+
+def spearman_op(idx, permuted, y_data):
+    return spearmanr(permuted[:, idx[0]], y_data[:, idx[1]])[0]
+
+
+def bootstrap_correlation(x_data, y_data, permuted, labels, n_iterations=1000):
+    """
+    Bootstrap the results using pearson correlation.
+
+    :param x_data: imaging data
+    :param y_data: gene expression data
+    :param permuted: permuted matrix of imaging data
+    :param labels: labels of the genes (original order)
+    :return gene_results: GeneResults class with correlation results.
+    """
+    gene_results = GeneResults(n_comp=1, dim1=1, dim2=y_data.shape[1])
+    n_genes = 15633
+    pool = Pool()
+    # original correlation
+    corr_ = np.zeros(y_data.shape[1])
+    for gene in range(n_genes):
+        corr_[gene], _ = spearmanr(x_data, y_data[:, gene])
+    # order results and set indexes in gene results
+    gene_results.original_results.pls_weights = np.sort(corr_, kind="mergesort")[::-1]
+    __idx = np.argsort(corr_, kind="mergesort")[::-1]
+    gene_results.original_results.labels = labels[__idx]
+    gene_results.original_results.gene_id = __idx
+    # bootstrap
+    __res = np.zeros((15633, 1000))
+    _iter = product(range(n_iterations), range(n_genes))
+    for ind, result in tqdm(enumerate(pool.imap(partial(
+            spearman_op, permuted=permuted, y_data=y_data),
+                                                _iter, chunksize=25_000
+                                                )),
+                            desc="Bootstrapping correlation",
+                            unit="iterations"):
+        __res.flat[ind] = result
+    gene_results.boot_results.pls_weights_boot = __res
     return gene_results
