@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 import yaml
 from pyls import pls_regression
-from scipy.stats import zscore, pearsonr
+from scipy.stats import zscore, spearmanr
 
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore")
@@ -175,7 +175,7 @@ class ImagingTranscriptomics:
         pd.DataFrame(self.permuted).to_csv(Path(path), header=None, index=False)
 
     def correlation(self):
-        """ Calculate the correlation between the imaging and genetic data.
+        """Calculate the correlation between the imaging and genetic data.
 
         :return corr_genes: pearson correlation coefficient ordered in
         descending order.
@@ -184,8 +184,9 @@ class ImagingTranscriptomics:
         corr_ = np.zeros(self._gene_expression.shape[1])
         p_val = np.zeros(self._gene_expression.shape[1])
         for gene in range(15633):
-            corr_[gene], p_val[gene] = pearsonr(self.zscore_data,
-                                                    self._gene_expression[:,gene])
+            corr_[gene], p_val[gene] = spearmanr(
+                self.zscore_data, self._gene_expression[:, gene]
+            )
         corr_genes = np.sort(corr_)
         corr_gene_labels = self._gene_labels[np.argsort(corr_)]
         return corr_genes, corr_gene_labels
@@ -252,12 +253,21 @@ class ImagingTranscriptomics:
             # run first analysis
             self.permute_data(iterations=n_iter)
             # bootstrap analysis
-            self.gene_results = bootstrap_correlation(self.zscore_data,
-                                                      self._gene_results,
-                                                      self._gene_labels)
-            pass
+            self.gene_results = bootstrap_correlation(
+                self.zscore_data,
+                self._gene_expression,
+                self.permuted,
+                self._gene_labels,
+            )
+            self.gene_results.boot_results.compute_corr(
+                self.gene_results.original_results.pls_weights,
+                self.gene_results.original_results.pls_gene,
+                self.gene_results.original_results.gene_id,
+            )
         else:
-            raise NotImplementedError(f"The method {method} does not exist. "
-                                      f"Please choose either pls or corr as "
-                                      f"method to run the analysis.")
+            raise NotImplementedError(
+                f"The method {method} does not exist. "
+                f"Please choose either pls or corr as "
+                f"method to run the analysis."
+            )
         logger.info("Imaging transcriptomics analysis completed.")

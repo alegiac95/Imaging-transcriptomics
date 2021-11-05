@@ -66,8 +66,8 @@ class BootResults(dict):
         """Compute the values of the bootstrap for each of the components.
 
         :param n_comp: number of PLS components.
-        :param original_weights: weights obtained from the original analysis (non bootstrapped).
-        :param original_ids: original ids (labels) from the original analysis (non bootstrapped).
+        :param original_weights: weights obtained from the original analysis (not bootstrapped)
+        :param original_ids: original ids (labels) from the original analysis (not bootstrapped)
         :return:
         """
         logger.info("Computing bootstrap gene results.")
@@ -86,6 +86,30 @@ class BootResults(dict):
                 __p[::-1].reshape(1, 15633), method="fdr_bh", is_sorted=True
             )
             self.pval_corrected[component - 1] = __p_corr
+
+    def compute_corr(self, original_corr, originals_ids, original_index):
+        """Compute bootstrapping values for correlation data.
+        :param
+        """
+        logger.info("Computing bootstrap correlation results")
+        n_iter = 1000
+        for i in range(n_iter):
+            self.pls_weights_boot[:, i] = self.pls_weights_boot[:, i][
+                original_index
+            ]
+        p = np.zeros(15633)
+        for i in range(15633):
+            p[i] = (
+                float(
+                    len(np.nonzero(self.pls_weights_boot[i, :] >= original_corr[i]))
+                )
+                / n_iter
+            )
+        self.pval = p
+        _, p_corrected, _ ,_= multipletests(p[::-1], method="fdr_bh",
+                                           is_sorted=True)
+        self.pval_corrected = p_corrected
+        self.pls_genes = originals_ids[original_index]
 
 
 class GeneResults(dict):
