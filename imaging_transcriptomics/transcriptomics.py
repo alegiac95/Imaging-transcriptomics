@@ -261,7 +261,7 @@ class ImagingTranscriptomics:
             )
             self.gene_results.boot_results.compute_corr(
                 self.gene_results.original_results.pls_weights,
-                self.gene_results.original_results.pls_gene,
+                self.gene_results.original_results.labels,
                 self.gene_results.original_results.gene_id,
             )
         else:

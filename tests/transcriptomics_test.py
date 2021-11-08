@@ -110,3 +110,10 @@ def test_saving_error():
     test = imt.ImagingTranscriptomics(np.zeros(41), n_components=1)
     with pytest.raises(AttributeError):
         test.save_permutations(Path().cwd())
+
+
+def test_correlation():
+    """Test the correlation method is performing correctly."""
+    test = imt.ImagingTranscriptomics(np.random.rand(41), n_components=1)
+    genes, labels = test.correlation()
+    assert genes.shape == (41,)
