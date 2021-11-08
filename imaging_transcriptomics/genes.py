@@ -101,15 +101,16 @@ class BootResults(dict):
         for i in range(15633):
             p[i] = (
                 float(
-                    len(np.nonzero(self.pls_weights_boot[i, :] >= original_corr[i]))
+                    len(np.nonzero(original_corr[i] < self.pls_weights_boot[
+                                                      i,:]))
                 )
                 / n_iter
             )
         self.pval = p
-        _, p_corrected, _ ,_= multipletests(p[::-1], method="fdr_bh",
-                                           is_sorted=True)
+        _, p_corrected, _, _ = multipletests(p[::-1], method="fdr_bh",
+                                             is_sorted=True)
         self.pval_corrected = p_corrected
-        self.pls_genes = originals_ids[original_index]
+        self.pls_genes = np.array(originals_ids)[original_index.astype(int)]
 
 
 class GeneResults(dict):
