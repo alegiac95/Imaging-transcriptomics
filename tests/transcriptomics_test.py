@@ -116,4 +116,5 @@ def test_correlation():
     """Test the correlation method is performing correctly."""
     test = imt.ImagingTranscriptomics(np.random.rand(41), n_components=1)
     genes, labels = test.correlation()
-    assert genes.shape == (41,)
+    assert genes.shape == (15633,)
+    assert labels.shape == (15633,1)

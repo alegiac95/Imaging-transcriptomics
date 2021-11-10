@@ -16,9 +16,9 @@ def test_modules_import():
     assert "errors" in imported
     assert "genes" in imported
     assert "inputs" in imported
-    assert "permutations" in imported
     assert "reporting" in imported
     assert "transcriptomics" in imported
+    assert "oermutatiuons" not in imported
 
 
 def test_functions_import():
