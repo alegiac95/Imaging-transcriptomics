@@ -163,3 +163,26 @@ def create_csv(analysis_results, n_comp, save_dir):
         ).T
         data = pd.DataFrame(data, columns=["Gene ID", "Z", "p", "p corrected"])
         data.to_csv(save_dir / f"PLS{i+1}.csv", index=False)
+
+
+def create_corr_csv(analysis_results, save_dir):
+    """Create a csv file for the correlation coefficients.
+
+    :param analysis_results: GeneResults data structure with the results of bootstrapping.
+    :param save_dir: path where the output will be saved.
+    :return:
+    """
+    if not isinstance(analysis_results, GeneResults):
+        raise TypeError("The data are not of the GeneResults class.")
+    if not isinstance(save_dir, Path):
+        save_dir = Path(save_dir)
+    data = np.vstack(
+        (
+            np.array(analysis_results.boot_results.pls_genes.reshape(1, 15633)),
+            np.array(analysis_results.original_results.pls_weights),
+            np.array(analysis_results.boot_results.pval),
+            np.array(analysis_results.boot_results.pval_corrected),
+        )
+    ).T
+    data = pd.DataFrame(data, columns=["Gene ID", "Correlation coefficient", "p", "p corrected"])
+    data.to_csv(save_dir / "Correlation_coefficients.csv", index=False)
