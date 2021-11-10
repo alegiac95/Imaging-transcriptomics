@@ -172,7 +172,7 @@ def bootstrap_correlation(x_data, y_data, permuted, labels, n_iterations=1000):
     # order results and set indexes in gene results
     gene_results.original_results.pls_weights = np.sort(corr_, kind="mergesort")[::-1]
     __idx = np.argsort(corr_, kind="mergesort")[::-1]
-    gene_results.original_results.labels = labels[__idx]
+    gene_results.original_results.pls_gene = labels[__idx]
     gene_results.original_results.gene_id = __idx
     # bootstrap
     __res = np.zeros((15633, 1000))
