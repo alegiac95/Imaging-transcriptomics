@@ -87,30 +87,23 @@ class BootResults(dict):
             )
             self.pval_corrected[component - 1] = __p_corr
 
-    def compute_corr(self, original_corr, originals_ids, original_index):
-        """Compute bootstrapping values for correlation data.
-        :param
-        """
+    def compute_correlation(self, original_corr, originals_ids, original_index):
+        """Compute the p value of the correlation after the permutation."""
         logger.info("Computing bootstrap correlation results")
         n_iter = 1000
         for i in range(n_iter):
-            self.pls_weights_boot[:, i] = self.pls_weights_boot[:, i][
-                original_index
-            ]
+            tmp = self.pls_weights_boot[:, i]
+            self.pls_weights_boot[:, i] = tmp[original_index]
         p = np.zeros(15633)
         for i in range(15633):
-            p[i] = (
-                float(
-                    len(np.nonzero(original_corr[i] < self.pls_weights_boot[
-                                                      i,:]))
-                )
-                / n_iter
-            )
+            original = original_corr[i]
+            boot = self.pls_weights_boot[i, :]
+            p[i] = float(len(boot[np.nonzero(boot >= original)])) / n_iter
         self.pval = p
-        _, p_corrected, _, _ = multipletests(p[::-1], method="fdr_bh",
-                                             is_sorted=True)
+        _, p_corrected, _, _ = multipletests(p, method="fdr_bh",
+                                             is_sorted=False)
         self.pval_corrected = p_corrected
-        self.pls_genes = np.array(originals_ids)[original_index.astype(int)]
+        self.pls_genes = np.array(originals_ids)
 
 
 class GeneResults(dict):
