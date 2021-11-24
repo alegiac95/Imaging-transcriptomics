@@ -70,6 +70,8 @@ The `options` available are:
 - `-v (--variance)`: Amount of variance that the PLS components must explain. This _MUST_ be in the range 0-100.
     > *__NOTE__*: if the variance given as input is in the range 0-1  the script will treat this as 30% the same way as if the number was in the range 10-100 (e.g., the script treats the inputs `-v 30` and `-v 0.3` in the exact same way and the resulting components will explain 30% of the variance).
 - `-n (--ncomp)`: Number of components to be used in the PLS regression. The number _MUST_ be in the range 1-15.
+- `--corr`: Run the analysis using Spearman correlation instead of PLS. 
+   > *__NOTE__*: if you run with the `--corr` command no other input is required, apart from the input scan (`-i`).
 - `-o (--output)` *(optional)*: Path where to save the results. If none is provided the results will be saved in the same directory as the input scan.
 > *__WARNING__*: The `-i` flag is _MANDATORY_ to run the script, and so is one, and only one, of the `-n` or `-v` flags. These last two are mutually exclusive, meaning that _ONLY_ one of the two has to be given as input.
 
@@ -92,6 +94,8 @@ my_data = np.ones(41)  # MUST be of size 41
 
 analysis = imt.ImagingTranscriptomics(my_data, n_components=1)
 analysis.run()
+# If instead of running PLS you want to analysze the data with correlation you can run the analysis with:
+analysis.run(method="corr")
 ```
 
 Once completed the results will be part of the `analysis` object and can be accessed with `analysis.gene_results`.
