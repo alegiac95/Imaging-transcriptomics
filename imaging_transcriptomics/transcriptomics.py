@@ -7,16 +7,14 @@ import numpy as np
 import pandas as pd
 import yaml
 from pyls import pls_regression
-from scipy.stats import zscore
+from scipy.stats import zscore, spearmanr
 
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore")
     from netneurotools import freesurfer, stats
 
-from .inputs import (load_gene_expression,
-                     load_gene_labels,
-                     get_components)
-from .bootstrap import bootstrap_pls, bootstrap_genes
+from .inputs import load_gene_expression, load_gene_labels, get_components
+from .bootstrap import bootstrap_pls, bootstrap_genes, bootstrap_correlation
 
 cfg_file_path = Path(__file__).parent / "log_config.yaml"
 with open(cfg_file_path, "r") as config_file:
@@ -63,8 +61,10 @@ class ImagingTranscriptomics:
         :return: data if it has correct length.
         """
         if not len(data) == 41:
-            raise AttributeError("The data must have a length of 41, corresponding to the number of regions in the "
-                                 "left brain hemisphere!")
+            raise AttributeError(
+                "The data must have a length of 41, corresponding to the number of regions in the "
+                "left brain hemisphere!"
+            )
         return data
 
     @staticmethod
@@ -83,7 +83,9 @@ class ImagingTranscriptomics:
         elif 0.0 <= variance <= 1.0:
             return variance
         elif 1.0 < variance < 100:
-            logger.warning("The variance inputted was in the range 1-100. It has been converted to the range 0.0-1.0")
+            logger.warning(
+                "The variance inputted was in the range 1-100. It has been converted to the range 0.0-1.0"
+            )
             return variance / 100
         elif variance < 0.0:
             raise ValueError("The input variance cannot be negative!")
@@ -110,7 +112,9 @@ class ImagingTranscriptomics:
     @staticmethod
     def check_var_or_comp(variance, components):
         if variance is None and components is None:
-            raise AttributeError("You must set either the variance or the number of components!")
+            raise AttributeError(
+                "You must set either the variance or the number of components!"
+            )
 
     def permute_data(self, iterations=1_000):
         """Permute the scan data for the analysis.
@@ -138,14 +142,20 @@ class ImagingTranscriptomics:
         parcel_centroids, parcel_hemi = freesurfer.find_parcel_centroids(
             lhannot=annot_lh,
             rhannot=annot_rh,
-            version='fsaverage5',
-            surf='sphere',
-            method="surface")
+            version="fsaverage5",
+            surf="sphere",
+            method="surface",
+        )
         # Mask the results to have only the left hemisphere
         left_hemi_mask = parcel_hemi == 0
-        parcel_centroids, parcel_hemi = parcel_centroids[left_hemi_mask], parcel_hemi[left_hemi_mask]
+        parcel_centroids, parcel_hemi = (
+            parcel_centroids[left_hemi_mask],
+            parcel_hemi[left_hemi_mask],
+        )
         # Get the spin samples
-        spins = stats.gen_spinsamples(parcel_centroids, parcel_hemi, n_rotate=iterations, method='vasa', seed=1234)
+        spins = stats.gen_spinsamples(
+            parcel_centroids, parcel_hemi, n_rotate=iterations, method="vasa", seed=1234
+        )
         cort_permuted = np.array(self._cortical[spins]).reshape(34, iterations)
         self.permuted[0:34, :] = cort_permuted
         logger.debug("End permutations.")
@@ -157,10 +167,29 @@ class ImagingTranscriptomics:
         "~/Documents/my_permuted.csv"
         """
         if self.permuted is None:
-            raise AttributeError("There are no permutations of the scan available to save. Before saving the "
-                                 "permutations you need to compute them.")
+            raise AttributeError(
+                "There are no permutations of the scan available to save. Before saving the "
+                "permutations you need to compute them."
+            )
         logger.info("Saving permutations to file %s", path)
         pd.DataFrame(self.permuted).to_csv(Path(path), header=None, index=False)
+
+    def correlation(self):
+        """Calculate the correlation between the imaging and genetic data.
+
+        :return corr_genes: pearson correlation coefficient ordered in
+        descending order.
+        :return corr_gene_labels: labels of the genes ordered by correlation coefficient.
+        """
+        corr_ = np.zeros(self._gene_expression.shape[1])
+        p_val = np.zeros(self._gene_expression.shape[1])
+        for gene in range(15633):
+            corr_[gene], p_val[gene] = spearmanr(
+                self.zscore_data, self._gene_expression[:, gene]
+            )
+        corr_genes = np.sort(corr_)
+        corr_gene_labels = self._gene_labels[np.argsort(corr_)]
+        return corr_genes, corr_gene_labels
 
     def pls_all_components(self):
         """Compute a PLS regression with all components.
@@ -169,37 +198,76 @@ class ImagingTranscriptomics:
         given by the components is estimated, depending on what is set by the user in the __init__() method.
         """
         logger.debug("Performing PLS with all 15 components.")
-        results = pls_regression(self._gene_expression, self.zscore_data.reshape(41, 1),
-                                 n_components=15, n_perm=0, n_boot=0)
+        results = pls_regression(
+            self._gene_expression,
+            self.zscore_data.reshape(41, 1),
+            n_components=15,
+            n_perm=0,
+            n_boot=0,
+        )
         var_exp = results.get("varexp")
         if self.n_components is None and self.var != 0.0:
             self.n_components = get_components(self.var, var_exp)
             logger.debug("Number of components has been set to: %s", self.n_components)
         elif self.var is None and self.n_components != 0:
-            self.var = np.cumsum(var_exp)[self.n_components-1]
-            logger.debug("Variance has been set to: %s", self.var)  # add number of variance set
+            self.var = np.cumsum(var_exp)[self.n_components - 1]
+            logger.debug(
+                "Variance has been set to: %s", self.var
+            )  # add number of variance set
         self.var_components = var_exp
 
-    def run(self, n_iter=1_000):
+    def run(self, n_iter=1_000, method="pls"):
         """Run the analysis of the imaging scan.
 
         :param int n_iter: number of permutations to make.
+        :param str method: method to run the analysis, can be either "pls"
+        for pls regression or "corr" cor simple correlation analysis.
         """
         logger.info("Starting imaging transcriptomics analysis.")
-        self.pls_all_components()
-        self.permute_data(iterations=n_iter)
-        self.r_boot, self.p_boot = bootstrap_pls(self._gene_expression,
-                                                 self.zscore_data.reshape(41, 1),
-                                                 self.permuted,
-                                                 self.n_components,
-                                                 iterations=n_iter)
-        self.gene_results = bootstrap_genes(self._gene_expression,
-                                            self.zscore_data.reshape(41, 1),
-                                            self.n_components,
-                                            self.scan_data,
-                                            self._gene_labels,
-                                            n_iter)
-        self.gene_results.boot_results.compute_values(self.n_components,
-                                                      self.gene_results.original_results.pls_weights,
-                                                      self.gene_results.original_results.pls_gene)
+        if method is "pls":
+            logger.info("Running analysis with PLS regression")
+            self.pls_all_components()
+            self.permute_data(iterations=n_iter)
+            self.r_boot, self.p_boot = bootstrap_pls(
+                self._gene_expression,
+                self.zscore_data.reshape(41, 1),
+                self.permuted,
+                self.n_components,
+                iterations=n_iter,
+            )
+            self.gene_results = bootstrap_genes(
+                self._gene_expression,
+                self.zscore_data.reshape(41, 1),
+                self.n_components,
+                self.scan_data,
+                self._gene_labels,
+                n_iter,
+            )
+            self.gene_results.boot_results.compute_values(
+                self.n_components,
+                self.gene_results.original_results.pls_weights,
+                self.gene_results.original_results.pls_gene,
+            )
+        elif method is "corr":
+            logger.info("Running analysis with correlation.")
+            # run first analysis
+            self.permute_data(iterations=n_iter)
+            # bootstrap analysis
+            self.gene_results = bootstrap_correlation(
+                self.zscore_data,
+                self._gene_expression,
+                self.permuted,
+                self._gene_labels,
+            )
+            self.gene_results.boot_results.compute_correlation(
+                self.gene_results.original_results.pls_weights,
+                self.gene_results.original_results.pls_gene,
+                self.gene_results.original_results.gene_id,
+            )
+        else:
+            raise NotImplementedError(
+                f"The method {method} does not exist. "
+                f"Please choose either pls or corr as "
+                f"method to run the analysis."
+            )
         logger.info("Imaging transcriptomics analysis completed.")

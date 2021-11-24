@@ -52,7 +52,15 @@ To the library can be imported by running:
 
     import imaging_transcriptomics as imt
 
-Once imported the package will contain the core ``ImagingTranscriptomics`` class, along with other useful functions.
+Once imported the package will contain the core ``ImagingTranscriptomics``
+class, along with other useful functions. To see all the available functions
+imported in the library run:
+
+..code:: python
+
+    dir(imt)
+
+which will display all the functions and modules imported in the library.
 
 ImagingTranscriptomics Class
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -65,8 +73,8 @@ To start using the class the first step is to initialise it. A way to do this is
     my_analysis = imt.ImagingTranscriptomics(my_data, n_components=1)
 
 The ``my_data`` is an array that contains the data you want to analyse (e.g., the average values from the scan). This vector has to have some characteristics, mainly:
+
 * it has to be a ``numpy.array`` with length 41, which corresponds to the number of regions in the left hemisphere of the Desikan-Killiany atlas.
 * it has to contain the values you want to analyse but not the ``zscore`` of the values as this is computed automatically during the initialisation.
 
-When initialising the class one might choose to initialise it using the ``n_components`` or the ``var`` attribute which represent the number of components to use for the regression or the variance to extract respectively.
-After setting one, and only one, of the values are set, one can estiamte the other by running the ``my_analysis.pls_all_components()`` method which will compute the PLS regression with 15 components and estimate the variance explained by the user defined
+
