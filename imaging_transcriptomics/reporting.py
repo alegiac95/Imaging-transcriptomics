@@ -11,14 +11,16 @@ from .genes import GeneResults
 
 
 class PDF(FPDF):
-    """Class to generate a PDF report for the imaging-transcriptomics script.
-    """
+    """Class to generate a PDF report for the imaging-transcriptomics script."""
+
     def header(self):
         """The header will contain always the title."""
         self.rect(10, 10, 190, 280)
         self.line(10, 50, 200, 50)
         self.set_font("Helvetica", "B", 14)
-        self.cell(w=0, h=15, align="C", txt="Imaging Transcriptomics Analysis Report", ln=True)
+        self.cell(
+            w=0, h=15, align="C", txt="Imaging Transcriptomics Analysis Report", ln=True
+        )
 
     def analysis_info(self, filename, date, filepath):
         """Info on the analysis performed. Information included are the name of
@@ -90,8 +92,14 @@ def make_plots(path, limit_x, data_y):
 
     # Plot cumulative percentage variance
     plt.plot(range(1, 16), varexp, marker="o", color="sandybrown")
-    plt.plot(limit_x, varexp[limit_x - 1], 'o', color="red")
-    plt.vlines(limit_x, varexp[0] - 10, varexp[limit_x - 1], colors="lightgrey", linestyles="dashed")
+    plt.plot(limit_x, varexp[limit_x - 1], "o", color="red")
+    plt.vlines(
+        limit_x,
+        varexp[0] - 10,
+        varexp[limit_x - 1],
+        colors="lightgrey",
+        linestyles="dashed",
+    )
     plt.hlines(varexp[limit_x - 1], 0, limit_x, colors="lightgrey", linestyles="dashed")
     plt.title("Cumulative variance explained by PLS components")
     plt.ylabel("Total explained variance (%)")
@@ -124,7 +132,7 @@ def create_pdf(filepath, save_dir):
         filepath = Path(filepath)
     analysis_date = datetime.now().strftime("%d-%m-%Y")
 
-    report = PDF(orientation="P", unit="mm", format='A4')
+    report = PDF(orientation="P", unit="mm", format="A4")
     report.add_page()
     report.analysis_info(filename=filepath.name, date=analysis_date, filepath=filepath)
     report.pls_regression(path_plots=save_dir)
@@ -145,10 +153,36 @@ def create_csv(analysis_results, n_comp, save_dir):
     if not isinstance(analysis_results, GeneResults):
         raise TypeError("The data are not of the GeneResults class.")
     for i in range(n_comp):
-        data = np.vstack((np.array(analysis_results.boot_results.pls_genes[i].reshape(1, 15633)),
-                          np.array(analysis_results.boot_results.z_scores[i]),
-                          np.array(analysis_results.boot_results.pval[i]),
-                          np.array(analysis_results.boot_results.pval_corrected[i])
-                          )).T
+        data = np.vstack(
+            (
+                np.array(analysis_results.boot_results.pls_genes[i].reshape(1, 15633)),
+                np.array(analysis_results.boot_results.z_scores[i]),
+                np.array(analysis_results.boot_results.pval[i]),
+                np.array(analysis_results.boot_results.pval_corrected[i]),
+            )
+        ).T
         data = pd.DataFrame(data, columns=["Gene ID", "Z", "p", "p corrected"])
         data.to_csv(save_dir / f"PLS{i+1}.csv", index=False)
+
+
+def create_corr_csv(analysis_results, save_dir):
+    """Create a csv file for the correlation coefficients.
+
+    :param analysis_results: GeneResults data structure with the results of bootstrapping.
+    :param save_dir: path where the output will be saved.
+    :return:
+    """
+    if not isinstance(analysis_results, GeneResults):
+        raise TypeError("The data are not of the GeneResults class.")
+    if not isinstance(save_dir, Path):
+        save_dir = Path(save_dir)
+    data = np.vstack(
+        (
+            np.array(analysis_results.boot_results.pls_genes.reshape(1, 15633)),
+            np.array(analysis_results.original_results.pls_weights),
+            np.array(analysis_results.boot_results.pval),
+            np.array(analysis_results.boot_results.pval_corrected),
+        )
+    ).T
+    data = pd.DataFrame(data, columns=["Gene ID", "Correlation coefficient", "p", "p corrected"])
+    data.to_csv(save_dir / "Correlation_coefficients.csv", index=False)

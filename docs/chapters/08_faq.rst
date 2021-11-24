@@ -14,4 +14,4 @@ FAQ
 
 #. **Why did you use the pypls library instead of some more maintained PLS library, e.g., sklearn?**
     We used pypls instead of sklearn because the latter one, and most of the other available, are implemented using the NIPALS algorithm, while pypls uses the SIMPLS.
-    One of the main advantages of the SIMPLS algorithm in respoect to the NIPALS is that is is less time consuming.
+    One of the main advantages of the SIMPLS algorithm in respect to the NIPALS is that is is less time consuming.

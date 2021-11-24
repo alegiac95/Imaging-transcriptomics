@@ -10,8 +10,12 @@ class InvalidFormatError(Exception):
         message -- optional user overridden error message to display.
     """
 
-    def __init__(self, error_file, message="The provided file has an invalid format. Please use files in the .nii, "
-                                           ".nii.gz format."):
+    def __init__(
+        self,
+        error_file,
+        message="The provided file has an invalid format. Please use files in the .nii, "
+        ".nii.gz format.",
+    ):
         self.error_file = error_file
         self.message = message
         super().__init__(self.message)
@@ -29,7 +33,9 @@ class InvalidSizeError(Exception):
         * message -- optional user defined error message
     """
 
-    def __init__(self, shape=(182, 218, 182), message="The provided file has a wrong shape."):
+    def __init__(
+        self, shape=(182, 218, 182), message="The provided file has a wrong shape."
+    ):
         self.message = message
         self.shape = shape
         super().__init__(self.message)
@@ -40,16 +46,17 @@ class InvalidSizeError(Exception):
 
 # Checks Decorators
 class CheckPath:
-    """ Decorator to check if a path exists.
+    """Decorator to check if a path exists.
 
     In order to run the function decorated the path provided to the function has to exists, otehrwise an error is
     raised.
 
     :raises FileNotFoundError:
     """
+
     def __init__(self, function):
         self.function = function
-    
+
     def __call__(self, path, *args, **kwargs):
         if not Path(path).absolute().exists():
             raise FileNotFoundError
@@ -81,9 +88,10 @@ class CheckShape:
 
     :raises InvalidSizeError:
     """
+
     def __init__(self, function):
         self.function = function
-    
+
     def __call__(self, image, *args, **kwargs):
         if not image.shape == (182, 218, 182):
             raise InvalidSizeError(image.shape)
@@ -97,6 +105,7 @@ class CheckVariance:
 
     :raises ValueError:
     """
+
     def __init__(self, function):
         self.function = function
 
