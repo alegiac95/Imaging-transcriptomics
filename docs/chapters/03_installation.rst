@@ -37,3 +37,5 @@ Once this package is installed you can install the ``imaging-transcriptomics`` p
 
 
 Once you get the message that the installation has completed you are set to go!
+
+.. note:: The version ``v1.0.0`` and ``v1.0.1``, can cause some issues on the installation due to compatibility issues of some packages. In version ``v1.0.2+`` this issue has been resolved during installation. If you have one of the older versions installed you might want to update the version using the command ``pip install --upgradde imaging-transcriptomics``. 
