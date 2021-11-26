@@ -29,20 +29,31 @@ class ImagingTranscriptomics:
     def __init__(self, scan_data, **kwargs):
         """Initialise the imaging transcriptomics class with the input scan's data and number of components or variance
         explained.
+        There are several settings that can be
 
         :param array-like scan_data: average values in the ROI defined by the Desikan-Killiany atlas.
         :param int n_components: number of components to use for the PLS regression.
         :param int variance: total explained variance by the PLS components.
         """
         logger.debug("Initializing ImagingTranscriptomics class.")
-        self.scan_data = self.check_input_length(scan_data)
+        self._method = kwargs.get("method") if kwargs.get("method") else "pls"
+        self._regions = kwargs.get("reg") if kwargs.get("reg") else "cort+sub"
+        self.scan_data = self.check_input_length(scan_data, self._regions)
         self.zscore_data = zscore(scan_data, ddof=1, axis=0)
         self.n_components = self.check_in_components(kwargs.get("n_components"))
         self.var = self.check_in_var(kwargs.get("variance"))
-        self.check_var_or_comp(self.var, self.n_components)
-        self._cortical = self.zscore_data[0:34].reshape(34, 1)
-        self._subcortical = self.zscore_data[34:].reshape(7, 1)
-        self._gene_expression = load_gene_expression()
+        if self._method == "pls":
+            self.check_var_or_comp(self.var, self.n_components)
+        if self._regions == "cort+sub":
+            self._cortical = self.zscore_data[0:34].reshape(34, 1)
+            self._subcortical = self.zscore_data[34:].reshape(7, 1)
+        elif self._regions == "cort":
+            self._cortical = self.zscore_data.reshape(34, 1)
+            self._subcortical = None
+        elif self._regions == "sub":
+            self._cortical = None
+            self._subcortical = self.zscore_data.reshape(7, 1)
+        self._gene_expression = load_gene_expression(self._regions)
         self._gene_labels = load_gene_labels()
         # Initialise with defaults for later
         self.permuted = None
@@ -53,19 +64,39 @@ class ImagingTranscriptomics:
         logger.debug("ImagingTranscriptomics class successfully initialized.")
 
     @staticmethod
-    def check_input_length(data):
+    def check_input_length(data, regions):
         """Check that the length of the data given as input is correct in length (41).
 
         :param data: array to check has the correct length.
+        :param regions: regions to use for the analysis can be either
+        "cort", "sub" or "cort+sub".
         :raises AttributeError: if the length of the data is not 41.
         :return: data if it has correct length.
         """
-        if not len(data) == 41:
-            raise AttributeError(
-                "The data must have a length of 41, corresponding to the number of regions in the "
-                "left brain hemisphere!"
-            )
-        return data
+        _cort_legth = 34
+        _sub_length = 7
+        _full_length = _cort_legth + _sub_length
+        if regions == "cort":
+            if len(data) == _cort_legth:
+                return data
+            else:
+                raise AttributeError(
+                    "The length of the data given as input must be {}.".format(_cort_legth)
+                )
+        elif regions == "sub":
+            if len(data) == _sub_length:
+                return data
+            else:
+                raise AttributeError(
+                    "The length of the data given as input must be {}.".format(_sub_length)
+                )
+        elif regions == "cort+sub":
+            if len(data) == _full_length:
+                return data
+            else:
+                raise AttributeError(
+                    "The length of the data given as input must be {}.".format(_full_length)
+                )
 
     @staticmethod
     def check_in_var(variance):
