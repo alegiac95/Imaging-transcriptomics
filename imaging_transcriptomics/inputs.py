@@ -83,7 +83,7 @@ def get_components(target_variance, explained_var):
 
 
 # Gene expression data
-def load_gene_expression():
+def load_gene_expression(regions="cort+sub"):
     """Return matrix with gene expression data.
 
     The data have been previously normalised and are available in the  ``data`` sub-folder.
@@ -95,7 +95,12 @@ def load_gene_expression():
         Path(__file__).resolve().parent / "data" / "gene_expression_data.csv"
     )
     expression_data = pd.read_csv(expression_file_path, sep=",")
-    my_data_x = expression_data.iloc[0:41, 2:].to_numpy()
+    if regions == "cort+sub":
+        my_data_x = expression_data.iloc[0:41, 2:].to_numpy()
+    elif regions == "cort":
+        my_data_x = expression_data.iloc[0:34, 2:].to_numpy()
+    elif regions == "sub":
+        my_data_x = expression_data.iloc[34:41, 2:].to_numpy()
     return zscore(my_data_x, ddof=1)
 
 
