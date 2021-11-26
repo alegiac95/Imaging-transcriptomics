@@ -30,6 +30,11 @@ The parameters of the script are:
 
 .. warning:: Please note that the **-v** and **-n** parameters are mutually exclusive and only one has to be provided as argument for the script, otherwise an error will occur.
 
+``--corr`` Allows to run the analysis using regression instead of PLS
+regression.
+
+.. note:: If you use the **--corr** option you can avoid specifying all other parameters (e.g., **-v**, **-n**) as the script will ignore them anyway.
+
 Optional additional parameters that can be provided are:
 
 ``-o`` (``--out``)   Path where you want to save the results, if no path is provided the results will be saved in the same path as the input scan. When the code is finished running the results will be saved in a folder named *Imt_myscanname* and will contain all the results (.csv files, .pdf report and images in .png format). If you run the script multiple times you will have more than one results folder with a trailing number for the run (e.g., *Imt_myscanname* for the first run and *Imt_myscanname_1* for the second run).
@@ -56,7 +61,7 @@ Once imported the package will contain the core ``ImagingTranscriptomics``
 class, along with other useful functions. To see all the available functions
 imported in the library run:
 
-..code:: python
+.. code:: python
 
     dir(imt)
 
@@ -77,4 +82,36 @@ The ``my_data`` is an array that contains the data you want to analyse (e.g., th
 * it has to be a ``numpy.array`` with length 41, which corresponds to the number of regions in the left hemisphere of the Desikan-Killiany atlas.
 * it has to contain the values you want to analyse but not the ``zscore`` of the values as this is computed automatically during the initialisation.
 
+Alternatively to initialise the class with the number of desired components, you can initialise the class by specifying the amount of variance that you want the components to explain. The software will then select the number of components that explains *at least* the specyfied amount (e.g., you specify a 60% of variance and one component explains 58% while the first two components combined explain 70%, two componets will be selcted).
 
+.. code:: python
+
+   my_analysis = imt.ImagingTranscriptomics(my_data, var=0.6)
+   # The amount of varinace can be expressed in different ways and gets converted internally.
+   # The following will produce the same results as the above
+   my_analysis = imt.ImagingTranscriptomics(my_data, var=60)
+
+Once the class in initialised, you can run the analysis by invoking the ``.run()`` method.
+
+.. code:: python
+
+   my_analysis.run()
+
+There are currently two methods to run the analysis, the first uses PLS regression while the other uses Spearman correlation. The PLS analysis is the default method to analyse the data is PLS, while if yoh want to run the analysis with correlation you can run the command:
+
+.. code:: python 
+
+   my_analysis.run(method="corr")
+ 
+.. note:: Please be aware that running the correlation method is currently much slower than the PLS method. This is due the number of correlation that have to be ran during the permutation analysis. The code running these analysis is leveraging multiprocessing of the processor, by using as many cores of the CPU as possible, but even doing this times of *20min* are not uncommon. 
+
+Once the analysis is completed you can check you results by accessing the attributes of the class.
+
+
+Other Functions of Imaging_Transcriptomics
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The ``imaging_transcriptomics`` library contains several helpful functions, like:
+
+* ``read_scan``: that allows to read a NIfTI file and returns the data matrix (without any of the header information.
+* ``extract_average``: that allows to extract the average value from the left hemisphere of the scan.  
