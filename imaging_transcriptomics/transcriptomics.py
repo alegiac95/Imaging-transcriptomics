@@ -44,15 +44,8 @@ class ImagingTranscriptomics:
         self.var = self.check_in_var(kwargs.get("variance"))
         if self._method == "pls":
             self.check_var_or_comp(self.var, self.n_components)
-        if self._regions == "cort+sub":
-            self._cortical = self.zscore_data[0:34].reshape(34, 1)
-            self._subcortical = self.zscore_data[34:].reshape(7, 1)
-        elif self._regions == "cort":
-            self._cortical = self.zscore_data.reshape(34, 1)
-            self._subcortical = None
-        elif self._regions == "sub":
-            self._cortical = None
-            self._subcortical = self.zscore_data.reshape(7, 1)
+        self._cortical, self._subcortical = self.assign_regions(
+            self.zscore_data)
         self._gene_expression = load_gene_expression(self._regions)
         self._gene_labels = load_gene_labels()
         # Initialise with defaults for later
@@ -77,32 +70,33 @@ class ImagingTranscriptomics:
         _sub_length = 7
         _full_length = _cort_legth + _sub_length
         if regions == "cort":
-            if len(data) == _cort_legth:
+            if len(data) == _cort_legth or len(data) == _full_length:
                 return data
             else:
                 raise AttributeError(
-                    "The length of the data given as input must be {}.".format(_cort_legth)
+                    f"The length of the data given as input must be {_cort_legth}."
                 )
         elif regions == "sub":
-            if len(data) == _sub_length:
+            if len(data) == _sub_length or len(data) == _full_length:
                 return data
             else:
                 raise AttributeError(
-                    "The length of the data given as input must be {}.".format(_sub_length)
+                    f"The length of the data given as input must be {_sub_length}."
                 )
         elif regions == "cort+sub":
             if len(data) == _full_length:
                 return data
             else:
                 raise AttributeError(
-                    "The length of the data given as input must be {}.".format(_full_length)
+                    f"The length of the data given as input must be {_full_length}."
                 )
 
     @staticmethod
     def check_in_var(variance):
         """Check if the variance given as input is in the correct range.
 
-        The variance can be in the range 0-100. If the variance is greater than 1 the value is divided by 100.
+        The variance can be in the range 0-100. If the variance is greater than
+        1 the value is divided by 100.
         If the variance is None it will be kept as is.
 
         :param variance: input variance to check.
@@ -115,7 +109,8 @@ class ImagingTranscriptomics:
             return variance
         elif 1.0 < variance < 100:
             logger.warning(
-                "The variance inputted was in the range 1-100. It has been converted to the range 0.0-1.0"
+                "The variance inputted was in the range 1-100. "
+                "It has been converted to the range 0.0-1.0"
             )
             return variance / 100
         elif variance < 0.0:
@@ -123,7 +118,8 @@ class ImagingTranscriptomics:
         elif variance > 100:
             raise ValueError("The input variance is too big!")
         elif isinstance(variance, str):
-            raise TypeError("Strings are not supported, please input a numeric value!")
+            raise TypeError("Strings are not supported, "
+                            "please input a numeric value!")
 
     @staticmethod
     def check_in_components(components):
@@ -138,7 +134,8 @@ class ImagingTranscriptomics:
         elif 1 <= components <= 15:
             return components
         else:
-            raise ValueError("The number of components MUST be in the range 1-15.")
+            raise ValueError("The number of components MUST be "
+                             "in the range 1-15.")
 
     @staticmethod
     def check_var_or_comp(variance, components):
@@ -146,6 +143,29 @@ class ImagingTranscriptomics:
             raise AttributeError(
                 "You must set either the variance or the number of components!"
             )
+
+    @staticmethod
+    def assign_regions(data):
+        """Assign the regions to the data.
+
+        :param data: data to assign the regions to.
+        :return: data with the regions assigned.
+        """
+        if len(data) == 41:
+            cort_data = data[0:34]
+            sub_data = data[34:41]
+        elif len(data) == 7:
+            cort_data = None
+            sub_data = data
+        elif len(data) == 34:
+            cort_data = data
+            sub_data = None
+        else:
+            raise AttributeError(
+                "The length of the data given as input must be either 41, 34 "
+                "or 7."
+            )
+        return cort_data, sub_data
 
     def permute_data(self, iterations=1_000):
         """Permute the scan data for the analysis.
@@ -161,10 +181,11 @@ class ImagingTranscriptomics:
         self.permuted = np.zeros((self.zscore_data.shape[0], iterations))
         # subcortical
         logger.debug("Starting permutations.")
-        sub_permuted = np.array(
-            [np.random.permutation(self._subcortical) for _ in range(iterations)]
-        ).reshape(7, iterations)
-        self.permuted[34:, :] = sub_permuted
+        if self._regions == "cort+sub":
+            sub_permuted = np.array(
+                [np.random.permutation(self._subcortical) for _ in range(iterations)]
+            ).reshape(7, iterations)
+            self.permuted[34:, :] = sub_permuted
         # Cortical
         # Annotation file for the Desikan-Killiany atlas in fs5
         annot_lh = Path(__file__).resolve().parent / "data/fsa5_lh_aparc.annot"
@@ -194,13 +215,13 @@ class ImagingTranscriptomics:
     def save_permutations(self, path):
         """Save the permutations to a csv file at a specified path.
 
-        :param path: Path used to save the permutations, this *should* also include the name of the file, e.g.,
-        "~/Documents/my_permuted.csv"
+        :param path: Path used to save the permutations, this *should* also
+        include the name of the file, e.g., "~/Documents/my_permuted.csv"
         """
         if self.permuted is None:
             raise AttributeError(
-                "There are no permutations of the scan available to save. Before saving the "
-                "permutations you need to compute them."
+                "There are no permutations of the scan available to save."
+                "Before saving the permutations you need to compute them."
             )
         logger.info("Saving permutations to file %s", path)
         pd.DataFrame(self.permuted).to_csv(Path(path), header=None, index=False)
@@ -210,7 +231,8 @@ class ImagingTranscriptomics:
 
         :return corr_genes: pearson correlation coefficient ordered in
         descending order.
-        :return corr_gene_labels: labels of the genes ordered by correlation coefficient.
+        :return corr_gene_labels: labels of the genes ordered by correlation
+        coefficient.
         """
         corr_ = np.zeros(self._gene_expression.shape[1])
         p_val = np.zeros(self._gene_expression.shape[1])
@@ -225,8 +247,10 @@ class ImagingTranscriptomics:
     def pls_all_components(self):
         """Compute a PLS regression with all components.
 
-        After the regression is estimated, either the number of components or the estimated percentage of variance
-        given by the components is estimated, depending on what is set by the user in the __init__() method.
+        After the regression is estimated, either the number of components or
+        the estimated percentage of variance given by the components is
+        estimated, depending on what is set by the user in the __init__()
+        method.
         """
         logger.debug("Performing PLS with all 15 components.")
         results = pls_regression(
@@ -247,7 +271,7 @@ class ImagingTranscriptomics:
             )  # add number of variance set
         self.var_components = var_exp
 
-    def run(self, n_iter=1_000, method="pls"):
+    def run(self, n_iter=1_000, method=None):
         """Run the analysis of the imaging scan.
 
         :param int n_iter: number of permutations to make.
@@ -255,6 +279,12 @@ class ImagingTranscriptomics:
         for pls regression or "corr" cor simple correlation analysis.
         """
         logger.info("Starting imaging transcriptomics analysis.")
+        if method is None:
+            if self._method is None:
+                raise AttributeError(
+                    "You need to specify a method to run the analysis.")
+            else:
+                method = self._method
         if method is "pls":
             logger.info("Running analysis with PLS regression")
             self.pls_all_components()
@@ -301,4 +331,6 @@ class ImagingTranscriptomics:
                 f"Please choose either pls or corr as "
                 f"method to run the analysis."
             )
+        logger.info("Running GSEA analysis.")
+        # run GSEA analysis
         logger.info("Imaging transcriptomics analysis completed.")

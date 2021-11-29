@@ -186,3 +186,10 @@ def create_corr_csv(analysis_results, save_dir):
     ).T
     data = pd.DataFrame(data, columns=["Gene ID", "Correlation coefficient", "p", "p corrected"])
     data.to_csv(save_dir / "Correlation_coefficients.csv", index=False)
+
+
+# PLOTTING
+# TODO: add plots for the cortical and subcortical regions
+
+# PDF REPORT
+# TODO: change the pdf from fpdf to reportlab
