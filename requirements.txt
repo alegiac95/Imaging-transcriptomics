@@ -11,5 +11,5 @@ pyyaml==5.4.1
 statsmodels==0.12.2
 nibabel==3.2.1
 matplotlib==3.4.2
-netneurotools==0.2.2+98.g503d9ad
+netneurotools>=0.2.2
 fpdf2>=2.0.0
