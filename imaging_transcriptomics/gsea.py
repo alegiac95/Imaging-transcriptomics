@@ -26,6 +26,9 @@ def gsea(gene_names, gene_scores, gene_set: str = None, out_dir=None,
     return gsea_results
 
 
-def ensemble_gsea(gene_names, gene_scores, permuted_gene_names,
-                  permuted_gene_labels):
-    pass
+def ensemble_gsea(gene_names, gene_scores, permuted_gene_scores):
+    """ Perform GSEA on all permutations of the genes and get the pvalue
+    from the results.
+    """
+
+
