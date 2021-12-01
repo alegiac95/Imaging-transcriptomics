@@ -7,22 +7,13 @@ with warnings.catch_warnings():
     from netneurotools import freesurfer, stats
 from pyls import pls_regression
 import pandas as pd
-from .inputs import load_gene_expression, extract_average, read_scan
+from .inputs import load_gene_expression, \
+    extract_average, \
+    read_scan, \
+    load_gene_labels
 
 
-def load_gene_labels():
-    """Return an array with the gene labels.
-    The gene labels are available in the ``data`` sub-folder.
-
-    :return: numpy array with the labels of the genes.
-    """
-    genes_labels_path = (
-        Path(__file__).resolve().parent / "data" / "gene_expression_labels.txt"
-    )
-    return pd.read_fwf(genes_labels_path, header=None)[0].tolist()
-
-
-class Imt:
+class ImagingTranscriptomics:
     # --------- INITIALIZATION --------- #
     def __init__(self,
                  scan_data,
@@ -96,6 +87,10 @@ class Imt:
     def method(self):
         return self._method
 
+    @property
+    def gene_results(self):
+        return self._analysis.gene_results
+
     # --------- METHODS --------- #
     def permute_data(self, n_permutations=1000):
         """Permute the imaging data maintaining spatial autocorrelation for
@@ -146,6 +141,8 @@ class Imt:
         pass
 
 
+# --------- PLS ANALYSIS --------- #
+
 class PLSAnalysis:
     def __init__(self, n_components: int, var: float):
         self.n_components = n_components
@@ -170,11 +167,13 @@ class PLSAnalysis:
             raise ValueError("The variance must be a number between 0 and 1.")
         return var
 
-    def set_coef(self, data, gene_exp):
+    def _set_coef(self, data, gene_exp):
         """Set the coefficients for the PLS regression. The function will
         estimate the variance or the number of components depending on the
         non missing parameter through a PLS regression with 15 components.
 
+        :param data: imaging data.
+        :param gene_exp: gene expression data.
         """
         res = pls_regression(data, gene_exp,
                              n_components=15,
@@ -189,7 +188,7 @@ class PLSAnalysis:
             while cumulative_var[dim - 1] < self.var:
                 dim += 1
             self.n_components = dim
-        self.components_var = explained_var
+        return explained_var
 
     @property
     def p_val(self):
@@ -208,10 +207,14 @@ class PLSAnalysis:
         self._r2 = r2
 
 
+# --------- CORR ANALYSIS --------- #
+
 class CorrAnalysis:
     def __init__(self):
         self.gene_results = GeneResults("corr")
 
+
+# --------- GENE ANALYSIS --------- #
 
 class GeneResults:
     def __init__(self, method, **kwargs):
@@ -235,8 +238,83 @@ class GeneResults:
 
 class PLSGenes:
     def __init__(self, n_components):
+        """ Initialize the results of the PLS analysis. The result will
+        include both the permuted and the original results.
+
+        """
+        self._n_genes = 15633
         self.n_components = n_components
+        self.orig = OrigPLS(n_components)
+        self.boot = BootPLS(n_components, self._n_genes)
+
+
+class OrigPLS:
+    def __init__(self, n_components, n_genes):
+        """ Initialize the original results of the PLS analysis.
+        """
+        self.n_components = n_components
+        self.weights = np.zeros((n_components, n_genes))
+        self.genes = np.zeros((n_components, n_genes))
+        self.index = np.zeros((n_components, n_genes))
+        self.zscored = np.zeros((n_components, n_genes))
+
+
+class BootPLS(dict):
+    def __init__(self, n_components, n_genes, n_iter=1000):
+        """Initialise a class to store the results of the bootstrapping of
+        the genes.
+
+        All the initialised fields are stored as numpy arrays with the
+        number of rows corresponding to the number of components and the
+        columns corresponding to the number of genes. The weights field has
+        an additional 3rd dimension corresponding to the number of
+        iterations (the default number is 1000).
+        The fields are:
+
+        * weights (n_components, n_genes, n_iter): the weights of the genes
+        for each component, for each iteration.
+
+        * genes (n_components, n_genes, n_iter): the genes that correspond
+        to the most contributing genes for each component.
+
+        * index (n_components, n_genes, n_iter): the index of the genes
+        compared to the original list of gene labels.
+
+        * std: the standard deviation of the weights for each component,
+        calculated from the bootstrapped weights.
+
+        * zscored (n_components, n_genes, n_iter): the z-scored weights.
+
+        * pval (n_components, n_genes): the p-value of the z-scored gene
+        wights.
+
+        * pval_corr (n_components, n_genes): the p-value of the correlation
+        corrected for multiple comparisons using the Benjamini-Hochberg method.
+
+        :param int n_components: number of components used for the analysis.
+        :param int n_genes: number of genes used for the analysis.
+        :param int n_iter: number of iterations used for the bootstrapping,
+        the default is 1000.
+        """
+        super().__init__()
+        self.weights = np.zeros((n_components, n_genes, n_iter))
+        self.genes = np.zeros((n_components, n_genes))
+        self.std = np.zeros((n_components, n_genes))
+        self._z_score = np.zeros((n_components, n_genes))
+        self.pval = np.zeros((n_components, n_genes))
+        self.pval_corr = np.zeros((n_components, n_genes))
+
+    @property
+    def z_score(self):
+        """The z-scored weights.
+        """
+        return self._z_score
+
+    @z_score.setter
+    def z_score(self, value):
+        self._z_score = zscore(value, axis=0, ddof=1)
 
 
 class CorrGenes:
-    pass
+    def __init__(self):
+        self.boot_corr = np.zeros(15633, 1000)
