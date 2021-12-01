@@ -153,10 +153,10 @@ class PLSAnalysis:
         if self.var is None and self.n_components is None:
             raise ValueError("You must specify either the variance or "
                              "the number of components for pls regression")
-        self.components_var = None
+        self.components_var = np.zeros(15)
         self._p_val = np.zeros(self.n_components)
         self._r2 = np.zeros(self.n_components)
-        self.gene_results = None
+        self.gene_results = GeneResults("pls", n_components=self.n_components)
 
     @staticmethod
     def check_var(var: float):
@@ -210,4 +210,33 @@ class PLSAnalysis:
 
 class CorrAnalysis:
     def __init__(self):
-        self.gene_results = None
+        self.gene_results = GeneResults("corr")
+
+
+class GeneResults:
+    def __init__(self, method, **kwargs):
+        """Initialize the results of the analysis. Depending on the method
+        used, the results will have underlying result classes, which account
+        for the different analysis methods.
+
+        :param str method: the method used for the analysis.
+        :param kwargs: Additional parameters, for the initialisation. If the
+        method is "pls" among the kwargs you *MUST* specify the number of
+        components used, for the initialisation of the pls class.
+        """
+        self.method = method
+        if self.method == "pls":
+            self.results = PLSGenes(kwargs.get("n_components"))
+        elif self.method == "corr":
+            self.results = CorrGenes()
+        else:
+            raise ValueError(f"The method {method} is not supported.")
+
+
+class PLSGenes:
+    def __init__(self, n_components):
+        self.n_components = n_components
+
+
+class CorrGenes:
+    pass
