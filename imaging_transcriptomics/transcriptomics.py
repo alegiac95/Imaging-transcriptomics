@@ -167,7 +167,7 @@ class ImagingTranscriptomics:
             )
         return cort_data, sub_data
 
-    def permute_data(self, iterations=1_000):
+    def permute_data(self, iterations=1_000):  # done in new base
         """Permute the scan data for the analysis.
 
         The permutations are computed into cortical and subcortical regions separately and then merged. This is done
@@ -226,7 +226,7 @@ class ImagingTranscriptomics:
         logger.info("Saving permutations to file %s", path)
         pd.DataFrame(self.permuted).to_csv(Path(path), header=None, index=False)
 
-    def correlation(self):
+    def correlation(self):  # done in new base
         """Calculate the correlation between the imaging and genetic data.
 
         :return corr_genes: pearson correlation coefficient ordered in
@@ -244,7 +244,7 @@ class ImagingTranscriptomics:
         corr_gene_labels = self._gene_labels[np.argsort(corr_)]
         return corr_genes, corr_gene_labels
 
-    def pls_all_components(self):
+    def pls_all_components(self):  # done in new base
         """Compute a PLS regression with all components.
 
         After the regression is estimated, either the number of components or
