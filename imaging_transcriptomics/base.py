@@ -60,6 +60,8 @@ class ImagingTranscriptomics:
             self._subcortical = None
         self._regions = regions
         self.scan_data = scan_data
+        self.gene_expression = load_gene_expression(self._regions)
+        self.gene_labels = load_gene_labels()
         if method not in ["pls", "corr"]:
             raise ValueError(
                 "The method must be either pls or corr."
@@ -72,12 +74,18 @@ class ImagingTranscriptomics:
                 raise ValueError("You must specify either the variance or "
                                  "the number of components for pls regression")
             else:
-                self._analysis = PLSAnalysis(kwargs.get("n_components"),
-                                             kwargs.get("var"))
+                if self._regions == "all" or self._regions == "cort+sub":
+                    self._analysis = PLSAnalysis(self.zscore_data,
+                                                 self.gene_expression,
+                                                 kwargs.get("n_components"),
+                                                 kwargs.get("var"))
+                else:
+                    self._analysis = PLSAnalysis(self._cortical,
+                                                 self.gene_expression,
+                                                 kwargs.get("n_components"),
+                                                 kwargs.get("var"))
         elif self._method == "corr":
             self._analysis = CorrAnalysis()
-        self.gene_expression = load_gene_expression(self._regions)
-        self.gene_labels = load_gene_labels()
         self._permutations = None
         self._permutation_ind = None
 
@@ -144,7 +152,8 @@ class ImagingTranscriptomics:
         :param int n_permutations: number of permutations.
         """
         _permuted = np.zeros((self.zscore_data.shape[0], n_permutations))
-        _perm_indexes = np.zeros((self.zscore_data.shape[0], n_permutations))
+        _perm_indexes = np.zeros((self.zscore_data.shape[0],
+                                  n_permutations), dtype=np.int32)
         # Calculate the permutations on the subcortical regions.
         if self._subcortical is not None:
             sub_permuted = np.zeros((self._subcortical.shape[0],
@@ -223,6 +232,18 @@ class ImagingTranscriptomics:
             if gsea:
                 self._analysis.gsea(gene_set=gene_set, outdir=outdir)
             self._analysis.save_results(outdir=outdir)
+        elif self._method == "pls":
+            if self._regions == "cort":
+                _d = self._cortical
+                if self._permutations.shape[0] == 41:
+                    _d_perm = self._permutations[0:34, :]
+                else:
+                    _d_perm = self._permutations
+            elif self._regions == "cort+sub" or self._regions == "all":
+                _d = self.zscore_data
+                _d_perm = self._permutations
+            assert isinstance(self._analysis, PLSAnalysis)
+            self._ananlysis.boot_pls(_d, _d_perm, self.gene_expression)
 
 
 # --------- GENE ANALYSIS --------- #
@@ -252,35 +273,35 @@ class GeneResults:
     @property
     def genes(self):
         if isinstance(self.results, PLSGenes):
-            pass
+            return self.results.orig.genes
         elif isinstance(self.results, CorrGenes):
             return self.results.genes
 
     @property
     def scores(self):
         if isinstance(self.results, PLSGenes):
-            pass
+            return self.results.orig.weights
         elif isinstance(self.results, CorrGenes):
             return self.results.corr
 
     @property
     def boot(self):
         if isinstance(self.results, PLSGenes):
-            pass
+            return self.results.boot.weights
         elif isinstance(self.results, CorrGenes):
             return self.results.boot_corr
 
     @property
     def pvals(self):
         if isinstance(self.results, PLSGenes):
-            pass
+            return self.results.boot.pval
         elif isinstance(self.results, CorrGenes):
             return self.results.pval
 
     @property
     def pvals_corr(self):
         if isinstance(self.results, PLSGenes):
-            pass
+            return self.results.boot.pval_corr
         elif isinstance(self.results, CorrGenes):
             return self.results.pval_corr
 
@@ -290,13 +311,9 @@ class PLSAnalysis:
     """Class for performing PLS regression on the imaging data.
     This class contains fields for
     """
-    def __init__(self, n_components: int, var: float):
-        self.n_components = n_components
-        self.var = self.check_var(var)
-        if self.var is None and self.n_components is None:
-            raise ValueError("You must specify either the variance or "
-                             "the number of components for pls regression")
-        self.components_var = np.zeros(15)
+    def __init__(self, imaging_data, gene_exp,  n_components: int, var: float):
+        self.var, self.n_components, self.components_var = self.set_coef(
+            imaging_data, gene_exp, n_components=n_components, var=var)
         self._p_val = np.zeros(self.n_components)
         self._r2 = np.zeros(self.n_components)
         self.gene_results = GeneResults("pls", n_components=self.n_components)
@@ -313,7 +330,8 @@ class PLSAnalysis:
             raise ValueError("The variance must be a number between 0 and 1.")
         return var
 
-    def set_coef(self, data, gene_exp, var=None, n_components=None):
+    @staticmethod
+    def set_coef(data, gene_exp, var=None, n_components=None):
         """Set the coefficients for the PLS regression. The function will
         estimate the variance or the number of components depending on the
         non missing parameter through a PLS regression with 15 components.
@@ -323,23 +341,20 @@ class PLSAnalysis:
         :param var: variance.
         :param n_components: number of components.
         """
-        res = pls_regression(data, gene_exp,
+        res = pls_regression(gene_exp, data.reshape(data.shape[0], 1),
                              n_components=15,
                              n_perm=0,
                              n_boot=0)
         explained_var = res.get("varexp")
         if var is None:
-            self.var = np.cumsum(explained_var)[n_components-1]
-            self.n_components = n_components
+            var = np.cumsum(explained_var)[n_components-1]
         if n_components is None:
-            self.var = var
             dim = 1
             cumulative_var = np.cumsum(explained_var)
             while cumulative_var[dim - 1] < var:
                 dim += 1
-            self.n_components = dim
-        self.components_var = explained_var
-        return
+            n_components = dim
+        return var, n_components, explained_var
 
     @property
     def p_val(self):
@@ -374,8 +389,10 @@ class PLSAnalysis:
         """
         # Iterate over the components
         for component in range(1, self.n_components + 1):
-            _res = pls_regression(imaging_data, gene_exp,
-                                  n_components=component, n_perm=0, n_boot=0)
+            _res = pls_regression(gene_exp, imaging_data.reshape(
+                imaging_data.shape[0], 1),
+                                  n_components=component,
+                                  n_perm=0, n_boot=0)
             _exp_var = _res.get("varexp")
             _temp = _exp_var.cumsum(axis=0)
             _R = _temp[component - 1]
@@ -386,7 +403,7 @@ class PLSAnalysis:
                           unit=" iterations"):
                 y_data = permuted_imaging[:, i].reshape(
                     imaging_data.shape[0], 1)
-                _res = pls_regression(y_data, gene_exp, n_components=component,
+                _res = pls_regression(gene_exp, y_data, n_components=component,
                                       n_perm=0, n_boot=0)
                 _exp_var = _res.get("varexp")
                 _R_sq[i] = _exp_var.cumsum(axis=0)[component - 1]
@@ -411,6 +428,158 @@ class PLSGenes:
         self.orig = OrigPLS(n_components, self.n_genes)
         self.boot = BootPLS(n_components, self.n_genes)
 
+    def boot_genes(self, imaging_data, permuted_imaging, perm_indexes,
+                   scan_data, gene_exp, gene_labels):
+        """Bootstrapping on the PLS components.
+
+        :param imaging_data: imaging data. Allows the user to specify the
+        data to use (e.g., with only cortical regions this can be only the
+        cortical vector, other wise the whole data).
+        :param permuted_imaging: imaging data permuted. Allows the user to
+        specify the data to use (e.g., with only cortical regions this can be
+        only the cortical vector, other wise the whole data).
+        :param perm_indexes: indexes of the permuted data.
+        :param scan_data: Original scam data, not zscored.
+        :param gene_exp: gene expression data.
+        :param gene_labels: gene labels.
+        """
+
+        def correlate(c1, c2):
+            """Return the MATLAB style correlation between two vectors."""
+            return np.corrcoef(np.hstack((c1, c2)), rowvar=False)[0, 1:]
+
+        _res = pls_regression(gene_exp, imaging_data.reshape(
+            imaging_data.shape[0], 1),
+                              n_components=self.n_components,
+                              n_boot=0, n_perm=0)
+        r1 = correlate(_res.get("x_scores"), scan_data.reshape(
+            scan_data.shape[0], 1))
+        _weights = _res.get("x_weights")
+        _scores = _res.get("x_scores")
+        for i in range(r1.size):
+            if r1[i] < 0:
+                _weights[:, i] *= -1
+                _scores[:, i] *= -1
+        for _idx in range(self.n_components):
+            _sort_weights_indexes = np.argsort(_weights[:, _idx],
+                                               kind="mergesort")[::-1]
+            self.orig.index[_idx, :] = _sort_weights_indexes
+            self.orig.genes[_idx, :] = gene_labels[:, 0][_sort_weights_indexes]
+            self.orig.weights[_idx, :] = _weights[:, _idx][
+                _sort_weights_indexes]
+            self.orig.zscored[_idx, :] = zscore(self.orig.weights[_idx, :],
+                                                axis=0,
+                                                ddof=1)
+        for _iter in range(1000):
+            _perm_imaging = permuted_imaging[:, _iter]
+            _i_results = pls_regression(gene_exp, _perm_imaging.reshape(
+                _perm_imaging.shape[0], 1),
+                                        n_components=self.n_components,
+                                        n_boot=0, n_perm=0)
+            _weights_i = _i_results.get("x_weights")
+            for _comp in range(self.n_components):
+                _temp_weights = _weights_i[:, _comp]
+                _new_weights = _temp_weights[self.orig.index[_comp, :]]
+                _temp_genes = self.orig.weights[_comp, :]
+                _corr = correlate(
+                    _temp_genes.reshape(_temp_genes.size, 1),
+                    _new_weights.reshape(_new_weights.shape[0], 1)
+                )
+                if _corr < 0:
+                    _new_weights *= -1
+                self.boot.weights[_comp, :, _iter] = _new_weights
+        return
+
+    def compute(self):
+        """ Compute the p-values of the z-scored weights.
+        The compute function calculates the zscores based on the original
+        weights, orders the weights in descending order and then calculates
+        the p-values and corrects for multiple comparisons using the
+        Benjamini-Hochberg method.
+
+        """
+        for component in range(self.n_components):
+            # Calculate the standard deviation of all the wights
+            self.boot.std[component, :] = self.boot.weights[component, :,
+                                          :].std(axis=1, ddof=1)
+            # Calculate the zscore and store it sorted in descending order
+            _z = self.orig.weights[component, :] / self.boot.std[component, :]
+            self.boot.z_score[component, :] = np.sort(
+                _z, axis=0, kind='mergesort')[::-1]
+            _index = np.argsort(_z, axis=0, kind='mergesort')[::-1]
+            # Reorder the genes according to the zscore
+            self.boot.genes[component, :] = self.orig.genes[component, _index]
+            # Calculate pvalue and pvalue corrected
+            _p_val = norm.sf(abs(self.boot.z_score[component, :]))
+            self.boot.pval[component, :] = _p_val
+            _, _p_corr, _, _ = multipletests(_p_val, method='fdr_bh')
+            self.boot.pval_corr[component, :] = _p_corr
+        return
+
+    def gsea(self, gene_set="lake", outdir=None):
+        """Perform a GSEA analysis on the z-scored weights."""
+        assert isinstance(self.orig, OrigPLS)
+        assert isinstance(self.boot, BootPLS)
+        gene_set = get_geneset(gene_set)
+        for _component in range(self.n_components):
+            gene_list = [gene for gene in self.orig.genes[
+                                          _component, :].to_list()]
+            rnk = pd.DataFrame(zip(gene_list,
+                                   self.orig.z_score[_component, :]))
+            gsea_results = gseapy.prerank(rnk, gene_set,
+                                          outdir=None,
+                                          seed=1234,
+                                          permutation_num=100)
+            _origin_es = gsea_results.res2d.es.to_numpy()
+            _boot_es = np.zeros((_origin_es.shape[0], 1000))
+            for i in range(1000):
+                rnk = pd.DataFrame(zip(gene_list,
+                                       zscore(
+                                           self.boot.weights[_component, :, i],
+                                           ddof=1)
+                                       )
+                                   )
+                gsea_results = gseapy.prerank(rnk, gene_set,
+                                              outdir=None,
+                                              seed=1234,
+                                              permutation_num=100)
+                _boot_es[:, i] = gsea_results.res2d.es.to_numpy()
+            _p_val = np.zeros((_origin_es.shape[0],))
+            for i in range(_origin_es.shape[0]):
+                _p_val[i] = np.sum(_boot_es[i, :] >= _origin_es[i]) / 1000
+            # calculate the p-value corrected
+            _, _p_corr, _, _ = multipletests(_p_val, method='fdr_bh')
+            # Prepare data to save
+            print("Prepare data...")
+            _out_data = OrderedDict()
+            _out_data["Term"] = gsea_results.res2d.axes[0].to_list()
+            _out_data["es"] = gsea_results.res2d.values[:, 0]
+            _out_data["nes"] = gsea_results.res2d.values[:, 1]
+            _out_data["p_val"] = _p_val
+            _out_data["fdr"] = _p_corr
+            _out_data["genest_size"] = gsea_results.res2d.values[:, 4]
+            _out_data["matched_size"] = gsea_results.res2d.values[:, 5]
+            _out_data["matched_genes"] = gsea_results.res2d.values[:, 6]
+            _out_data["ledge_genes"] = gsea_results.res2d.values[:, 7]
+            out_df = pd.DataFrame.from_dict(_out_data)
+            # TODO: make the output and clean the .csv file
+            if outdir is not None:
+                outdir = Path(outdir)
+                assert outdir.exists()
+                out_df.to_csv(
+                    outdir / f"gsea_pls{_component + 1}_results.tsv",
+                    index=False,
+                    sep="\t")
+                for _i in range(len(gsea_results.res2d.index)):
+                    term = gsea_results.res2d.index[i]
+                    gsea_results.results[term]["pval"] = _p_val[_i]
+                    gsea_results.results[term]["fdr"] = _p_corr[_i]
+                    gseaplot(rank_metric=gsea_results.ranking,
+                             term=term,
+                             **gsea_results.results[term],
+                             ofname=f"{outdir}/imt_{term}_pls"
+                                    f"{_component + 1}_prerank.pdf")
+
 
 # --------- ORIG PLS --------- #
 class OrigPLS:
@@ -425,8 +594,8 @@ class OrigPLS:
         """
         self.n_components = n_components
         self.weights = np.zeros((n_components, n_genes))
-        self.genes = np.zeros((n_components, n_genes))
-        self.index = np.zeros((n_components, n_genes))
+        self.genes = np.zeros((n_components, n_genes), dtype=object)
+        self.index = np.zeros((n_components, n_genes), dtype=np.int32)
         self.zscored = np.zeros((n_components, n_genes))
 
 
@@ -470,7 +639,7 @@ class BootPLS:
         """
         self.n_components = n_components
         self.weights = np.zeros((n_components, n_genes, n_iter))
-        self.genes = np.zeros((n_components, n_genes))
+        self.genes = np.zeros((n_components, n_genes), dtype=object)
         self.std = np.zeros((n_components, n_genes))
         self._z_score = np.zeros((n_components, n_genes))
         self.pval = np.zeros((n_components, n_genes))
@@ -481,35 +650,6 @@ class BootPLS:
         """The z-scored weights.
         """
         return self._z_score
-
-    def compute(self, weights, genes):
-        """ Compute the p-values of the z-scored weights.
-        The compute function calculates the zscores based on the original
-        weights, orders the weights in descending order and then calculates
-        the p-values and corrects for multiple comparisons using the
-        Benjamini-Hochberg method.
-
-        :param numpy.ndarray weights: the weights of the genes for each of
-        the components. The array should have shape (n_components, n_genes).
-        :param numpy.ndarray genes: the labels in the original order.
-        """
-        for component in range(self.n_components):
-            # Calculate the standard deviation of all the wights
-            self.std[component, :] = self.weights[component, :, :].std(
-                axis=0, ddof=1)
-            # Calculate the zscore and store it sorted in descending order
-            _z = weights[component, :] / self.std[component, :]
-            self.z_score[component, :] = np.sort(
-                _z, axis=0, kind='mergesort')[::-1]
-            _index = np.argsort(_z, axis=0, kind='mergesort')[::-1]
-            # Reorder the genes according to the zscore
-            self.genes[component, :] = genes[_index]
-            # Calculate pvalue and pvalue corrected
-            _p_val = norm.sf(abs(self.z_score[component, :]))
-            self.pval[component, :] = _p_val
-            _, _p_corr, _, _ = multipletests(_p_val, method='fdr_bh')
-            self.pval_corr[component, :] = _p_corr
-        return
 
 
 # --------- CORR ANALYSIS --------- #
@@ -581,7 +721,8 @@ class CorrAnalysis:
                 zip(gene_list, self.gene_results.results.corr[0, :]))
         gsea_results = gseapy.prerank(rnk, gene_set,
                                       outdir=None,
-                                      permutation_num=100)
+                                      permutation_num=100,
+                                      seed=1234)
         _origin_es = gsea_results.res2d.es.to_numpy()
         _boot_es = np.zeros((_origin_es.shape[0], 1000))
         # perform the GSEA on the permutations
@@ -635,7 +776,7 @@ class CorrAnalysis:
         assert outdir.exists()
         # Create the data to save
         data_to_save = zip(self.gene_results.results.genes[:, 0],
-                           self.gene_results.results.corr[:, 0],
+                           self.gene_results.results.corr[0, :],
                            self.gene_results.results.pval[0, :],
                            self.gene_results.results.pval_corr[0, :])
         # Save the data
@@ -645,7 +786,7 @@ class CorrAnalysis:
         return
 
 
-def get_geneset(gene_set: str):  # TODO: make a real thing
+def get_geneset(gene_set: str):
     """Returns the path to the geneset file, if it is not one of those
     defined in gseapy.
 
