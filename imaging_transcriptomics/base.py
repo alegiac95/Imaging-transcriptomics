@@ -17,7 +17,9 @@ from tqdm import tqdm
 from multiprocessing import Pool, cpu_count
 from functools import partial
 from itertools import product
+from collections import OrderedDict
 import gseapy
+from gseapy.plot import gseaplot
 
 
 np.random.seed(1234)
@@ -33,7 +35,10 @@ class ImagingTranscriptomics:
         """ImagingTranscriptomics class for imaging transcriptomics analysis.
 
         :param np.array scan_data: imaging scan data.
-        :param str regions: regions to be used for analysis.
+        :param str regions: regions to be used for analysis. These can be
+        "cort+sub" (or "all") which will perform the analysis on the
+        cortical and subcortical regions, or "cort" which will only perform
+        the analysis on the cortical regions.
         :param str method: method to run the analysis, can be either "pls"
         for pls regression or "corr" cor simple correlation analysis.
         :param kwargs: additional arguments for the method. This include:
@@ -51,7 +56,7 @@ class ImagingTranscriptomics:
             assert scan_data.shape == (34,) or scan_data.shape == (41,)
             self.zscore_data = zscore(scan_data, axis=0, ddof=1)
             self._cortical = self.zscore_data if scan_data.shape == (34,) else\
-                self.zscore_data[34:]
+                self.zscore_data[:34]
             self._subcortical = None
         self._regions = regions
         self.scan_data = scan_data
@@ -81,6 +86,19 @@ class ImagingTranscriptomics:
         """Initialise an ImagingTranscriptomics object from a NIfTI scan.
         The extracted data corresponds to the average of the ROIs in the DK
         atlas.
+
+        :param str scan_path: path to the NIfTI scan.
+        :param str method: method to run the analysis, can be either "pls"
+        for pls regression or "corr" cor simple correlation analysis.
+        :param str regions: regions to be used for analysis. These can be
+        "cort+sub" (or "all") which will perform the analysis on the
+        cortical and subcortical regions, or "cort" which will only perform
+        the analysis on the cortical regions.
+        :param kwargs: additional arguments for the method. This include:
+            * "n_components": number of components for pls regression.
+            * "var": variance explained for pls regression.
+            * "n_permutations": number of permutations for permutation test.
+        :return: ImagingTranscriptomics object.
         """
         scan_data = extract_average(read_scan(scan_path))
         return cls(scan_data, method=method, regions=regions, **kwargs)
@@ -90,6 +108,20 @@ class ImagingTranscriptomics:
         """Initialise an ImagingTranscriptomics object from a text file.
         The file should contain a column with the data you want to use for
         the analysis.
+
+        :param str file_path: path to the text file. The text file should
+        contain a column with the data you want to use for the analysis.
+        :param str method: method to run the analysis, can be either "pls"
+        for pls regression or "corr" cor simple correlation analysis.
+        :param str regions: regions to be used for analysis. These can be
+        "cort+sub" (or "all") which will perform the analysis on the
+        cortical and subcortical regions, or "cort" which will only perform
+        the analysis on the cortical regions.
+        :param kwargs: additional arguments for the method. This include:
+            * "n_components": number of components for pls regression.
+            * "var": variance explained for pls regression.
+            * "n_permutations": number of permutations for permutation test.
+        :return: ImagingTranscriptomics object.
         """
         scan_data = np.loadtxt(file_path)
         return cls(scan_data, method=method, regions=regions, **kwargs)
@@ -156,8 +188,14 @@ class ImagingTranscriptomics:
         self._permutations = _permuted
         self._permutation_ind = _perm_indexes
 
+    @staticmethod
+    def _make_output_dir(output_dir):
+        outdir = Path(output_dir) / "Imt_"
+        outdir.mkdir(exist_ok=True)
+        return outdir
+
     # --------- RUN ANALYSIS --------- #
-    def run(self, outdir=None, gsea=True, gene_set="lake", noplot=False):
+    def run(self, outdir=None, gsea=True, gene_set="lake"):
         """Method to run the imaging transcriptomics analysis.
 
         :param str outdir: path to the output directory, if not provided the
@@ -165,9 +203,10 @@ class ImagingTranscriptomics:
         :param bool gsea: if True, run the GSEA analysis, if False the GSEA
         analysis is skipped.
         :param str gene_set: gene set to use for the GSEA analysis.
-        :param bool noplot: if True, do not plot the results.
         """
         self.permute_data()
+        if outdir is not None:
+            outdir = self._make_output_dir(outdir)
         if self._method == "corr":
             if self._regions == "cort":
                 _d = self._cortical
@@ -179,11 +218,11 @@ class ImagingTranscriptomics:
                 _d = self.zscore_data
                 _d_perm = self._permutations
             self._analysis.bootstrap_correlation(_d, _d_perm,
-                                                 self.gene_expression)
+                                                 self.gene_expression,
+                                                 self.gene_labels)
             if gsea:
                 self._analysis.gsea(gene_set=gene_set, outdir=outdir)
-
-        pass  # TODO: make final run() method.
+            self._analysis.save_results(outdir=outdir)
 
 
 # --------- GENE ANALYSIS --------- #
@@ -274,28 +313,33 @@ class PLSAnalysis:
             raise ValueError("The variance must be a number between 0 and 1.")
         return var
 
-    def set_coef(self, data, gene_exp):  # TODO: need to check
+    def set_coef(self, data, gene_exp, var=None, n_components=None):
         """Set the coefficients for the PLS regression. The function will
         estimate the variance or the number of components depending on the
         non missing parameter through a PLS regression with 15 components.
 
         :param data: imaging data.
         :param gene_exp: gene expression data.
+        :param var: variance.
+        :param n_components: number of components.
         """
         res = pls_regression(data, gene_exp,
                              n_components=15,
                              n_perm=0,
                              n_boot=0)
         explained_var = res.get("varexp")
-        if self.var is None:
-            self.var = np.cumsum(explained_var)[self.n_components-1]
-        if self.n_components is None:
+        if var is None:
+            self.var = np.cumsum(explained_var)[n_components-1]
+            self.n_components = n_components
+        if n_components is None:
+            self.var = var
             dim = 1
             cumulative_var = np.cumsum(explained_var)
-            while cumulative_var[dim - 1] < self.var:
+            while cumulative_var[dim - 1] < var:
                 dim += 1
             self.n_components = dim
-        return explained_var
+        self.components_var = explained_var
+        return
 
     @property
     def p_val(self):
@@ -349,6 +393,7 @@ class PLSAnalysis:
             # Set the results
             self.r2[component - 1] = _R
             self.p_val[component - 1] = np.sum(_R_sq >= _R) / 1000
+        return
 
 
 # --------- PLS GENES --------- #
@@ -459,11 +504,12 @@ class BootPLS:
             _index = np.argsort(_z, axis=0, kind='mergesort')[::-1]
             # Reorder the genes according to the zscore
             self.genes[component, :] = genes[_index]
-            # Calculage pvalue and pvalue corrected
+            # Calculate pvalue and pvalue corrected
             _p_val = norm.sf(abs(self.z_score[component, :]))
             self.pval[component, :] = _p_val
             _, _p_corr, _, _ = multipletests(_p_val, method='fdr_bh')
             self.pval_corr[component, :] = _p_corr
+        return
 
 
 # --------- CORR ANALYSIS --------- #
@@ -483,7 +529,8 @@ class CorrAnalysis:
         self.gsea_res = None
 
     # --------- COMPUTE FUNCTIONS --------- #
-    def bootstrap_correlation(self, imaging_data, permuted_imaging, gene_exp):
+    def bootstrap_correlation(self, imaging_data, permuted_imaging,
+                              gene_exp, gene_labels):
         """Perform bootstrapping on the correlation.
 
         The function first calculates the correlation between the imaging
@@ -500,6 +547,7 @@ class CorrAnalysis:
         is a matrix with shape (n_imaging, 1000), where `n_imaging`
         represents the length of the imaging vector.
         :param np.ndarray gene_exp: the gene expression data.
+        :param list gene_labels: the labels of the genes.
         """
         assert isinstance(self.gene_results.results, CorrGenes)
         for i in range(self.gene_results.n_genes):
@@ -512,33 +560,35 @@ class CorrAnalysis:
         for ind, res in enumerate(pool.imap(partial(_spearman_op,
                                                     permuted=permuted_imaging,
                                                     y=gene_exp),
-                                            _ind, chunksize=1000)):
+                                            _ind, chunksize=15633)):
             self.gene_results.results.boot_corr.flat[ind] = res
+        self.gene_results.results.genes = gene_labels
         self.gene_results.results.sort_genes()
         self.gene_results.results.compute_pval()
+        return
 
     def gsea(self, gene_set="lake", outdir=None):
         """Perform GSEA on the correlation."""
         assert isinstance(self.gene_results.results, CorrGenes)
+        print("Running GSEA...")
         gene_set = get_geneset(gene_set)
         # prepare the gene_list as a list of strings
         gene_list = [
-            str(gene) for gene in self.gene_results.results.genes[1, :]
+            gene for gene in self.gene_results.results.genes[:, 0].tolist()
         ]
-        # perform the GSEA on orignal results
-        rnk = pd.DataFrame(list(
-                zip(gene_list, self.gene_results.results.corr[1, :])))
+        # perform the GSEA on original results
+        rnk = pd.DataFrame(
+                zip(gene_list, self.gene_results.results.corr[0, :]))
         gsea_results = gseapy.prerank(rnk, gene_set,
                                       outdir=None,
-                                      permutation_num=100,
-                                      seed=1234)
+                                      permutation_num=100)
         _origin_es = gsea_results.res2d.es.to_numpy()
         _boot_es = np.zeros((_origin_es.shape[0], 1000))
         # perform the GSEA on the permutations
         for i in range(1000):
-            rnk = pd.DataFrame(list(
+            rnk = pd.DataFrame(
                 zip(gene_list, self.gene_results.results.boot_corr[:, i])
-            ))
+            )
             _gsea_res = gseapy.prerank(rnk, gene_set,
                                        permutation_num=1,
                                        no_plot=True,
@@ -551,12 +601,32 @@ class CorrAnalysis:
             _p_val[i] = np.sum(_boot_es[i, :] >= _origin_es[i]) / 1000
         # calculate the p-value corrected
         _, _p_corr, _, _ = multipletests(_p_val, method='fdr_bh')
-        self.gsea_res = gsea_results  # TODO: use the _p_Val and _pval_corr
-        # and substitute in the results, so that the results are accurate.
+        # Prepare data to save
+        print("Prepare data...")
+        _out_data = OrderedDict()
+        _out_data["Term"] = gsea_results.res2d.axes[0].to_list()
+        _out_data["es"] = gsea_results.res2d.values[:, 0]
+        _out_data["nes"] = gsea_results.res2d.values[:, 1]
+        _out_data["p_val"] = _p_val
+        _out_data["fdr"] = _p_corr
+        _out_data["genest_size"] = gsea_results.res2d.values[:, 4]
+        _out_data["matched_size"] = gsea_results.res2d.values[:, 5]
+        _out_data["matched_genes"] = gsea_results.res2d.values[:, 6]
+        _out_data["ledge_genes"] = gsea_results.res2d.values[:, 7]
+        out_df = pd.DataFrame.from_dict(_out_data)
         # TODO: make the output and clean the .csv file
         if outdir is not None:
             outdir = Path(outdir)
             assert outdir.exists()
+            out_df.to_csv(outdir / "gsea_results.tsv", index=False, sep="\t")
+            for i in range(len(gsea_results.res2d.index)):
+                term = gsea_results.res2d.index[i]
+                gsea_results.results[term]["pval"] = _p_val[i]
+                gsea_results.results[term]["fdr"] = _p_corr[i]
+                gseaplot(rank_metric=gsea_results.ranking,
+                         term=term,
+                         **gsea_results.results[term],
+                         ofname=f"{outdir}/imt_{term}_prerank.pdf")
 
     # --------- SAVE FUNCTIONS --------- #
     def save_results(self, outdir):
@@ -564,14 +634,15 @@ class CorrAnalysis:
         outdir = Path(outdir)
         assert outdir.exists()
         # Create the data to save
-        data_to_save = zip(self.gene_results.results.genes,
-                           self.gene_results.results.corr,
-                           self.gene_results.results.pval,
-                           self.gene_results.results.pval_corr)
+        data_to_save = zip(self.gene_results.results.genes[:, 0],
+                           self.gene_results.results.corr[:, 0],
+                           self.gene_results.results.pval[0, :],
+                           self.gene_results.results.pval_corr[0, :])
         # Save the data
         pd.DataFrame(
             data_to_save, columns=["Gene", "Corr", "Pval", "Pval_corr"]
         ).to_csv(outdir / "corr_genes.tsv", index=False, sep='\t')
+        return
 
 
 def get_geneset(gene_set: str):  # TODO: make a real thing
@@ -583,9 +654,9 @@ def get_geneset(gene_set: str):  # TODO: make a real thing
     the gene sets are from the gseapy package.
     """
     if gene_set.lower() == "lake":
-        return str(Path(__file__).parent.parent / "data" / "geneset_LAKE.gmt")
+        return str(Path(__file__).parent / "data" / "geneset_LAKE.gmt")
     elif gene_set.lower() == "pooled":
-        return str(Path(__file__).parent.parent / "data" /
+        return str(Path(__file__).parent / "data" /
                    "geneset_Pooled.gmt")
     else:
         return gene_set
@@ -620,32 +691,38 @@ class CorrGenes:
 
     def compute_pval(self):
         """Compute the p-values, and its fdr correction, of the correlation,
-        from the list of
-        bootstrapped correlations.
+        from the list of bootstrapped correlations.
         """
         # This calculation assumes that the order of the genes is the same
         # in both the original and the bootstrapped list. IF one is ordered,
         # make sure the order of the other is the same.
+        print("compute pval")
         for i in range(self.n_genes):
             self.pval[0, i] = np.sum(
                 self.boot_corr[i, :] >= self.corr[0, i]) / self._n_iter
-        _, p_corr, _, _ = multipletests(self.pval, method='fdr_bh',
+        _, p_corr, _, _ = multipletests(self.pval[0, :], method='fdr_bh',
                                         is_sorted=False)
         self.pval_corr[0, :] = p_corr
+        return
 
     @property
     def is_sorted(self):
-        """Check if the list of genes is sorted."""
+        """Check if the list of genes is sorted.
+
+        :return: True if the list of genes is sorted, False otherwise.
+        """
         return False if self._index is None else True
 
     def sort_genes(self):
         """Order the genes in the list of genes. Both the order of the
         order of the bootstrapped genes are ordered.
         """
-        self._index = np.argsort(self.corr, axis=1, kind='mergesort')[::-1]
+        print("sort genes")
+        self._index = np.argsort(self.corr, axis=1, kind='mergesort')
         self.corr[0, :] = self.corr[0, self._index]
-        self.genes[0, :] = self.genes[0, self._index]
+        self.genes[:] = self.genes[self._index]
         self.pval[0, :] = self.pval[0, self._index]
         self.pval_corr[0, :] = self.pval_corr[0, self._index]
         for i in range(self._n_iter):
             self.boot_corr[:, i] = self.boot_corr[:, i][self._index]
+        return
