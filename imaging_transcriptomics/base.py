@@ -523,13 +523,13 @@ class PLSGenes:
         gene_set = get_geneset(gene_set)
         for _component in range(self.n_components):
             gene_list = [gene for gene in self.orig.genes[
-                                          _component, :].to_list()]
+                                          _component, :]]
             rnk = pd.DataFrame(zip(gene_list,
-                                   self.orig.z_score[_component, :]))
+                                   self.orig.zscored[_component, :]))
             gsea_results = gseapy.prerank(rnk, gene_set,
                                           outdir=None,
                                           seed=1234,
-                                          permutation_num=100)
+                                          permutation_num=1000)
             _origin_es = gsea_results.res2d.es.to_numpy()
             _boot_es = np.zeros((_origin_es.shape[0], 1000))
             for i in range(1000):
@@ -539,11 +539,11 @@ class PLSGenes:
                                            ddof=1)
                                        )
                                    )
-                gsea_results = gseapy.prerank(rnk, gene_set,
-                                              outdir=None,
-                                              seed=1234,
-                                              permutation_num=100)
-                _boot_es[:, i] = gsea_results.res2d.es.to_numpy()
+                gsea_res = gseapy.prerank(rnk, gene_set,
+                                          outdir=None,
+                                          seed=1234,
+                                          permutation_num=1)
+                _boot_es[:, i] = gsea_res.res2d.es.to_numpy()
             _p_val = np.zeros((_origin_es.shape[0],))
             for i in range(_origin_es.shape[0]):
                 _p_val[i] = np.sum(_boot_es[i, :] >= _origin_es[i]) / 1000
@@ -571,7 +571,7 @@ class PLSGenes:
                     index=False,
                     sep="\t")
                 for _i in range(len(gsea_results.res2d.index)):
-                    term = gsea_results.res2d.index[i]
+                    term = gsea_results.res2d.index[_i]
                     gsea_results.results[term]["pval"] = _p_val[_i]
                     gsea_results.results[term]["fdr"] = _p_corr[_i]
                     gseaplot(rank_metric=gsea_results.ranking,
@@ -721,7 +721,7 @@ class CorrAnalysis:
                 zip(gene_list, self.gene_results.results.corr[0, :]))
         gsea_results = gseapy.prerank(rnk, gene_set,
                                       outdir=None,
-                                      permutation_num=100,
+                                      permutation_num=1000,
                                       seed=1234)
         _origin_es = gsea_results.res2d.es.to_numpy()
         _boot_es = np.zeros((_origin_es.shape[0], 1000))
