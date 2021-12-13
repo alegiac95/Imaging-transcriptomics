@@ -4,17 +4,17 @@ import warnings
 from pathlib import Path
 
 import numpy as np
-import pandas as pd
 import yaml
-from pyls import pls_regression
-from scipy.stats import zscore, spearmanr
+from scipy.stats import zscore
 
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore")
     from netneurotools import freesurfer, stats
 
-from .inputs import load_gene_expression, load_gene_labels, get_components
-from .bootstrap import bootstrap_pls, bootstrap_genes, bootstrap_correlation
+from .inputs import load_gene_expression, load_gene_labels, \
+    extract_average, read_scan
+from .pls import PLSAnalysis
+from .corr import CorrAnalysis
 
 cfg_file_path = Path(__file__).parent / "log_config.yaml"
 with open(cfg_file_path, "r") as config_file:
@@ -26,166 +26,162 @@ logger.setLevel(logging.DEBUG)
 
 
 class ImagingTranscriptomics:
-    def __init__(self, scan_data, **kwargs):
-        """Initialise the imaging transcriptomics class with the input scan's data and number of components or variance
-        explained.
-        There are several settings that can be
+    # --------- INITIALIZATION --------- #
+    def __init__(self,
+                 scan_data,
+                 regions="cort+sub",
+                 method="pls",
+                 **kwargs):
+        """ImagingTranscriptomics class for imaging transcriptomics analysis.
 
-        :param array-like scan_data: average values in the ROI defined by the Desikan-Killiany atlas.
-        :param int n_components: number of components to use for the PLS regression.
-        :param int variance: total explained variance by the PLS components.
+        :param np.array scan_data: imaging scan data.
+        :param str regions: regions to be used for analysis. These can be
+        "cort+sub" (or "all") which will perform the analysis on the
+        cortical and subcortical regions, or "cort" which will only perform
+        the analysis on the cortical regions.
+        :param str method: method to run the analysis, can be either "pls"
+        for pls regression or "corr" cor simple correlation analysis.
+        :param kwargs: additional arguments for the method. This include:
+            * "n_components": number of components for pls regression.
+            * "var": variance explained for pls regression.
+            * "n_permutations": number of permutations for permutation test.
+
         """
-        logger.debug("Initializing ImagingTranscriptomics class.")
-        self._method = kwargs.get("method") if kwargs.get("method") else "pls"
-        self._regions = kwargs.get("reg") if kwargs.get("reg") else "cort+sub"
-        self.scan_data = self.check_input_length(scan_data, self._regions)
-        self.zscore_data = zscore(scan_data, ddof=1, axis=0)
-        self.n_components = self.check_in_components(kwargs.get("n_components"))
-        self.var = self.check_in_var(kwargs.get("variance"))
+        if regions == "cort+sub" or regions == "all":
+            assert scan_data.shape == (41,)
+            self.zscore_data = zscore(scan_data, axis=0, ddof=1)
+            self._cortical = self.zscore_data[:34]
+            self._subcortical = self.zscore_data[34:]
+        elif regions == "cort":
+            assert scan_data.shape == (34,) or scan_data.shape == (41,)
+            self.zscore_data = zscore(scan_data, axis=0, ddof=1)
+            self._cortical = self.zscore_data if scan_data.shape == (34,) else\
+                self.zscore_data[:34]
+            self._subcortical = None
+        self._regions = regions
+        self.scan_data = scan_data
+        self.gene_expression = load_gene_expression(self._regions)
+        self.gene_labels = load_gene_labels()
+        if method not in ["pls", "corr"]:
+            raise ValueError(
+                "The method must be either pls or corr."
+                "Please choose either pls or corr to run the analysis."
+            )
+        else:
+            self._method = method
         if self._method == "pls":
-            self.check_var_or_comp(self.var, self.n_components)
-        self._cortical, self._subcortical = self.assign_regions(
-            self.zscore_data)
-        self._gene_expression = load_gene_expression(self._regions)
-        self._gene_labels = load_gene_labels()
-        # Initialise with defaults for later
-        self.permuted = None
-        self.r_boot = None
-        self.p_boot = None
-        self.gene_results = None
-        self.var_components = None
-        logger.debug("ImagingTranscriptomics class successfully initialized.")
-
-    @staticmethod
-    def check_input_length(data, regions):
-        """Check that the length of the data given as input is correct in length (41).
-
-        :param data: array to check has the correct length.
-        :param regions: regions to use for the analysis can be either
-        "cort", "sub" or "cort+sub".
-        :raises AttributeError: if the length of the data is not 41.
-        :return: data if it has correct length.
-        """
-        _cort_legth = 34
-        _sub_length = 7
-        _full_length = _cort_legth + _sub_length
-        if regions == "cort":
-            if len(data) == _cort_legth or len(data) == _full_length:
-                return data
+            if "n_components" not in kwargs and "var" not in kwargs:
+                raise ValueError("You must specify either the variance or "
+                                 "the number of components for pls regression")
             else:
-                raise AttributeError(
-                    f"The length of the data given as input must be {_cort_legth}."
-                )
-        elif regions == "sub":
-            if len(data) == _sub_length or len(data) == _full_length:
-                return data
-            else:
-                raise AttributeError(
-                    f"The length of the data given as input must be {_sub_length}."
-                )
-        elif regions == "cort+sub":
-            if len(data) == _full_length:
-                return data
-            else:
-                raise AttributeError(
-                    f"The length of the data given as input must be {_full_length}."
-                )
+                if self._regions == "all" or self._regions == "cort+sub":
+                    self.analysis = PLSAnalysis(self.zscore_data,
+                                                self.gene_expression,
+                                                kwargs.get("n_components"),
+                                                kwargs.get("var"))
+                else:
+                    self.analysis = PLSAnalysis(self._cortical,
+                                                self.gene_expression,
+                                                kwargs.get("n_components"),
+                                                kwargs.get("var"))
+        elif self._method == "corr":
+            self.analysis = CorrAnalysis()
+        self._permutations = None
+        self._permutation_ind = None
 
-    @staticmethod
-    def check_in_var(variance):
-        """Check if the variance given as input is in the correct range.
+    @classmethod
+    def from_scan(cls, scan_path, method="pls", regions="cort+sub", **kwargs):
+        """Initialise an ImagingTranscriptomics object from a NIfTI scan.
+        The extracted data corresponds to the average of the ROIs in the DK
+        atlas.
 
-        The variance can be in the range 0-100. If the variance is greater than
-        1 the value is divided by 100.
-        If the variance is None it will be kept as is.
-
-        :param variance: input variance to check.
-        :raises ValueError: if below 0 ir greater than 100.
-        :return: variance if correct.
+        :param str scan_path: path to the NIfTI scan.
+        :param str method: method to run the analysis, can be either "pls"
+        for pls regression or "corr" cor simple correlation analysis.
+        :param str regions: regions to be used for analysis. These can be
+        "cort+sub" (or "all") which will perform the analysis on the
+        cortical and subcortical regions, or "cort" which will only perform
+        the analysis on the cortical regions.
+        :param kwargs: additional arguments for the method. This include:
+            * "n_components": number of components for pls regression.
+            * "var": variance explained for pls regression.
+            * "n_permutations": number of permutations for permutation test.
+        :return: ImagingTranscriptomics object.
         """
-        if variance is None:
-            return variance
-        elif 0.0 <= variance <= 1.0:
-            return variance
-        elif 1.0 < variance < 100:
-            logger.warning(
-                "The variance inputted was in the range 1-100. "
-                "It has been converted to the range 0.0-1.0"
+        if not Path(scan_path).exists():
+            raise FileNotFoundError("The specified scan file does not exist.")
+        if method not in ["pls", "corr"]:
+            raise ValueError(
+                "The method must be either pls or corr."
+                "Please choose either pls or corr to run the analysis."
             )
-            return variance / 100
-        elif variance < 0.0:
-            raise ValueError("The input variance cannot be negative!")
-        elif variance > 100:
-            raise ValueError("The input variance is too big!")
-        elif isinstance(variance, str):
-            raise TypeError("Strings are not supported, "
-                            "please input a numeric value!")
-
-    @staticmethod
-    def check_in_components(components):
-        """Check if the number of components given as input is in the range 1-15
-
-        :param components: number of components given as input.
-        :raises ValueError: if the component is not in the range 1-15 or None.
-        :return: the number of components if correct.
-        """
-        if components is None:
-            return components
-        elif 1 <= components <= 15:
-            return components
-        else:
-            raise ValueError("The number of components MUST be "
-                             "in the range 1-15.")
-
-    @staticmethod
-    def check_var_or_comp(variance, components):
-        if variance is None and components is None:
-            raise AttributeError(
-                "You must set either the variance or the number of components!"
+        if regions not in ["cort+sub", "cort", "all"]:
+            raise ValueError(
+                "The regions must be either cort+sub, cort or all."
+                "Please choose one of these to run the analysis."
             )
+        scan_data = extract_average(read_scan(scan_path))
+        return cls(scan_data, method=method, regions=regions, **kwargs)
 
-    @staticmethod
-    def assign_regions(data):
-        """Assign the regions to the data.
+    @classmethod
+    def from_file(cls, file_path, method="pls", regions="cort+sub", **kwargs):
+        """Initialise an ImagingTranscriptomics object from a text file.
+        The file should contain a column with the data you want to use for
+        the analysis.
 
-        :param data: data to assign the regions to.
-        :return: data with the regions assigned.
+        :param str file_path: path to the text file. The text file should
+        contain a column with the data you want to use for the analysis.
+        :param str method: method to run the analysis, can be either "pls"
+        for pls regression or "corr" cor simple correlation analysis.
+        :param str regions: regions to be used for analysis. These can be
+        "cort+sub" (or "all") which will perform the analysis on the
+        cortical and subcortical regions, or "cort" which will only perform
+        the analysis on the cortical regions.
+        :param kwargs: additional arguments for the method. This include:
+            * "n_components": number of components for pls regression.
+            * "var": variance explained for pls regression.
+            * "n_permutations": number of permutations for permutation test.
+        :return: ImagingTranscriptomics object.
         """
-        if len(data) == 41:
-            cort_data = data[0:34]
-            sub_data = data[34:41]
-        elif len(data) == 7:
-            cort_data = None
-            sub_data = data
-        elif len(data) == 34:
-            cort_data = data
-            sub_data = None
-        else:
-            raise AttributeError(
-                "The length of the data given as input must be either 41, 34 "
-                "or 7."
-            )
-        return cort_data, sub_data
+        if not Path(file_path).exists():
+            raise FileNotFoundError("The specified file does not exist.")
+        if not Path(file_path).is_file():
+            raise ValueError(f"{file_path} is not a file.")
+        scan_data = np.loadtxt(file_path)
+        return cls(scan_data, method=method, regions=regions, **kwargs)
 
-    def permute_data(self, iterations=1_000):  # done in new base
-        """Permute the scan data for the analysis.
+    # --------- PROPERTIES --------- #
+    @property
+    def method(self):
+        return self._method
 
-        The permutations are computed into cortical and subcortical regions separately and then merged. This is done
-        to maintain the spatial autocorrelation in the cortical regions for more accuracy.
-        To compute the cortical permutations the library python package ``netneurotools`` developed by R. Markello is
-        used. For more information about the methods used you can refer to the official `documentation of the
-        package. <https://netneurotools.readthedocs.io/en/latest/>_`
+    @property
+    def gene_results(self):
+        return self.analysis.gene_results
 
-        :param int iterations: number of iterations to perform in the permutations.
+    # --------- METHODS --------- #
+    def permute_data(self, n_permutations=1000):
+        """Permute the imaging data maintaining spatial autocorrelation for
+        the cortical regions. The permutation is done using the
+        netneurotools Python package.
+
+        :param int n_permutations: number of permutations.
+
         """
-        self.permuted = np.zeros((self.zscore_data.shape[0], iterations))
-        # subcortical
-        logger.debug("Starting permutations.")
-        if self._regions == "cort+sub":
-            sub_permuted = np.array(
-                [np.random.permutation(self._subcortical) for _ in range(iterations)]
-            ).reshape(7, iterations)
-            self.permuted[34:, :] = sub_permuted
+        _permuted = np.zeros((self.zscore_data.shape[0], n_permutations))
+        _perm_indexes = np.zeros((self.zscore_data.shape[0],
+                                  n_permutations), dtype=np.int32)
+        # Calculate the permutations on the subcortical regions.
+        if self._subcortical is not None:
+            sub_permuted = np.zeros((self._subcortical.shape[0],
+                                     n_permutations))
+            for i in range(n_permutations):
+                sub_resample = np.random.choice(7, size=7)
+                _perm_indexes[34:, i] = sub_resample + 34  # keep into
+                # account the shift of the subcortical given by the cortical
+                # regions.
+                sub_permuted[:, i] = self._subcortical[sub_resample]
+            _permuted[34:, :] = sub_permuted
         # Cortical
         # Annotation file for the Desikan-Killiany atlas in fs5
         annot_lh = Path(__file__).resolve().parent / "data/fsa5_lh_aparc.annot"
@@ -206,131 +202,83 @@ class ImagingTranscriptomics:
         )
         # Get the spin samples
         spins = stats.gen_spinsamples(
-            parcel_centroids, parcel_hemi, n_rotate=iterations, method="vasa", seed=1234
+            parcel_centroids, parcel_hemi,
+            n_rotate=n_permutations,
+            method="vasa",
+            seed=1234
         )
-        cort_permuted = np.array(self._cortical[spins]).reshape(34, iterations)
-        self.permuted[0:34, :] = cort_permuted
-        logger.debug("End permutations.")
+        cort_permuted = np.array(self._cortical[spins]).reshape(34,
+                                                                n_permutations)
+        _perm_indexes[:34, :] = spins
+        _permuted[0:34, :] = cort_permuted
+        self._permutations = _permuted
+        self._permutation_ind = _perm_indexes
+        return
 
-    def save_permutations(self, path):
-        """Save the permutations to a csv file at a specified path.
+    @staticmethod
+    def _make_output_dir(output_dir):
+        outdir = Path(output_dir) / "Imt_"
+        outdir.mkdir(exist_ok=True)
+        return outdir
 
-        :param path: Path used to save the permutations, this *should* also
-        include the name of the file, e.g., "~/Documents/my_permuted.csv"
+    # --------- RUN ANALYSIS --------- #
+    def run(self, outdir=None, gsea=True, gene_set="lake"):
+        """Method to run the imaging transcriptomics analysis.
+
+        :param str outdir: path to the output directory, if not provided the
+        results will be saved in the current directory.
+        :param bool gsea: if True, run the GSEA analysis, if False the GSEA
+        analysis is skipped.
+        :param str gene_set: gene set to use for the GSEA analysis.
         """
-        if self.permuted is None:
-            raise AttributeError(
-                "There are no permutations of the scan available to save."
-                "Before saving the permutations you need to compute them."
-            )
-        logger.info("Saving permutations to file %s", path)
-        pd.DataFrame(self.permuted).to_csv(Path(path), header=None, index=False)
-
-    def correlation(self):  # done in new base
-        """Calculate the correlation between the imaging and genetic data.
-
-        :return corr_genes: pearson correlation coefficient ordered in
-        descending order.
-        :return corr_gene_labels: labels of the genes ordered by correlation
-        coefficient.
-        """
-        corr_ = np.zeros(self._gene_expression.shape[1])
-        p_val = np.zeros(self._gene_expression.shape[1])
-        for gene in range(15633):
-            corr_[gene], p_val[gene] = spearmanr(
-                self.zscore_data, self._gene_expression[:, gene]
-            )
-        corr_genes = np.sort(corr_)
-        corr_gene_labels = self._gene_labels[np.argsort(corr_)]
-        return corr_genes, corr_gene_labels
-
-    def pls_all_components(self):  # done in new base
-        """Compute a PLS regression with all components.
-
-        After the regression is estimated, either the number of components or
-        the estimated percentage of variance given by the components is
-        estimated, depending on what is set by the user in the __init__()
-        method.
-        """
-        logger.debug("Performing PLS with all 15 components.")
-        results = pls_regression(
-            self._gene_expression,
-            self.zscore_data.reshape(41, 1),
-            n_components=15,
-            n_perm=0,
-            n_boot=0,
-        )
-        var_exp = results.get("varexp")
-        if self.n_components is None and self.var != 0.0:
-            self.n_components = get_components(self.var, var_exp)
-            logger.debug("Number of components has been set to: %s", self.n_components)
-        elif self.var is None and self.n_components != 0:
-            self.var = np.cumsum(var_exp)[self.n_components - 1]
-            logger.debug(
-                "Variance has been set to: %s", self.var
-            )  # add number of variance set
-        self.var_components = var_exp
-
-    def run(self, n_iter=1_000, method=None):
-        """Run the analysis of the imaging scan.
-
-        :param int n_iter: number of permutations to make.
-        :param str method: method to run the analysis, can be either "pls"
-        for pls regression or "corr" cor simple correlation analysis.
-        """
-        logger.info("Starting imaging transcriptomics analysis.")
-        if method is None:
-            if self._method is None:
-                raise AttributeError(
-                    "You need to specify a method to run the analysis.")
-            else:
-                method = self._method
-        if method is "pls":
-            logger.info("Running analysis with PLS regression")
-            self.pls_all_components()
-            self.permute_data(iterations=n_iter)
-            self.r_boot, self.p_boot = bootstrap_pls(
-                self._gene_expression,
-                self.zscore_data.reshape(41, 1),
-                self.permuted,
-                self.n_components,
-                iterations=n_iter,
-            )
-            self.gene_results = bootstrap_genes(
-                self._gene_expression,
-                self.zscore_data.reshape(41, 1),
-                self.n_components,
-                self.scan_data,
-                self._gene_labels,
-                n_iter,
-            )
-            self.gene_results.boot_results.compute_values(
-                self.n_components,
-                self.gene_results.original_results.pls_weights,
-                self.gene_results.original_results.pls_gene,
-            )
-        elif method is "corr":
-            logger.info("Running analysis with correlation.")
-            # run first analysis
-            self.permute_data(iterations=n_iter)
-            # bootstrap analysis
-            self.gene_results = bootstrap_correlation(
-                self.zscore_data,
-                self._gene_expression,
-                self.permuted,
-                self._gene_labels,
-            )
-            self.gene_results.boot_results.compute_correlation(
-                self.gene_results.original_results.pls_weights,
-                self.gene_results.original_results.pls_gene,
-                self.gene_results.original_results.gene_id,
-            )
-        else:
-            raise NotImplementedError(
-                f"The method {method} does not exist. "
-                f"Please choose either pls or corr as "
-                f"method to run the analysis."
-            )
-        logger.info("Running GSEA analysis.")
-        # run GSEA analysis
-        logger.info("Imaging transcriptomics analysis completed.")
+        # Create the permuted data matrix
+        self.permute_data()
+        # Check if the ouput directory is provided and create the output folder
+        if outdir is not None:
+            outdir = self._make_output_dir(outdir)
+        # Run the analysis
+        # CORRELATION
+        if self._method == "corr":
+            # Select the data or slice of data
+            if self._regions == "cort":
+                _d = self._cortical
+                if self._permutations.shape[0] == 41:
+                    _d_perm = self._permutations[0:34, :]
+                else:
+                    _d_perm = self._permutations
+            elif self._regions == "cort+sub" or self._regions == "all":
+                _d = self.zscore_data
+                _d_perm = self._permutations
+            self.analysis.bootstrap_correlation(_d, _d_perm,
+                                                self.gene_expression,
+                                                self.gene_labels)
+            self.analysis.save_results(outdir=outdir)
+            if gsea:
+                self.analysis.gsea(gene_set=gene_set, outdir=outdir)
+        # PLS
+        elif self._method == "pls":
+            # Select the data or slice of data
+            if self._regions == "cort":
+                _d = self._cortical
+                if self._permutations.shape[0] == 41:
+                    _d_perm = self._permutations[0:34, :]
+                else:
+                    _d_perm = self._permutations
+            elif self._regions == "cort+sub" or self._regions == "all":
+                _d = self.zscore_data
+                _d_perm = self._permutations
+            assert isinstance(self.analysis, PLSAnalysis)
+            self.analysis.boot_pls(_d, _d_perm, self.gene_expression)
+            if self._regions == "cort":
+                _orig = self.scan_data if self.scan_data.shape[0] == 34 else \
+                    self.scan_data[0:34, :]
+            elif self._regions == "cort+sub" or self._regions == "all":
+                _orig = self.scan_data
+            self.gene_results.results.boot_genes(_d,
+                                                 _d_perm,
+                                                 _orig,
+                                                 self.gene_expression,
+                                                 self.gene_labels)
+            self.gene_results.save_results(outdir=outdir)
+            if gsea:
+                self.gene_results.gsea(gene_set=gene_set, outdir=outdir)

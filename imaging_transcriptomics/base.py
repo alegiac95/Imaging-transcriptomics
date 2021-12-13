@@ -75,17 +75,17 @@ class ImagingTranscriptomics:
                                  "the number of components for pls regression")
             else:
                 if self._regions == "all" or self._regions == "cort+sub":
-                    self._analysis = PLSAnalysis(self.zscore_data,
-                                                 self.gene_expression,
-                                                 kwargs.get("n_components"),
-                                                 kwargs.get("var"))
+                    self.analysis = PLSAnalysis(self.zscore_data,
+                                                self.gene_expression,
+                                                kwargs.get("n_components"),
+                                                kwargs.get("var"))
                 else:
-                    self._analysis = PLSAnalysis(self._cortical,
-                                                 self.gene_expression,
-                                                 kwargs.get("n_components"),
-                                                 kwargs.get("var"))
+                    self.analysis = PLSAnalysis(self._cortical,
+                                                self.gene_expression,
+                                                kwargs.get("n_components"),
+                                                kwargs.get("var"))
         elif self._method == "corr":
-            self._analysis = CorrAnalysis()
+            self.analysis = CorrAnalysis()
         self._permutations = None
         self._permutation_ind = None
 
@@ -108,6 +108,18 @@ class ImagingTranscriptomics:
             * "n_permutations": number of permutations for permutation test.
         :return: ImagingTranscriptomics object.
         """
+        if not Path(scan_path).exists():
+            raise FileNotFoundError("The specified scan file does not exist.")
+        if method not in ["pls", "corr"]:
+            raise ValueError(
+                "The method must be either pls or corr."
+                "Please choose either pls or corr to run the analysis."
+            )
+        if regions not in ["cort+sub", "cort", "all"]:
+            raise ValueError(
+                "The regions must be either cort+sub, cort or all."
+                "Please choose one of these to run the analysis."
+            )
         scan_data = extract_average(read_scan(scan_path))
         return cls(scan_data, method=method, regions=regions, **kwargs)
 
@@ -131,6 +143,10 @@ class ImagingTranscriptomics:
             * "n_permutations": number of permutations for permutation test.
         :return: ImagingTranscriptomics object.
         """
+        if not Path(file_path).exists():
+            raise FileNotFoundError("The specified file does not exist.")
+        if not Path(file_path).is_file():
+            raise ValueError(f"{file_path} is not a file.")
         scan_data = np.loadtxt(file_path)
         return cls(scan_data, method=method, regions=regions, **kwargs)
 
@@ -141,7 +157,7 @@ class ImagingTranscriptomics:
 
     @property
     def gene_results(self):
-        return self._analysis.gene_results
+        return self.analysis.gene_results
 
     # --------- METHODS --------- #
     def permute_data(self, n_permutations=1000):
@@ -150,6 +166,7 @@ class ImagingTranscriptomics:
         netneurotools Python package.
 
         :param int n_permutations: number of permutations.
+
         """
         _permuted = np.zeros((self.zscore_data.shape[0], n_permutations))
         _perm_indexes = np.zeros((self.zscore_data.shape[0],
@@ -196,6 +213,7 @@ class ImagingTranscriptomics:
         _permuted[0:34, :] = cort_permuted
         self._permutations = _permuted
         self._permutation_ind = _perm_indexes
+        return
 
     @staticmethod
     def _make_output_dir(output_dir):
@@ -213,10 +231,15 @@ class ImagingTranscriptomics:
         analysis is skipped.
         :param str gene_set: gene set to use for the GSEA analysis.
         """
+        # Create the permuted data matrix
         self.permute_data()
+        # Check if the ouput directory is provided and create the output folder
         if outdir is not None:
             outdir = self._make_output_dir(outdir)
+        # Run the analysis
+        # CORRELATION
         if self._method == "corr":
+            # Select the data or slice of data
             if self._regions == "cort":
                 _d = self._cortical
                 if self._permutations.shape[0] == 41:
@@ -226,13 +249,15 @@ class ImagingTranscriptomics:
             elif self._regions == "cort+sub" or self._regions == "all":
                 _d = self.zscore_data
                 _d_perm = self._permutations
-            self._analysis.bootstrap_correlation(_d, _d_perm,
-                                                 self.gene_expression,
-                                                 self.gene_labels)
+            self.analysis.bootstrap_correlation(_d, _d_perm,
+                                                self.gene_expression,
+                                                self.gene_labels)
+            self.analysis.save_results(outdir=outdir)
             if gsea:
-                self._analysis.gsea(gene_set=gene_set, outdir=outdir)
-            self._analysis.save_results(outdir=outdir)
+                self.analysis.gsea(gene_set=gene_set, outdir=outdir)
+        # PLS
         elif self._method == "pls":
+            # Select the data or slice of data
             if self._regions == "cort":
                 _d = self._cortical
                 if self._permutations.shape[0] == 41:
@@ -242,7 +267,7 @@ class ImagingTranscriptomics:
             elif self._regions == "cort+sub" or self._regions == "all":
                 _d = self.zscore_data
                 _d_perm = self._permutations
-            assert isinstance(self._analysis, PLSAnalysis)
+            assert isinstance(self.analysis, PLSAnalysis)
             self._ananlysis.boot_pls(_d, _d_perm, self.gene_expression)
 
 
