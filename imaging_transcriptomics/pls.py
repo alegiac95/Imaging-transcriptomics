@@ -1,8 +1,9 @@
 import numpy as np
 from pyls import pls_regression
+import pandas as pd
 
 from tqdm import tqdm
-from .genes import GeneResults
+from .genes import GeneResults, PLSGenes
 
 np.random.seed(1234)
 
@@ -77,7 +78,10 @@ class PLSAnalysis:
     def r2(self, r2):
         self._r2 = r2
 
-    def boot_pls(self, imaging_data, permuted_imaging, gene_exp):
+    def boot_pls(self,
+                 imaging_data,
+                 permuted_imaging,
+                 gene_exp):  # pragma: no cover
         """Bootstrapping on the PLS components.
 
         :param imaging_data: imaging data. Allows the user to specify the
@@ -113,4 +117,19 @@ class PLSAnalysis:
             self.p_val[component - 1] = np.sum(_R_sq >= _R) / 1000
         return
 
+    def save_results(self, outdir=None):
+        """Save the results of the PLS regression.
+
+        :param oudtir: output directory.
+        """
+        assert isinstance(self.gene_results.results, PLSGenes)
+        for i in range(self.n_components):
+            data = zip(self.gene_results.results.orig.genes[i, :],
+                       self.gene_results.results.orig.zscored[i, :],
+                       self.gene_results.results.boot.pval[i, :],
+                       self.gene_results.results.boot.pval_corr[i, :])
+            df = pd.DataFrame(data, columns=["Gene", "Z-score", "p-value",
+                                             "p-value (corrected)"])
+            df.to_csv(f"{outdir}/pls_component_{i+1}.tsv", sep='\t',
+            index=False)
 

@@ -179,7 +179,10 @@ class PLSGenes:
             # Calculate pvalue and pvalue corrected
             _p_val = norm.sf(abs(self.boot.z_score[component, :]))
             self.boot.pval[component, :] = _p_val
-            _, _p_corr, _, _ = multipletests(_p_val, method='fdr_bh')
+            _, _p_corr, _, _ = multipletests(_p_val[::-1].reshape(1,
+                                                               self.n_genes),
+                                             method='fdr_bh',
+                                             is_sorted=True)
             self.boot.pval_corr[component, :] = _p_corr
         return
 
@@ -244,7 +247,7 @@ class PLSGenes:
                     gseaplot(rank_metric=gsea_results.ranking,
                              term=term,
                              **gsea_results.results[term],
-                             ofname=f"{outdir}/imt_{term}_pls"
+                             ofname=f"{outdir}/{term}_pls"
                                     f"{_component + 1}_prerank.pdf")
 
 

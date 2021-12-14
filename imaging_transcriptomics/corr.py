@@ -2,9 +2,9 @@ import numpy as np
 from pathlib import Path
 from scipy.stats import spearmanr
 import pandas as pd
-
+import logging
 from statsmodels.stats.multitest import multipletests
-from multiprocessing import Pool, cpu_count
+from multiprocessing import Pool
 from functools import partial
 from itertools import product
 from collections import OrderedDict
@@ -17,7 +17,7 @@ np.random.seed(1234)
 
 
 # --------- CORR ANALYSIS --------- #
-def _spearman_op(idx, permuted, y):
+def _spearman_op(idx, permuted, y):  # pragma: no cover, used for multiprocess
     """Wrapper for the spearman correlation function, to be used for
     parallel computation."""
     return spearmanr(permuted[:, idx[0]], y[:, idx[1]])[0]
@@ -34,7 +34,7 @@ class CorrAnalysis:
 
     # --------- COMPUTE FUNCTIONS --------- #
     def bootstrap_correlation(self, imaging_data, permuted_imaging,
-                              gene_exp, gene_labels):
+                              gene_exp, gene_labels, n_cpu=4):
         """Perform bootstrapping on the correlation.
 
         The function first calculates the correlation between the imaging
@@ -52,12 +52,13 @@ class CorrAnalysis:
         represents the length of the imaging vector.
         :param np.ndarray gene_exp: the gene expression data.
         :param list gene_labels: the labels of the genes.
+        :param int n_cpu: the number of CPUs to use for the parallelization
         """
         assert isinstance(self.gene_results.results, CorrGenes)
         for i in range(self.gene_results.n_genes):
             self.gene_results.results.corr[0, i], _ = spearmanr(
                 imaging_data, gene_exp[:, i])
-        pool = Pool(cpu_count()-1)
+        pool = Pool(n_cpu)
         _ind = product(range(1000), range(self.gene_results.n_genes))
 
         print("Performing bootstrapping...")
@@ -71,8 +72,17 @@ class CorrAnalysis:
         self.gene_results.results.compute_pval()
         return
 
-    def gsea(self, gene_set="lake", outdir=None):
-        """Perform GSEA on the correlation."""
+    def gsea(self, gene_set="lake", outdir=None):  # pragma: no cover,
+        # long to process (t > 1 h) - TESTED on run
+        """Perform GSEA on the correlation.
+
+        The function runs a first gsea with the data and then runs the same
+        analysis using the permuted data. The analysis of the permuted data
+        is used ot calculate the p-values for the Enrichment scores (ES).
+
+        :param str gene_set: the gene set to use for the analysis.
+        :param str outdir: the directory where to save the results.
+        """
         assert isinstance(self.gene_results.results, CorrGenes)
         print("Running GSEA...")
         gene_set = get_geneset(gene_set)
@@ -119,11 +129,11 @@ class CorrAnalysis:
         _out_data["matched_genes"] = gsea_results.res2d.values[:, 6]
         _out_data["ledge_genes"] = gsea_results.res2d.values[:, 7]
         out_df = pd.DataFrame.from_dict(_out_data)
-        # TODO: make the output and clean the .csv file
         if outdir is not None:
             outdir = Path(outdir)
             assert outdir.exists()
-            out_df.to_csv(outdir / "gsea_results.tsv", index=False, sep="\t")
+            out_df.to_csv(outdir / "gsea_corr_results.tsv", index=False,
+                          sep="\t")
             for i in range(len(gsea_results.res2d.index)):
                 term = gsea_results.res2d.index[i]
                 gsea_results.results[term]["pval"] = _p_val[i]
@@ -131,10 +141,10 @@ class CorrAnalysis:
                 gseaplot(rank_metric=gsea_results.ranking,
                          term=term,
                          **gsea_results.results[term],
-                         ofname=f"{outdir}/imt_{term}_prerank.pdf")
+                         ofname=f"{outdir}/{term}_corr_prerank.pdf")
 
     # --------- SAVE FUNCTIONS --------- #
-    def save_results(self, outdir):
+    def save_results(self, outdir):  # pragma: no cover, simply saves stuff
         """Save the results to a file."""
         outdir = Path(outdir)
         assert outdir.exists()
