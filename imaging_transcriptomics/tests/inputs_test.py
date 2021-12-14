@@ -56,6 +56,9 @@ def test_load_gene_expression():
     np.testing.assert_almost_equal(expression[0, 0], -.281, decimal=3)
     np.testing.assert_almost_equal(expression[34, 18], 1.199, decimal=3)
     np.testing.assert_almost_equal(expression[39, 13], -3.201, decimal=3)
+
+
+def test_load_gene_expression_cort():
     expression = load_gene_expression(regions="cort")
     assert expression.shape == (34, 15633)
     assert expression.dtype == np.float64

@@ -86,3 +86,68 @@ def test_missing_pls_argument():
     data = np.random.rand(41)
     with pytest.raises(ValueError):
         imt.ImagingTranscriptomics(data, regions="all", method="pls")
+
+
+def test_from_scan_init(tdata_dir):
+    scan = tdata_dir / "MNI152_T1_1mm.nii.gz"
+    imt_instance = imt.ImagingTranscriptomics.from_scan(scan, regions="all",
+                                                        method="corr")
+    assert isinstance(imt_instance, imt.ImagingTranscriptomics)
+    with pytest.raises(ValueError):
+        imt.ImagingTranscriptomics.from_scan(scan, regions="all",
+                                             method="pca")
+    with pytest.raises(ValueError):
+        imt.ImagingTranscriptomics.from_scan(scan, regions="none",
+                                             method="corr")
+
+
+def test_from_scan_errors(tdata_dir):
+    scan = tdata_dir / "MNI152_T1_1mm_brain.nii.gz"
+    with pytest.raises(FileNotFoundError):
+        imt.ImagingTranscriptomics.from_scan(scan, regions="all",
+                                             method="corr")
+
+
+def test_from_file_init(tdata_dir):
+    file = tdata_dir / "test_input.txt"
+    imt_instance = imt.ImagingTranscriptomics.from_file(file, regions="all",
+                                                        method="corr")
+    assert isinstance(imt_instance, imt.ImagingTranscriptomics)
+    with pytest.raises(ValueError):
+        imt.ImagingTranscriptomics.from_file(tdata_dir, regions="all",
+                                             method="corr")
+    with pytest.raises(FileNotFoundError):
+        imt.ImagingTranscriptomics.from_file(tdata_dir / "new_file.txt",
+                                             regions="none", method="corr")
+
+
+def test_permute_data():
+    """Test the permutations method."""
+    data = np.random.rand(41)
+    imt_instance = imt.ImagingTranscriptomics(data, regions="all",
+                                              method="pls", n_components=1)
+    assert imt_instance._permutations is None
+    imt_instance.permute_data()
+    assert imt_instance._permutations is not None
+    assert imt_instance._permutations.shape == (41, 1000)
+    assert imt_instance._permutations.dtype == np.float64
+
+
+def test_permute_data_with_cort():
+    """Test the permutations method."""
+    data = np.random.rand(34)
+    imt_instance = imt.ImagingTranscriptomics(data, regions="cort",
+                                              method="pls", n_components=1)
+    imt_instance.permute_data()
+    assert imt_instance._permutations.shape == (34, 1000)
+    assert imt_instance._permutations.dtype == np.float64
+
+
+def test_make_out_dir(tmpdir):
+    """Test the make_out_dir method."""
+    out_dir = tmpdir / "Imt_"
+    imt_instance = imt.ImagingTranscriptomics(np.random.rand(41),
+                                              regions="all", method="pls",
+                                              n_components=1)
+    imt_instance._make_output_dir(tmpdir)
+    assert out_dir.exists()

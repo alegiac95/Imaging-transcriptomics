@@ -5,13 +5,17 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from fpdf import FPDF
+from enigmatoolbox.utils.parcellation import parcel_to_surface
+from enigmatoolbox.plotting.surface_plotting import plot_cortical, \
+    plot_subcortical
 
 from .errors import CheckPath
 from .genes import GeneResults
+from .transcriptomics import ImagingTranscriptomics
 
 
 class PDF(FPDF):
-    """Class to generate a PDF report for the imaging-transcriptomics script."""
+    """Class to generate a PDF report for the imaging-transcriptomics script"""
 
     def header(self):
         """The header will contain always the title."""
@@ -19,7 +23,8 @@ class PDF(FPDF):
         self.line(10, 50, 200, 50)
         self.set_font("Helvetica", "B", 14)
         self.cell(
-            w=0, h=15, align="C", txt="Imaging Transcriptomics Analysis Report", ln=True
+            w=0, h=15, align="C",
+            txt="Imaging Transcriptomics Analysis Report", ln=True
         )
 
     def analysis_info(self, filename, date, filepath):
@@ -78,8 +83,9 @@ def make_folder(path, folder_name: str):
 
 @CheckPath
 def make_plots(path, limit_x, data_y):
-    """Generate the plots for the explained variance by each component, one with the cumulative sum and one with the
-    variance explained by each individual component.
+    """Generate the plots for the explained variance by each component,
+    one with the cumulative sum and one with the variance explained by each
+    individual component.
 
     :param path: path where the plots will be saved.
     :param limit_x: number of PLS components.
@@ -100,7 +106,8 @@ def make_plots(path, limit_x, data_y):
         colors="lightgrey",
         linestyles="dashed",
     )
-    plt.hlines(varexp[limit_x - 1], 0, limit_x, colors="lightgrey", linestyles="dashed")
+    plt.hlines(varexp[limit_x - 1], 0, limit_x, colors="lightgrey",
+               linestyles="dashed")
     plt.title("Cumulative variance explained by PLS components")
     plt.ylabel("Total explained variance (%)")
     plt.xlabel("Number of PLS components")
@@ -118,6 +125,7 @@ def make_plots(path, limit_x, data_y):
     plt.ylabel("Variance (%)")
     plt.savefig(path / "individual_variance.png", dpi=1200)
     plt.close()
+    return
 
 
 def create_pdf(filepath, save_dir):
@@ -134,62 +142,24 @@ def create_pdf(filepath, save_dir):
 
     report = PDF(orientation="P", unit="mm", format="A4")
     report.add_page()
-    report.analysis_info(filename=filepath.name, date=analysis_date, filepath=filepath)
+    report.analysis_info(filename=filepath.name, date=analysis_date,
+                         filepath=filepath)
     report.pls_regression(path_plots=save_dir)
     report.output(save_dir / "Report.pdf", "F")
 
 
-def create_csv(analysis_results, n_comp, save_dir):
-    """Create .csv files for the results of each component.
-
-    The function creates a different csv file for each of the components used for PLS regression (if 2 components are
-    used the files 'PLS1.csv' and 'PLS2.csv' will be created.
-
-    :param analysis_results: GeneResults data structure with the results of bootstrapping.
-    :param int n_comp: number of components used in the regression.
-    :param save_dir: path where the output will be saved.
-    :return:
-    """
-    if not isinstance(analysis_results, GeneResults):
-        raise TypeError("The data are not of the GeneResults class.")
-    for i in range(n_comp):
-        data = np.vstack(
-            (
-                np.array(analysis_results.boot_results.pls_genes[i].reshape(1, 15633)),
-                np.array(analysis_results.boot_results.z_scores[i]),
-                np.array(analysis_results.boot_results.pval[i]),
-                np.array(analysis_results.boot_results.pval_corrected[i]),
-            )
-        ).T
-        data = pd.DataFrame(data, columns=["Gene ID", "Z", "p", "p corrected"])
-        data.to_csv(save_dir / f"PLS{i+1}.csv", index=False)
-
-
-def create_corr_csv(analysis_results, save_dir):
-    """Create a csv file for the correlation coefficients.
-
-    :param analysis_results: GeneResults data structure with the results of bootstrapping.
-    :param save_dir: path where the output will be saved.
-    :return:
-    """
-    if not isinstance(analysis_results, GeneResults):
-        raise TypeError("The data are not of the GeneResults class.")
-    if not isinstance(save_dir, Path):
-        save_dir = Path(save_dir)
-    data = np.vstack(
-        (
-            np.array(analysis_results.boot_results.pls_genes.reshape(1, 15633)),
-            np.array(analysis_results.original_results.pls_weights),
-            np.array(analysis_results.boot_results.pval),
-            np.array(analysis_results.boot_results.pval_corrected),
-        )
-    ).T
-    data = pd.DataFrame(data, columns=["Gene ID", "Correlation coefficient", "p", "p corrected"])
-    data.to_csv(save_dir / "Correlation_coefficients.csv", index=False)
-
-
 # PLOTTING
 # TODO: add plots for the cortical and subcortical regions
-
-# PDF REPORT
-# TODO: change the pdf from fpdf to reportlab
+def make_surface_plots(data, save_dir):
+    enigma_index = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
+                    13, 14, 15, 16, 17, 18, 19, 20, 21,
+                    22, 23, 24, 25, 26, 27, 28, 29, 30,
+                    31, 32, 33, 34, 75, 71, 74, 73, 69,
+                    72, 70, 35, 36, 37, 38, 39, 40, 41,
+                    42, 43, 44, 45, 46, 47, 48, 49, 50,
+                    51, 52, 53, 54, 55, 56, 57, 58, 59,
+                    60, 61, 62, 63, 64, 65, 66, 67, 68,
+                    82, 79, 81, 80, 76, 79, 77, 83]
+    if data.shape[0] == 83:
+        data = data[enigma_index, :]
+    CT_z_mean = parcel_to_surface(data, "aparc_fsa5")

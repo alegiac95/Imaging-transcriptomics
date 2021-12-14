@@ -2,6 +2,7 @@ import logging.config
 import logging
 import warnings
 from pathlib import Path
+import pickle
 
 import numpy as np
 import yaml
@@ -148,15 +149,17 @@ class ImagingTranscriptomics:
         if not Path(file_path).is_file():
             raise ValueError(f"{file_path} is not a file.")
         scan_data = np.loadtxt(file_path)
+        if scan_data.shape[0] > 41:
+            scan_data = scan_data[:41]
         return cls(scan_data, method=method, regions=regions, **kwargs)
 
     # --------- PROPERTIES --------- #
     @property
-    def method(self):
+    def method(self):  # pragma: no cover, simply returns stuff
         return self._method
 
     @property
-    def gene_results(self):
+    def gene_results(self):  # pragma: no cover, simply returns stuff
         return self.analysis.gene_results
 
     # --------- METHODS --------- #
@@ -215,27 +218,59 @@ class ImagingTranscriptomics:
         self._permutation_ind = _perm_indexes
         return
 
-    @staticmethod
-    def _make_output_dir(output_dir):
-        outdir = Path(output_dir) / "Imt_"
+    def _make_output_dir(self, output_dir, name=""):
+        """Create the output directory if it does not exist.
+
+        :param str output_dir: path to the output directory.
+        :param str name: name of the output directory, if not provided
+        disregard.
+        """
+
+        outdir = Path(output_dir) / f"Imt_{name}_{self.method}"
         outdir.mkdir(exist_ok=True)
         return outdir
 
+    def _save_object(self, outdir, name):
+        """Save the object as a pickle file.
+
+        :param str outdir: path to the output directory.
+        :param str name: name of the output file.
+        """
+        outfile = Path(outdir) / f"{name}.pkl"
+        with open(outfile, "wb") as f:
+            pickle.dump(self, f)
+        return
+
     # --------- RUN ANALYSIS --------- #
-    def run(self, outdir=None, gsea=True, gene_set="lake"):
+    def gsea(self, outdir=None, gene_set="lake"):
+        if self.method == "corr":
+            self.analysis.gsea(gene_set=gene_set, outdir=outdir)
+        elif self.method == "pls":
+            self.gene_results.results.gsea(gene_set=gene_set,
+                                           outdir=outdir)
+
+    def run(self, outdir=None, scan_name="", gsea=True,
+            gene_set="lake", save_res=True):  # pragma: no cover
         """Method to run the imaging transcriptomics analysis.
 
         :param str outdir: path to the output directory, if not provided the
         results will be saved in the current directory.
+        :param str scan_name: name of the scan, if not provided the name will
+        be ignored. Is used only to create the output directory.
         :param bool gsea: if True, run the GSEA analysis, if False the GSEA
         analysis is skipped.
         :param str gene_set: gene set to use for the GSEA analysis.
+        :param bool save_res: if True, save the results in a directory,
+        if False the results are not saved.
         """
         # Create the permuted data matrix
         self.permute_data()
         # Check if the ouput directory is provided and create the output folder
-        if outdir is not None:
-            outdir = self._make_output_dir(outdir)
+        if save_res:
+            if outdir is not None:
+                outdir = self._make_output_dir(outdir, name=scan_name)
+            else:
+                outdir = self._make_output_dir(Path.cwd(), name=scan_name)
         # Run the analysis
         # CORRELATION
         if self._method == "corr":
@@ -252,9 +287,10 @@ class ImagingTranscriptomics:
             self.analysis.bootstrap_correlation(_d, _d_perm,
                                                 self.gene_expression,
                                                 self.gene_labels)
-            self.analysis.save_results(outdir=outdir)
+            if save_res:
+                self.analysis.save_results(outdir=outdir)
             if gsea:
-                self.analysis.gsea(gene_set=gene_set, outdir=outdir)
+                self.gsea(gene_set=gene_set, outdir=outdir)
         # PLS
         elif self._method == "pls":
             # Select the data or slice of data
@@ -279,6 +315,9 @@ class ImagingTranscriptomics:
                                                  _orig,
                                                  self.gene_expression,
                                                  self.gene_labels)
-            self.gene_results.save_results(outdir=outdir)
+            self.gene_results.results.compute()
+            if save_res:
+                self._save_object(outdir, f"{self.method}_analysis")
+                self.analysis.save_results(outdir=outdir)
             if gsea:
-                self.gene_results.gsea(gene_set=gene_set, outdir=outdir)
+                self.gsea(gene_set=gene_set, outdir=outdir)

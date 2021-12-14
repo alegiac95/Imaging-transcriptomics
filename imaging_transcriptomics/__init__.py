@@ -9,3 +9,5 @@ from .inputs import (
     extract_average,
 )
 from .genes import GeneResults
+from .corr import CorrAnalysis
+from .pls import PLSAnalysis
