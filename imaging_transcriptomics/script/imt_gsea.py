@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import imaging_transcriptomics as imt
 import pickle
 import argparse
 from pathlib import Path
@@ -14,7 +13,8 @@ def parse_args():
                                      epilog=EPILOG)
     parser.add_argument("-i", "--input", type=str, required=False,
                         help="Path to the input. This MUST be a pickle file, "
-                             "created by running an imaging transcriptomics "
+                             "(i.e. a file ending in .pkl), created by "
+                             "running an imaging transcriptomics "
                              "analysis with the imagingtranscriptomics "
                              "script.")
     parser.add_argument("-o", "--output", type=str, required=False,
@@ -48,8 +48,7 @@ def main():
     else:
         geneset = parsed.geneset
         if parsed.input is None:
-            print("Please provide an input file.")
-            return
+            raise ValueError("Please provide an input file.")
         infile = Path(parsed.input)
         if not infile.suffix == ".pkl":
             raise ValueError("The input file must be a pickle file.")

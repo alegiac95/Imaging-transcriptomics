@@ -6,3 +6,4 @@ omit =
   imaging_transcriptomics/pls.py
   imaging_transcriptomics/corr.py
   imaging_transcriptomics/genes.py
+  imaging_transcriptomics/script/*

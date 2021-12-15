@@ -250,7 +250,7 @@ class ImagingTranscriptomics:
                                            outdir=outdir)
 
     def run(self, outdir=None, scan_name="", gsea=True,
-            gene_set="lake", save_res=True):  # pragma: no cover
+            gene_set="lake", save_res=True, n_cpu=4):  # pragma: no cover
         """Method to run the imaging transcriptomics analysis.
 
         :param str outdir: path to the output directory, if not provided the
@@ -262,6 +262,8 @@ class ImagingTranscriptomics:
         :param str gene_set: gene set to use for the GSEA analysis.
         :param bool save_res: if True, save the results in a directory,
         if False the results are not saved.
+        :param int n_cpu: number of CPUs to use for the analysis (only for
+        correlation analysis).
         """
         # Create the permuted data matrix
         self.permute_data()
@@ -286,7 +288,8 @@ class ImagingTranscriptomics:
                 _d_perm = self._permutations
             self.analysis.bootstrap_correlation(_d, _d_perm,
                                                 self.gene_expression,
-                                                self.gene_labels)
+                                                self.gene_labels,
+                                                n_cpu=n_cpu)
             if save_res:
                 self.analysis.save_results(outdir=outdir)
             if gsea:

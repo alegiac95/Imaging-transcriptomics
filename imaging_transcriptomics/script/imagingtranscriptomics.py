@@ -35,6 +35,8 @@ def parse_cmdline():
                              "the genesets included in the gseapy package.")
     subparser = parser.add_subparsers(title="method", dest="method")
     parse_corr = subparser.add_parser("corr")
+    parse_corr.add_argument("--cpu", type=int, required=False, default=4,
+                            help="Number of CPUs to use for the analysis.")
     parse_pls = subparser.add_parser("pls")
     pls_group = parse_pls.add_mutually_exclusive_group(required=True)
     pls_group.add_argument("--ncomp", type=int, help="Number of "
@@ -64,6 +66,7 @@ def main():
                 infile,
                 method="corr",
                 regions=regions)
+        n_cpu = parsed.cpu
     elif parsed.method == "pls":
         pls_arg = {
             "n_components": parsed.ncomp,
@@ -79,12 +82,14 @@ def main():
                 infile,
                 method="pls",
                 regions=regions, **pls_arg)
+        n_cpu = 4
     else:
         raise ValueError("Method not recognized")
     transcriptomics.run(outdir,
                         scan_name=input_name,
                         gsea=gsea,
-                        gene_set=geneset)
+                        gene_set=geneset,
+                        n_cpu=n_cpu)
     # PLOTTING and PDF creation
 
 

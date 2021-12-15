@@ -151,15 +151,37 @@ def create_pdf(filepath, save_dir):
 # PLOTTING
 # TODO: add plots for the cortical and subcortical regions
 def make_surface_plots(data, save_dir):
-    enigma_index = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
-                    13, 14, 15, 16, 17, 18, 19, 20, 21,
-                    22, 23, 24, 25, 26, 27, 28, 29, 30,
-                    31, 32, 33, 34, 75, 71, 74, 73, 69,
-                    72, 70, 35, 36, 37, 38, 39, 40, 41,
-                    42, 43, 44, 45, 46, 47, 48, 49, 50,
-                    51, 52, 53, 54, 55, 56, 57, 58, 59,
-                    60, 61, 62, 63, 64, 65, 66, 67, 68,
-                    82, 79, 81, 80, 76, 79, 77, 83]
-    if data.shape[0] == 83:
-        data = data[enigma_index, :]
-    CT_z_mean = parcel_to_surface(data, "aparc_fsa5")
+    # Indexes to match the abagen (DK) order to the enigma
+    enigma_index = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
+                    12, 13, 14, 15, 16, 17, 18, 19, 20,
+                    21, 22, 23, 24, 25, 26, 27, 28, 29,
+                    30, 31, 32, 33, 34, 75, 71, 74, 73,
+                    69, 72, 70, 35, 36, 37, 38, 39, 40,
+                    41, 42, 43, 44, 45, 46, 47, 48, 49,
+                    50, 51, 52, 53, 54, 55, 56, 57, 58,
+                    59, 60, 61, 62, 63, 64, 65, 66, 67,
+                    68, 82, 79, 81, 80, 76, 79, 77, 83], np.int32) - 1
+
+    save_dir = Path(save_dir)
+    filename_cort = save_dir / "cortical_surface.png"
+    # All regions are there, just reorder them
+    if data.shape == (83,):
+        data = data[enigma_index]
+
+    data_cortical = parcel_to_surface(data, "aparc_fsa5")
+    plot_cortical(array_name=data_cortical, surface_name="aparc_fsa5",
+                  size=(800, 400), cmap="Rd_bu_r", color_bar=True,
+                  color_range=(-0.5, 0.5), interactive=False,
+                  screenshot=True, filename=str(filename_cort),
+                  transparent_bg=True, label_text={"top": "Cortical Regions "
+                                                          "z-score"}
+                  )
+
+
+def make_pdf():
+    WIDTH = 210  # mm
+    HEIGHT = 297  # mm
+    MARGIN = 5  # mm
+    report = PDF(orientation="P", unit="mm", format="A4")
+
+    pass

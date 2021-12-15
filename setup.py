@@ -63,8 +63,9 @@ setup(name="imaging-transcriptomics",
                                                 "*.csv", "*.txt", "*.annot"]},
       entry_points={
           "console_scripts": [
-              "imagingtranscriptomics=scripts.imaging_transcriptomics:main",
-              "imt_gsea=scripts.imt_gsea:main",
+              "imagingtranscriptomics=imaging_transcriptomics.script"
+              ".imagingtranscriptomics:main",
+              "imt_gsea=imaging_transcriptomics.script.imt_gsea:main",
           ]
       },
       project_urls={
