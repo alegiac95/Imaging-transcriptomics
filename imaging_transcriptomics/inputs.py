@@ -117,3 +117,28 @@ def get_geneset(gene_set: str):
     else:
         return gene_set
 
+
+def extract_average_all_regions(imaging_matrix):
+    """Extract the average value of the ROIs from the imaging scan.
+
+    The values are extracted from the left hemisphere only, since the data of
+    the Allen Human Brain Atlas are available for that hemisphere only for
+    all donors.
+
+    :param imaging_matrix: matrix with the voxels of the image.
+
+    :return: numpy array with the average value from 41 brain regions.
+    """
+    logger.debug("Extracting average from scan.")
+    atlas_data = nib.load(
+        Path(__file__).resolve().parent
+        / "data"
+        / "atlas-desikankilliany_1mm_MNI152.nii.gz"
+    ).get_fdata()
+    n_regions = int(max(atlas_data.flatten()))
+    print(n_regions)
+    data = np.zeros(n_regions)
+    for i in range(1, n_regions + 1):
+        data[i - 1] = np.mean(imaging_matrix[np.where(atlas_data == i)])
+    logger.debug("Extracted values are: \n%s", data)
+    return np.array(data)
