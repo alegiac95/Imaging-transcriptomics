@@ -4,6 +4,7 @@ import pickle
 import argparse
 from pathlib import Path
 import gseapy
+import nibabel.nifti1
 
 
 def parse_args():

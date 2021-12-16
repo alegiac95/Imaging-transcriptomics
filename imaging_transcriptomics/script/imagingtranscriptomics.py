@@ -6,8 +6,13 @@ from pathlib import Path
 
 
 def parse_cmdline():
-    DESCRIPTION = ""
-    EPILOG = ""
+    DESCRIPTION = """Perform imaging transcriptomics analysis of a 
+    neuroimaging data."""
+    EPILOG = """
+    If you use this software in your work, please cite:
+    
+    * 
+    """
     parser = argparse.ArgumentParser(description=DESCRIPTION,
                                      epilog=EPILOG)
     # IO arguments
@@ -61,7 +66,8 @@ def main():
                 infile,
                 method="corr",
                 regions=regions)
-        elif str().join(infile.suffixes) in [".nii", ".nii.gz"]:
+        elif str().join(infile.suffixes) in [
+            ".nii", ".nii.gz"]:
             transcriptomics = imt.ImagingTranscriptomics.from_scan(
                 infile,
                 method="corr",

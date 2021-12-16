@@ -171,6 +171,7 @@ class ImagingTranscriptomics:
         :param int n_permutations: number of permutations.
 
         """
+        logger.info("Permuting data.")
         _permuted = np.zeros((self.zscore_data.shape[0], n_permutations))
         _perm_indexes = np.zeros((self.zscore_data.shape[0],
                                   n_permutations), dtype=np.int32)
@@ -225,7 +226,6 @@ class ImagingTranscriptomics:
         :param str name: name of the output directory, if not provided
         disregard.
         """
-
         outdir = Path(output_dir) / f"Imt_{name}_{self.method}"
         outdir.mkdir(exist_ok=True)
         return outdir
@@ -265,6 +265,7 @@ class ImagingTranscriptomics:
         :param int n_cpu: number of CPUs to use for the analysis (only for
         correlation analysis).
         """
+        logger.info(f"Running the {self.method} analysis.")
         # Create the permuted data matrix
         self.permute_data()
         # Check if the ouput directory is provided and create the output folder

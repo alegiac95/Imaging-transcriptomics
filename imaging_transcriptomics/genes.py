@@ -12,6 +12,7 @@ from gseapy.plot import gseaplot
 import pandas as pd
 from .inputs import get_geneset
 
+
 cfg_file_path = Path(__file__).parent / "log_config.yaml"
 with open(cfg_file_path, "r") as config_file:
     log_cfg = yaml.safe_load(config_file.read())
@@ -110,6 +111,7 @@ class PLSGenes:
         :param gene_exp: gene expression data.
         :param gene_labels: gene labels.
         """
+        logger.info("Performing bootstrapping of the genes.")
 
         def correlate(c1, c2):
             """Return the MATLAB style correlation between two vectors."""
@@ -163,8 +165,8 @@ class PLSGenes:
         weights, orders the weights in descending order and then calculates
         the p-values and corrects for multiple comparisons using the
         Benjamini-Hochberg method.
-
         """
+        logger.info("Calculating statistics.")
         for component in range(self.n_components):
             # Calculate the standard deviation of all the wights
             self.boot.std[component, :] = self.boot.weights[component, :,
@@ -190,6 +192,7 @@ class PLSGenes:
         """Perform a GSEA analysis on the z-scored weights."""
         assert isinstance(self.orig, OrigPLS)
         assert isinstance(self.boot, BootPLS)
+        logger.info("Performing GSEA.")
         gene_set = get_geneset(gene_set)
         for _component in range(self.n_components):
             gene_list = [gene for gene in self.orig.genes[
@@ -218,9 +221,9 @@ class PLSGenes:
             for i in range(_origin_es.shape[0]):
                 _p_val[i] = np.sum(_boot_es[i, :] >= _origin_es[i]) / 1000
             # calculate the p-value corrected
-            _, _p_corr, _, _ = multipletests(_p_val, method='fdr_bh')
+            _, _p_corr, _, _ = multipletests(_p_val, method='fdr_bh',
+                               is_sorted=False)
             # Prepare data to save
-            print("Prepare data...")
             _out_data = OrderedDict()
             _out_data["Term"] = gsea_results.res2d.axes[0].to_list()
             _out_data["es"] = gsea_results.res2d.values[:, 0]
@@ -232,8 +235,8 @@ class PLSGenes:
             _out_data["matched_genes"] = gsea_results.res2d.values[:, 6]
             _out_data["ledge_genes"] = gsea_results.res2d.values[:, 7]
             out_df = pd.DataFrame.from_dict(_out_data)
-            # TODO: make the output and clean the .csv file
             if outdir is not None:
+                logger.info("Saving GSEA results.")
                 outdir = Path(outdir)
                 assert outdir.exists()
                 out_df.to_csv(
@@ -356,7 +359,7 @@ class CorrGenes:
         # This calculation assumes that the order of the genes is the same
         # in both the original and the bootstrapped list. IF one is ordered,
         # make sure the order of the other is the same.
-        print("compute pval")
+        logger.info("Computing p values.")
         for i in range(self.n_genes):
             self.pval[0, i] = np.sum(
                 self.boot_corr[i, :] >= self.corr[0, i]) / self._n_iter
@@ -377,7 +380,7 @@ class CorrGenes:
         """Order the genes in the list of genes. Both the order of the
         order of the bootstrapped genes are ordered.
         """
-        print("sort genes")
+        logger.info("Sorting genes in ascending order.")
         self._index = np.argsort(self.corr, axis=1, kind='mergesort')
         self.corr[0, :] = self.corr[0, self._index]
         self.genes[:] = self.genes[self._index]
