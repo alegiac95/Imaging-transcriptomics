@@ -2,8 +2,19 @@ import numpy as np
 from pyls import pls_regression
 import pandas as pd
 
-from tqdm import tqdm
 from .genes import GeneResults, PLSGenes
+from pathlib import Path
+import yaml
+import logging.config
+import logging
+
+cfg_file_path = Path(__file__).parent / "log_config.yaml"
+with open(cfg_file_path, "r") as config_file:
+    log_cfg = yaml.safe_load(config_file.read())
+
+logging.config.dictConfig(log_cfg)
+logger = logging.getLogger("genes")
+logger.setLevel(logging.DEBUG)
 
 np.random.seed(1234)
 
@@ -93,6 +104,7 @@ class PLSAnalysis:
         :param gene_exp: gene expression data.
         """
         # Iterate over the components
+        logger.info(f"Calculating PLS with permuted data")
         for component in range(1, self.n_components + 1):
             _res = pls_regression(gene_exp, imaging_data.reshape(
                 imaging_data.shape[0], 1),
@@ -103,9 +115,7 @@ class PLSAnalysis:
             _R = _temp[component - 1]
             _R_sq = np.zeros(1000)
             # Iterate over the permutations
-            for i in tqdm(range(1000),
-                          desc=f"Bootstrapping on PLS component {component}",
-                          unit=" iterations"):
+            for i in range(1000):
                 y_data = permuted_imaging[:, i].reshape(
                     imaging_data.shape[0], 1)
                 _res = pls_regression(gene_exp, y_data, n_components=component,
@@ -115,7 +125,18 @@ class PLSAnalysis:
             # Set the results
             self.r2[component - 1] = _R
             self.p_val[component - 1] = np.sum(_R_sq >= _R) / 1000
+        self.print_table()
         return
+
+    def print_table(self):
+        print("+-----------+----------------+-------+")
+        print("| Component | Cumulative var | p val |")
+        print("|-----------|----------------|-------|")
+        for i in range(self.p_val.shape[0]):
+            print("|     {}     |      {:.3f}     | {} |".format(
+                i + 1, self.r2[i], self.p_val[i]))
+        print("+-----------+----------------+-------+")
+        print("")
 
     def save_results(self, outdir=None):
         """Save the results of the PLS regression.

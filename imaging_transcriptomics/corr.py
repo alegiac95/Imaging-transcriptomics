@@ -12,8 +12,19 @@ import gseapy
 from gseapy.plot import gseaplot
 from .genes import GeneResults, CorrGenes
 from .inputs import get_geneset
+import yaml
+import logging
+import logging.config
 
 np.random.seed(1234)
+
+cfg_file_path = Path(__file__).parent / "log_config.yaml"
+with open(cfg_file_path, "r") as config_file:
+    log_cfg = yaml.safe_load(config_file.read())
+
+logging.config.dictConfig(log_cfg)
+logger = logging.getLogger("genes")
+logger.setLevel(logging.DEBUG)
 
 
 # --------- CORR ANALYSIS --------- #
@@ -55,13 +66,14 @@ class CorrAnalysis:
         :param int n_cpu: the number of CPUs to use for the parallelization
         """
         assert isinstance(self.gene_results.results, CorrGenes)
+        logger.info("Calculating correlation on original data.")
         for i in range(self.gene_results.n_genes):
             self.gene_results.results.corr[0, i], _ = spearmanr(
                 imaging_data, gene_exp[:, i])
         pool = Pool(n_cpu)
         _ind = product(range(1000), range(self.gene_results.n_genes))
 
-        print("Performing bootstrapping...")
+        logger.info("Calculating correlation on permuted data.")
         for ind, res in enumerate(pool.imap(partial(_spearman_op,
                                                     permuted=permuted_imaging,
                                                     y=gene_exp),
@@ -84,7 +96,7 @@ class CorrAnalysis:
         :param str outdir: the directory where to save the results.
         """
         assert isinstance(self.gene_results.results, CorrGenes)
-        print("Running GSEA...")
+        logger.info("Performing GSEA.")
         gene_set = get_geneset(gene_set)
         # prepare the gene_list as a list of strings
         gene_list = [
@@ -117,7 +129,6 @@ class CorrAnalysis:
         # calculate the p-value corrected
         _, _p_corr, _, _ = multipletests(_p_val, method='fdr_bh')
         # Prepare data to save
-        print("Prepare data...")
         _out_data = OrderedDict()
         _out_data["Term"] = gsea_results.res2d.axes[0].to_list()
         _out_data["es"] = gsea_results.res2d.values[:, 0]
@@ -130,6 +141,7 @@ class CorrAnalysis:
         _out_data["ledge_genes"] = gsea_results.res2d.values[:, 7]
         out_df = pd.DataFrame.from_dict(_out_data)
         if outdir is not None:
+            logger.info("Saving GSEA results.")
             outdir = Path(outdir)
             assert outdir.exists()
             out_df.to_csv(outdir / "gsea_corr_results.tsv", index=False,
@@ -149,6 +161,7 @@ class CorrAnalysis:
         outdir = Path(outdir)
         assert outdir.exists()
         # Create the data to save
+        logger.info("Saving results.")
         data_to_save = zip(self.gene_results.results.genes[:, 0],
                            self.gene_results.results.corr[0, :],
                            self.gene_results.results.pval[0, :],
