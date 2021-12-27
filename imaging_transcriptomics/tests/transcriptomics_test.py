@@ -145,9 +145,9 @@ def test_permute_data_with_cort():
 
 def test_make_out_dir(tmpdir):
     """Test the make_out_dir method."""
-    out_dir = tmpdir / "Imt_"
+    out_dir = tmpdir / "Imt_test_pls"
     imt_instance = imt.ImagingTranscriptomics(np.random.rand(41),
                                               regions="all", method="pls",
                                               n_components=1)
-    imt_instance._make_output_dir(tmpdir)
+    imt_instance._make_output_dir(tmpdir, "test")
     assert out_dir.exists()
