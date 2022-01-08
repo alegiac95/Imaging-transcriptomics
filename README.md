@@ -67,13 +67,18 @@ imagingtranscriptomics options
 
 The `options` available are:
 - `-i (--input)`: Path to the imaging file to analise. The path should be given to the program as an absolute path (e.g., `/Users/myusername/Documents/my_scan.nii`, since a relative path could raise permission errors and crashes. The script only accepts imaging files in the NIfTI format (`.nii`, `.nii.gz`).
-- `-v (--variance)`: Amount of variance that the PLS components must explain. This _MUST_ be in the range 0-100.
-    > *__NOTE__*: if the variance given as input is in the range 0-1  the script will treat this as 30% the same way as if the number was in the range 10-100 (e.g., the script treats the inputs `-v 30` and `-v 0.3` in the exact same way and the resulting components will explain 30% of the variance).
-- `-n (--ncomp)`: Number of components to be used in the PLS regression. The number _MUST_ be in the range 1-15.
-- `--corr`: Run the analysis using Spearman correlation instead of PLS. 
-   > *__NOTE__*: if you run with the `--corr` command no other input is required, apart from the input scan (`-i`).
 - `-o (--output)` *(optional)*: Path where to save the results. If none is provided the results will be saved in the same directory as the input scan.
-> *__WARNING__*: The `-i` flag is _MANDATORY_ to run the script, and so is one, and only one, of the `-n` or `-v` flags. These last two are mutually exclusive, meaning that _ONLY_ one of the two has to be given as input.
+- `-r` *(optional)*: Regions of the brain to use for the estimation. Can be either "cort+sub" (or equivalently "all") to use all regions or "cort" to use only cortical regions.
+- `--no-gsea` *(optional)*: If this option is provided the GSEA analysis will not be performed.
+- `--geneset` *(optional)*: Name of the geneset to use to run GSEA. The 
+  full list is available in the documentation or by running the `imt_gsea 
+  avail` command.
+Additionally to the above options two specific commands (required) are available:
+- `corr`: To run the correlation analysis.
+- `pls`: To run the PLS analysis. If you choose to run the pls analysis 
+  there are two additional options available:
+  - `--ncomp`: number of components to use in the PLS analysis.
+  - `--var`: variance to estimate from the data.
 
 ### Part of Python script
 
