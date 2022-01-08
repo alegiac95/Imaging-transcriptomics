@@ -62,7 +62,7 @@ Once installed the software can be used in two ways:
 ---
 To run the standalone script from the terminal use the command:
 ```shell
-imagingtranscriptomics options
+imagingtranscriptomics options {corr, pls}
 ```
 
 The `options` available are:
@@ -120,7 +120,12 @@ For any problems with the software you can [open an issue in GitHub](https://git
 
 If you publish work using `imaging-transcriptomics` as part of your analysis please cite:
 
->*Imaging transcriptomics: Convergent cellular, transcriptomic, and molecular neuroimaging signatures in the healthy adult human brain.* Daniel Martins, Alessio Giacomel, Steven CR Williams, Federico Turkheimer, Ottavia Dipasquale, Mattia Veronese, PET templates working group. bioRxiv 2021.06.18.448872; doi: [https://doi.org/10.1101/2021.06.18.448872](https://doi.org/10.1101/2021.06.18.448872)
+>*Imaging transcriptomics: Convergent cellular, transcriptomic, and 
+> molecular neuroimaging signatures in the healthy adult human brain.* 
+> Daniel Martins, Alessio Giacomel, Steven CR Williams, Federico Turkheimer,
+> Ottavia Dipasquale, Mattia Veronese, PET templates working group. Cell 
+> Reports; doi: [https://doi.org/10.1016/j.celrep.2021.110173]
+> (https://doi.org/10.1016/j.celrep.2021.110173)
 
 
 >*Imaging-transcriptomics: python package (v1.0.0).* Alessio Giacomel, Daniel Martins.
