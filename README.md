@@ -1,9 +1,9 @@
 # Imaging Transcriptomics
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5726839.svg)](https://doi.org/10.5281/zenodo.5726839)
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-red.svg)](https://www.gnu.org/licenses/gpl-3.0)
-[![Maintainer](https://img.shields.io/badge/maintainer-alegiac95-orange)](https://github.com/alegiac95)
-[![Generic badge](https://img.shields.io/badge/python->=3.6-yellow.svg)](https://www.python.org/doc/versions/)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![Maintainer](https://img.shields.io/badge/maintainer-alegiac95-blue)](https://github.com/alegiac95)
+[![Generic badge](https://img.shields.io/badge/python->=3.6-blue.svg)](https://www.python.org/doc/versions/)
 [![Documentation Status](https://readthedocs.org/projects/imaging-transcriptomics/badge/?version=latest)](https://imaging-transcriptomics.readthedocs.io/en/latest/?badge=latest)
 
 
@@ -62,18 +62,23 @@ Once installed the software can be used in two ways:
 ---
 To run the standalone script from the terminal use the command:
 ```shell
-imagingtranscriptomics options
+imagingtranscriptomics options {corr, pls}
 ```
 
 The `options` available are:
 - `-i (--input)`: Path to the imaging file to analise. The path should be given to the program as an absolute path (e.g., `/Users/myusername/Documents/my_scan.nii`, since a relative path could raise permission errors and crashes. The script only accepts imaging files in the NIfTI format (`.nii`, `.nii.gz`).
-- `-v (--variance)`: Amount of variance that the PLS components must explain. This _MUST_ be in the range 0-100.
-    > *__NOTE__*: if the variance given as input is in the range 0-1  the script will treat this as 30% the same way as if the number was in the range 10-100 (e.g., the script treats the inputs `-v 30` and `-v 0.3` in the exact same way and the resulting components will explain 30% of the variance).
-- `-n (--ncomp)`: Number of components to be used in the PLS regression. The number _MUST_ be in the range 1-15.
-- `--corr`: Run the analysis using Spearman correlation instead of PLS. 
-   > *__NOTE__*: if you run with the `--corr` command no other input is required, apart from the input scan (`-i`).
 - `-o (--output)` *(optional)*: Path where to save the results. If none is provided the results will be saved in the same directory as the input scan.
-> *__WARNING__*: The `-i` flag is _MANDATORY_ to run the script, and so is one, and only one, of the `-n` or `-v` flags. These last two are mutually exclusive, meaning that _ONLY_ one of the two has to be given as input.
+- `-r` *(optional)*: Regions of the brain to use for the estimation. Can be either "cort+sub" (or equivalently "all") to use all regions or "cort" to use only cortical regions.
+- `--no-gsea` *(optional)*: If this option is provided the GSEA analysis will not be performed.
+- `--geneset` *(optional)*: Name of the geneset to use to run GSEA. The 
+  full list is available in the documentation or by running the `imt_gsea 
+  avail` command.
+Additionally to the above options two specific commands (required) are available:
+- `corr`: To run the correlation analysis.
+- `pls`: To run the PLS analysis. If you choose to run the pls analysis 
+  there are two additional options available:
+  - `--ncomp`: number of components to use in the PLS analysis.
+  - `--var`: variance to estimate from the data.
 
 ### Part of Python script
 
@@ -92,10 +97,12 @@ import imaging_transcriptomics as imt
 my_data = np.ones(41)  # MUST be of size 41 
                        # (corresponds to the regions in left hemisphere of the DK atlas)
 
-analysis = imt.ImagingTranscriptomics(my_data, n_components=1)
-analysis.run()
+analysis = imt.ImagingTranscriptomics(my_data, method="pls", n_components=1,
+                                      regions="cort+sub")
+analysis.run(gsea=False)
 # If instead of running PLS you want to analysze the data with correlation you can run the analysis with:
-analysis.run(method="corr")
+analysis = imt.ImagingTranscriptomics(my_data, method="corr", 
+                                      regions="cort+sub")
 ```
 
 Once completed the results will be part of the `analysis` object and can be accessed with `analysis.gene_results`.
@@ -115,7 +122,12 @@ For any problems with the software you can [open an issue in GitHub](https://git
 
 If you publish work using `imaging-transcriptomics` as part of your analysis please cite:
 
->*Imaging transcriptomics: Convergent cellular, transcriptomic, and molecular neuroimaging signatures in the healthy adult human brain.* Daniel Martins, Alessio Giacomel, Steven CR Williams, Federico Turkheimer, Ottavia Dipasquale, Mattia Veronese, PET templates working group. bioRxiv 2021.06.18.448872; doi: [https://doi.org/10.1101/2021.06.18.448872](https://doi.org/10.1101/2021.06.18.448872)
+>*Imaging transcriptomics: Convergent cellular, transcriptomic, and 
+> molecular neuroimaging signatures in the healthy adult human brain.* 
+> Daniel Martins, Alessio Giacomel, Steven CR Williams, Federico Turkheimer,
+> Ottavia Dipasquale, Mattia Veronese, PET templates working group. Cell 
+> Reports; doi: [https://doi.org/10.1016/j.celrep.2021.110173]
+> (https://doi.org/10.1016/j.celrep.2021.110173)
 
 
 >*Imaging-transcriptomics: Second release update (v1.0.2)*.Alessio Giacomel, & Daniel Martins. (2021). Zenodo. https://doi.org/10.5281/zenodo.5726839
