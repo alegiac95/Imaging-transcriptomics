@@ -168,5 +168,7 @@ Network Trash Folder
 Temporary Items
 .apdisk
 
+# Strange directories or locally installed packages to ignore
 .idea/
-
+src/
+pyls/
