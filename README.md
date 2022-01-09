@@ -130,5 +130,4 @@ If you publish work using `imaging-transcriptomics` as part of your analysis ple
 > (https://doi.org/10.1016/j.celrep.2021.110173)
 
 
->*Imaging-transcriptomics: python package (v1.0.0).* Alessio Giacomel, Daniel Martins.
-  Zenodo 2021. [https://doi.org/10.5281/zenodo.5507506](https://doi.org/10.5281/zenodo.5507506)
+>*Imaging-transcriptomics: Second release update (v1.0.2)*.Alessio Giacomel, & Daniel Martins. (2021). Zenodo. https://doi.org/10.5281/zenodo.5726839
