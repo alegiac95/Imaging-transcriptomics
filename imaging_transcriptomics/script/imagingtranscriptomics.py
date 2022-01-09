@@ -11,7 +11,12 @@ def parse_cmdline():
     EPILOG = """
     If you use this software in your work, please cite:
     
-    * 
+    * Imaging transcriptomics: Convergent cellular, transcriptomic, 
+    and molecular neuroimaging signatures in the healthy adult human brain.* 
+    Daniel Martins, Alessio Giacomel, Steven CR Williams, Federico Turkheimer,
+    Ottavia Dipasquale, Mattia Veronese, PET templates working group. Cell 
+    Reports; doi: [https://doi.org/10.1016/j.celrep.2021.110173]
+    (https://doi.org/10.1016/j.celrep.2021.110173)
     """
     parser = argparse.ArgumentParser(description=DESCRIPTION,
                                      epilog=EPILOG)
