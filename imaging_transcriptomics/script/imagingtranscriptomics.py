@@ -97,6 +97,11 @@ def main():
                         gene_set=geneset,
                         n_cpu=n_cpu)
     # PLOTTING and PDF creation
+    imt.reporting.make_pdf(transcriptomics_data=transcriptomics,
+                           save_dir=Path(outdir) / f"Imt_{input_name}_"
+                                                   f"{transcriptomics.method}",
+                           name=str(input_name),
+                           scanname=str(infile.name))
 
 
 if __name__ == "__main__":

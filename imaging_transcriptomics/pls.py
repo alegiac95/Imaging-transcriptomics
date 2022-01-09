@@ -141,7 +141,7 @@ class PLSAnalysis:
     def save_results(self, outdir=None):
         """Save the results of the PLS regression.
 
-        :param oudtir: output directory.
+        :param outdir: output directory.
         """
         assert isinstance(self.gene_results.results, PLSGenes)
         for i in range(self.n_components):

@@ -97,10 +97,12 @@ import imaging_transcriptomics as imt
 my_data = np.ones(41)  # MUST be of size 41 
                        # (corresponds to the regions in left hemisphere of the DK atlas)
 
-analysis = imt.ImagingTranscriptomics(my_data, n_components=1)
-analysis.run()
+analysis = imt.ImagingTranscriptomics(my_data, method="pls", n_components=1,
+                                      regions="cort+sub")
+analysis.run(gsea=False)
 # If instead of running PLS you want to analysze the data with correlation you can run the analysis with:
-analysis.run(method="corr")
+analysis = imt.ImagingTranscriptomics(my_data, method="corr", 
+                                      regions="cort+sub")
 ```
 
 Once completed the results will be part of the `analysis` object and can be accessed with `analysis.gene_results`.
