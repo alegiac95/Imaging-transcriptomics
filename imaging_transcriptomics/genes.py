@@ -193,7 +193,11 @@ class PLSGenes:
         assert isinstance(self.orig, OrigPLS)
         assert isinstance(self.boot, BootPLS)
         logger.info("Performing GSEA.")
-        gene_set = get_geneset(gene_set)
+        if Path(gene_set).exists() and Path(gene_set).is_file() and Path(
+                gene_set).suffix == ".gmt":
+            gene_set = Path(gene_set)
+        else:
+            gene_set = get_geneset(gene_set)
         for _component in range(self.n_components):
             gene_list = [gene for gene in self.orig.genes[
                                           _component, :]]
