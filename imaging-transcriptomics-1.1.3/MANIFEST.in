@@ -1,0 +1,6 @@
+include imaging_transcriptomics/data/*
+include imaging_transcriptomics/resources/*
+include requirements.txt
+include ./**/*.yaml
+include imaging_transcriptomics/script/*
+include imaging_transcriptomics/*

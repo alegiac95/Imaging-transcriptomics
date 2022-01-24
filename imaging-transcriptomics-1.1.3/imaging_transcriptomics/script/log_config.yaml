@@ -1,0 +1,36 @@
+---
+version: 1
+
+formatters:
+  simple:
+    format: "[%(levelname)s] %(asctime)s: %(message)s"
+    timefmt: "%Y-%m-%dT%H:%M:%S"
+
+  extended:
+    format: "[%(levelname)s] %(asctime)s: %(name)s - %(funcName)s - %(lineno)d - %(message)s"
+    timefmt: "%Y-%m-%dT%H:%M:%S"
+
+
+handlers:
+  console_info:
+    class: logging.StreamHandler
+    formatter: simple
+    level: INFO
+
+  console_warning:
+    class: logging.StreamHandler
+    level: WARNING
+    formatter: simple
+
+  console_verbose:
+    class: logging.StreamHandler
+    level: DEBUG
+    formatter: simple
+
+loggers:
+  info:
+    handlers: [console_info]
+  verbose:
+    handlers: [console_verbose]
+  warning:
+    handlers: [console_warning]
