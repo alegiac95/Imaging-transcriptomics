@@ -84,8 +84,9 @@ class CorrAnalysis:
         self.gene_results.results.compute_pval()
         return
 
-    def gsea(self, gene_set="lake", outdir=None):  # pragma: no cover,
-        # long to process (t > 1 h) - TESTED on run
+    def gsea(self, gene_set="lake", outdir=None,
+             gene_limit=500):  # pragma: no cover, long to process (t > 1 h)
+                                # - TESTED on run
         """Perform GSEA on the correlation.
 
         The function runs a first gsea with the data and then runs the same
@@ -108,7 +109,8 @@ class CorrAnalysis:
         gsea_results = gseapy.prerank(rnk, gene_set,
                                       outdir=None,
                                       permutation_num=1000,
-                                      seed=1234)
+                                      seed=1234,
+                                      max_size=gene_limit)
         _origin_es = gsea_results.res2d.es.to_numpy()
         _boot_es = np.zeros((_origin_es.shape[0], 1000))
         # perform the GSEA on the permutations
@@ -120,7 +122,8 @@ class CorrAnalysis:
                                        permutation_num=1,
                                        no_plot=True,
                                        outdir=None,
-                                       seed=1234)
+                                       seed=1234,
+                                       max_size=gene_limit)
             _boot_es[:, i] = _gsea_res.res2d.es.to_numpy()
         # calculate the p-value
         _p_val = np.zeros((_origin_es.shape[0],))

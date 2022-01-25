@@ -188,7 +188,7 @@ class PLSGenes:
             self.boot.pval_corr[component, :] = _p_corr
         return
 
-    def gsea(self, gene_set="lake", outdir=None):
+    def gsea(self, gene_set="lake", outdir=None, gene_limit=500):
         """Perform a GSEA analysis on the z-scored weights."""
         assert isinstance(self.orig, OrigPLS)
         assert isinstance(self.boot, BootPLS)
@@ -206,7 +206,8 @@ class PLSGenes:
             gsea_results = gseapy.prerank(rnk, gene_set,
                                           outdir=None,
                                           seed=1234,
-                                          permutation_num=1000)
+                                          permutation_num=1000,
+                                          max_size=gene_limit)
             _origin_es = gsea_results.res2d.es.to_numpy()
             _boot_es = np.zeros((_origin_es.shape[0], 1000))
             for i in range(1000):
@@ -219,7 +220,8 @@ class PLSGenes:
                 gsea_res = gseapy.prerank(rnk, gene_set,
                                           outdir=None,
                                           seed=1234,
-                                          permutation_num=1)
+                                          permutation_num=1,
+                                          max_size=gene_limit)
                 _boot_es[:, i] = gsea_res.res2d.es.to_numpy()
             _p_val = np.zeros((_origin_es.shape[0],))
             for i in range(_origin_es.shape[0]):
