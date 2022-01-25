@@ -48,6 +48,11 @@ pip install imaging-transcriptomics
 ```
 
 
+> **WARNING** At this time the package has some problems running on Mac 
+> computers that have the M1 chip instead of the Intel ones. The problem is 
+> not due to the package but on the chip architecture in running Python. 
+> We're currently working to test some solution for this.
+
 ## Usage
 
 
