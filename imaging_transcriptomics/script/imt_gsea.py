@@ -60,7 +60,7 @@ def main():
         with open(infile, "rb") as f:
             transcriptomics = pickle.load(f)
         transcriptomics.gsea(outdir=outdir, gene_set=geneset,
-                             max_genes=parsed.max_genes)
+                             gene_limit=parsed.max_genes)
 
 
 if __name__ == '__main__':

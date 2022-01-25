@@ -105,7 +105,7 @@ def main():
                         gsea=gsea,
                         gene_set=geneset,
                         n_cpu=n_cpu,
-                        gene_limit=parsed.gene_limit)
+                        gene_limit=parsed.max_genes)
     # PLOTTING and PDF creation
     imt.reporting.make_pdf(transcriptomics_data=transcriptomics,
                            save_dir=Path(outdir) / f"Imt_{input_name}_"
