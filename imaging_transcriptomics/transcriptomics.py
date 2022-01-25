@@ -297,6 +297,7 @@ class ImagingTranscriptomics:
                                                 self.gene_labels,
                                                 n_cpu=n_cpu)
             if save_res:
+                self._save_object(outdir, f"{self.method}_analysis")
                 self.analysis.save_results(outdir=outdir)
             if gsea:
                 self.gsea(gene_set=gene_set, outdir=outdir)
