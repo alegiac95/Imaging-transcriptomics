@@ -242,12 +242,15 @@ class ImagingTranscriptomics:
         return
 
     # --------- RUN ANALYSIS --------- #
-    def gsea(self, outdir=None, gene_set="lake"):
+    def gsea(self, outdir=None, gene_set="lake", gene_limit=500):
+
         if self.method == "corr":
-            self.analysis.gsea(gene_set=gene_set, outdir=outdir)
+            self.analysis.gsea(gene_set=gene_set, outdir=outdir,
+                               gene_limit=gene_limit)
         elif self.method == "pls":
             self.gene_results.results.gsea(gene_set=gene_set,
-                                           outdir=outdir)
+                                           outdir=outdir,
+                                           gene_limit=gene_limit)
 
     def run(self, outdir=None, scan_name="", gsea=True,
             gene_set="lake", save_res=True, n_cpu=4):  # pragma: no cover

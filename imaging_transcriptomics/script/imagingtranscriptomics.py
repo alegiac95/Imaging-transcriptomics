@@ -43,6 +43,10 @@ def parse_cmdline():
                         help="geneset to use for the GSEA analysis. Can be "
                              "either 'lake' (default), 'pooled' or any of "
                              "the genesets included in the gseapy package.")
+    parser.add_argument("--max_genes", type=int, required=False,
+                        default=500,
+                        help="Maximum number of genes to use in the "
+                             "analysis. Default is 500.")
     subparser = parser.add_subparsers(title="method", dest="method")
     parse_corr = subparser.add_parser("corr")
     parse_corr.add_argument("--cpu", type=int, required=False, default=4,
@@ -100,7 +104,8 @@ def main():
                         scan_name=input_name,
                         gsea=gsea,
                         gene_set=geneset,
-                        n_cpu=n_cpu)
+                        n_cpu=n_cpu,
+                        gene_limit=parsed.gene_limit)
     # PLOTTING and PDF creation
     imt.reporting.make_pdf(transcriptomics_data=transcriptomics,
                            save_dir=Path(outdir) / f"Imt_{input_name}_"

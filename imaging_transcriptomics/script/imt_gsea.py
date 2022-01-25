@@ -4,7 +4,6 @@ import pickle
 import argparse
 from pathlib import Path
 import gseapy
-import nibabel.nifti1
 
 
 def parse_args():
@@ -35,6 +34,10 @@ def parse_args():
                              "gseapy package. If you want to see all the "
                              "available gene sets, please run the "
                              "'imt_gsea -g avail' command.")
+    parser.add_argument("-m", "--max_genes", type=int, required=False,
+                        default=500,
+                        help="Maximum number of genes to use in the "
+                             "analysis. Default is 500.")
 
     return parser.parse_args()
 
@@ -56,7 +59,8 @@ def main():
         outdir = Path(parsed.output) if parsed.output else infile.parent
         with open(infile, "rb") as f:
             transcriptomics = pickle.load(f)
-        transcriptomics.gsea(outdir=outdir, gene_set=geneset)
+        transcriptomics.gsea(outdir=outdir, gene_set=geneset,
+                             max_genes=parsed.max_genes)
 
 
 if __name__ == '__main__':
