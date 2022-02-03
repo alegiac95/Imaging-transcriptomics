@@ -35,6 +35,7 @@ def _spearman_op(idx, permuted, y):  # pragma: no cover, used for multiprocess
     return spearmanr(permuted[:, idx[0]], y[:, idx[1]])[0]
 
 
+@numba.njit()
 def rank_array(array):
     _args = array.argsort()
     ranked = np.empty_like(array)
@@ -186,10 +187,10 @@ class CorrAnalysis:
         assert outdir.exists()
         # Create the data to save
         logger.info("Saving results.")
-        data_to_save = zip(self.gene_results.results.genes[:, 0],
-                           self.gene_results.results.corr[0, :],
-                           self.gene_results.results.pval[0, :],
-                           self.gene_results.results.pval_corr[0, :])
+        data_to_save = zip(self.gene_results.results.genes[:, 0][::-1],
+                           self.gene_results.results.corr[0, :][::-1],
+                           self.gene_results.results.pval[0, :][::-1],
+                           self.gene_results.results.pval_corr[0, :][::-1])
         # Save the data
         pd.DataFrame(
             data_to_save, columns=["Gene", "Corr", "Pval", "Pval_corr"]
