@@ -15,6 +15,7 @@ from .inputs import get_geneset
 import yaml
 import logging
 import logging.config
+import numba
 
 np.random.seed(1234)
 
@@ -32,6 +33,26 @@ def _spearman_op(idx, permuted, y):  # pragma: no cover, used for multiprocess
     """Wrapper for the spearman correlation function, to be used for
     parallel computation."""
     return spearmanr(permuted[:, idx[0]], y[:, idx[1]])[0]
+
+
+@numba.njit()
+def rank_array(array):
+    _args = array.argsort()
+    ranked = np.empty_like(array)
+    ranked[_args] = np.arange(array.size)
+    return ranked
+
+
+@numba.guvectorize(['f8[:], f8[:,:], f8[:]'],
+                   '(n_reg), (n_reg, n_gen), (n_gen)',
+                   nopython=True,
+                   fastmath=True)
+def spearman_opt(imaging, genes, corr):
+    """Calculate the Spearman rank correlation between two arrays."""
+    ranked_img = rank_array(imaging)
+    for i in range(genes.shape[1]):
+        ranked_gen = rank_array(genes[:, i])
+        corr[i] = np.corrcoef(ranked_img, ranked_gen)[0, 1]
 
 
 class CorrAnalysis:
@@ -67,18 +88,19 @@ class CorrAnalysis:
         """
         assert isinstance(self.gene_results.results, CorrGenes)
         logger.info("Calculating correlation on original data.")
-        for i in range(self.gene_results.n_genes):
-            self.gene_results.results.corr[0, i], _ = spearmanr(
-                imaging_data, gene_exp[:, i])
-        pool = Pool(n_cpu)
-        _ind = product(range(1000), range(self.gene_results.n_genes))
+        spearman_opt(imaging_data, gene_exp, self.gene_results.results.corr)
+        # pool = Pool(n_cpu)
+        # _ind = product(range(1000), range(self.gene_results.n_genes))
 
         logger.info("Calculating correlation on permuted data.")
-        for ind, res in enumerate(pool.imap(partial(_spearman_op,
-                                                    permuted=permuted_imaging,
-                                                    y=gene_exp),
-                                            _ind, chunksize=15633)):
-            self.gene_results.results.boot_corr.flat[ind] = res
+        # for ind, res in enumerate(pool.imap(partial(_spearman_op,
+        #                                             permuted=permuted_imaging,
+        #                                             y=gene_exp),
+        #                                     _ind, chunksize=15633)):
+        #     self.gene_results.results.boot_corr.flat[ind] = res
+        for i in range(permuted_imaging.shape[1]):
+            spearman_opt(permuted_imaging[:, i], gene_exp,
+                         self.gene_results.results.boot_corr[:, i])
         self.gene_results.results.genes = gene_labels
         self.gene_results.results.sort_genes()
         self.gene_results.results.compute_pval()
@@ -165,10 +187,10 @@ class CorrAnalysis:
         assert outdir.exists()
         # Create the data to save
         logger.info("Saving results.")
-        data_to_save = zip(self.gene_results.results.genes[:, 0],
-                           self.gene_results.results.corr[0, :],
-                           self.gene_results.results.pval[0, :],
-                           self.gene_results.results.pval_corr[0, :])
+        data_to_save = zip(self.gene_results.results.genes[:, 0][::-1],
+                           self.gene_results.results.corr[0, :][::-1],
+                           self.gene_results.results.pval[0, :][::-1],
+                           self.gene_results.results.pval_corr[0, :][::-1])
         # Save the data
         pd.DataFrame(
             data_to_save, columns=["Gene", "Corr", "Pval", "Pval_corr"]
