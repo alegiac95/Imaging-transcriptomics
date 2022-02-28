@@ -5,44 +5,34 @@
 Script usage
 ============
 
-Once you have installed the package you can run the script as
+Once you have installed the package you can run the analysis script as:
 
 .. code:: bash
 
-    imagingtranscriptomics -i path_to_file -n 2
+    imagingtranscriptomics --input /path-to-your-in-file [options] {corr|pls [options]}
+
+The script has some options that allow the user to tune the analysis to their specific application. The options are as follows:
+
+- `--input` (`-i`, **mandatory**): path to the input data. This can be either a neuroimaging scan (*i.e.*, .nii[.gz]) or a text file (*i.e.*, .txt).
+  
+  .. warning::
+
+      If the input scan is a neuroimaging scan (*i.e.*, .nii, .nii.gz) this is expected to be in the same resolution as the Desikan-Killiany (DK) atlas used which is 1mm isotropic (matrix size 182x218x182). On the other hand if the input is a text file, this must be a text file with one column and no headers, with the rows containing the values of interest in the same order as the DK atlas used.
+
+- `--output` (`-o`, **optional**): path to the output directory. If none is provided the results will be saved in the same folder as the input scan.
+- `--regions` (`-r`, **optional**): regions to use for the analysis, can be *cort+sub* (or equivalently *all*) which specifies that all the regions are used, or, alternatively, *cort* for the cortical regions only. The latter is useful with some certain types of data, where the subcortical regions might not be available (*e.g.*, EEG).
+- `--no-gsea` (**optional**): specifies whether or not Gene Set Enrihment Analysis should be performed.
+- `--geneset` (**optional**): specifies the name of the gene set or the path to the file to use for Gene Set Enrichment Analysis.
+  
+  .. warning:: 
+
+      The `--geneset` argument will be ignored if you also specify the `--no-gsea` flag. If the GSEA analysis is performed, the name of the gene set, or a path to a custom made gene set, should be given. To lookup the name of the available gene sets or on how to create a custom one refer to the GSEA section. 
+
+- 
 
 
-The script has some parameters that can be tuned according to the necessity of the analysis, which can be viewed by calling the help function from the script as
-:code:`imagingtranscriptomics -h` or :code:`imagingtranscriptomics --help`.
-
-
-Here we will describe in more details all the parameters of the script.
-The parameters of the script are:
-
-``-i`` (``--input``)     Scan on which you want to perform the analysis. It is *recommended* that you provide an absolute path to your scan (e.g., :code:`~/Desktop/myscan.nii.gz`) instead of a relative one (e.g., :code:`myscan.nii.gz`) to avoid errors. The input file *must* be an imaging file in NIfTI format (both :code:`.nii` and :code:`.nii.gz` formats are supported), be in MNI152 space and have a matrix dimension of 182x218x182. If your image has a different matrix size you can reslice it to match this dimension with your preferred method. (A quick method is to use *fslview* and reslice to match the dimension of the included *MNI152_1mm* brain atlas).
-
-.. warning:: The input scan must have a predefined dimension **(182x218x182)** and be in **MNI152** space. If the input scan is not in the required dimension the script will throw an error. You should always check the dimension before running the script and eventually reslice or spatially normalise your image to the matching dimensions with your preferred method (e.g., SPM, FSL, ANTS).
-
-``-n`` (``--ncomp``)     Number of PLS components to use for the analysis. The parameter *must* be an **integer** between 1 and 15, otherwise an error will occur. *Please note* that in PLS regression the first component is not necessarily the component explaining the most amount of variance, as in PCA. Example: running :code:`imaging-transcriptomics -i path_to_file -n 2` will run the script on your imaging file selecting the two first components for the analysis.
-
-
-``-v`` (``--variance``)  Total amount of variance you want your components to explain. The code will automatically select the number of components that explain at least the variance you specify. The parameter *must* be an **integer** between 10 and 100, which represents the percentage of explained variance. Example: if you run :code:`imaging-transcriptomics -i path_to_file -v 30` and the first 3 components explain 10%, 25% and 3%, respectively, of the total variance the script will use 2 components, even if they explain 35% (which is a bit more than specified) of the total variance.
-
-.. warning:: Please note that the **-v** and **-n** parameters are mutually exclusive and only one has to be provided as argument for the script, otherwise an error will occur.
-
-``--corr`` Allows to run the analysis using regression instead of PLS
-regression.
-
-.. note:: If you use the **--corr** option you can avoid specifying all other parameters (e.g., **-v**, **-n**) as the script will ignore them anyway.
-
-Optional additional parameters that can be provided are:
-
-``-o`` (``--out``)   Path where you want to save the results, if no path is provided the results will be saved in the same path as the input scan. When the code is finished running the results will be saved in a folder named *Imt_myscanname* and will contain all the results (.csv files, .pdf report and images in .png format). If you run the script multiple times you will have more than one results folder with a trailing number for the run (e.g., *Imt_myscanname* for the first run and *Imt_myscanname_1* for the second run).
-
-``--verbose`` Sets the output logging level to debug mode and shows all debug values and steps
-
-``--suppress`` Sets the logging level to warning and will display only eventual warning messages.
-
+.. tip::
+    All paths given as input should be given as absolute paths instead of relative paths to avoid any errors in reading the file.
 
 .. _library:
 

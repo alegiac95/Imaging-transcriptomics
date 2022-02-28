@@ -19,7 +19,7 @@ In brief, average values of the scan are extracted from 41 brain regions as defi
 
 As a result of the PLS regression we obtain the ranked genes list according to the spatial alignment with the neuroimaging marker of interest.
 
-.. seealso:: For a more comprehensive dive into the methodology have a look at our paper: `Imaging transcriptomics: Convergent cellular, transcriptomic, and molecular neuroimaging signatures in the healthy adult human brain. <https://doi.org/10.1101/2021.06.18.448872>`_ *Daniel Martins, Alessio Giacomel, Steven CR Williams, Federico Turkheimer, Ottavia Dipasquale, Mattia Veronese, PET templates working group*. bioRxiv 2021.06.18.448872; doi: `https://doi.org/10.1101/2021.06.18.448872 <https://doi.org/10.1101/2021.06.18.448872>`_
+.. seealso:: For a more comprehensive dive into the methodology have a look at our paper: `Imaging transcriptomics: Convergent cellular, transcriptomic, and molecular neuroimaging signatures in the healthy adult human brain. <https://doi.org/10.1016/j.celrep.2021.110173>`_ *Daniel Martins, Alessio Giacomel, Steven CR Williams, Federico Turkheimer, Ottavia Dipasquale, Mattia Veronese, PET templates working group*. Cell Reports; doi: `https://doi.org/10.1016/j.celrep.2021.110173 <https://doi.org/10.1016/j.celrep.2021.110173>`_
 
 
 Allen Human Brain Atlas

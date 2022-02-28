@@ -17,5 +17,4 @@ FAQ
     One of the main advantages of the SIMPLS algorithm in respect to the NIPALS is that is is less time consuming.
 
 #. **Can I run the ImaginTranscriptomics analysis on just the cortical areas without the subcortical areas?**
-    The short answer is maybe. We are currently working on an update that will allow the user to selct if to use the cortical, subcortical or both. For now we are using both areas.
-
+    Yes, check out the main page on the use to get an idea on how to do this.
