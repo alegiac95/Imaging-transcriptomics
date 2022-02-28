@@ -29,7 +29,16 @@ This will install install the GitHub repository directly using pip and it will m
 
     Do not install pyls directly from pip with the command ``pip install pyls`` as this is a completely different package!
 
-Once this package is installed you can install the ``imaging-transcriptomics`` package by running:
+A second package to install for the full functionalities of the imaging-transcriptomics toolbox is the `ENIGMA toolbox <https://enigma-toolbox.readthedocs.io/en/latest/index.html>`_ . 
+To install this we'll follow the instructions of the developers. In brief, install this by running the commands:
+
+.. code:: shell
+
+    git clone https://github.com/MICA-MNI/ENIGMA.git
+    cd ENIGMA
+    python setup.py install
+
+Once these packages is installed you can install the ``imaging-transcriptomics`` package by running:
 
 .. code::
 
@@ -38,4 +47,6 @@ Once this package is installed you can install the ``imaging-transcriptomics`` p
 
 Once you get the message that the installation has completed you are set to go!
 
-.. note:: The version ``v1.0.0`` and ``v1.0.1``, can cause some issues on the installation due to compatibility issues of some packages. In version ``v1.0.2+`` this issue has been resolved during installation. If you have one of the older versions installed you might want to update the version using the command ``pip install --upgradde imaging-transcriptomics``. 
+.. note:: The version ``v1.0.0`` and ``v1.0.1``, can cause some issues on the installation due to compatibility issues of some packages. In version ``v1.0.2+`` this issue has been resolved during installation. If you have one of the older versions installed you might want to update the version using the command ``pip install --upgrade imaging-transcriptomics``. 
+
+.. note:: From version ``v1.1.0`` has the possibility of running directly from the toolbox also the gene set enrichment analysis (GSEA). Version ``v1.1.8`` has a major speedup in the correlation analyses, reducing the overall time needed to run the analysis.
