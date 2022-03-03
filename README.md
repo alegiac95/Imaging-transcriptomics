@@ -48,7 +48,7 @@ pip install imaging-transcriptomics
 ```
 
 
-> **WARNING** At this time the package has some problems running on Mac 
+> **WARNING** At this time the package might some problems running on Mac 
 > computers that have the M1 chip instead of the Intel ones. The problem is 
 > not due to the package but on the chip architecture in running Python. 
 > We're currently working to test some solution for this.
@@ -131,8 +131,7 @@ If you publish work using `imaging-transcriptomics` as part of your analysis ple
 > molecular neuroimaging signatures in the healthy adult human brain.* 
 > Daniel Martins, Alessio Giacomel, Steven CR Williams, Federico Turkheimer,
 > Ottavia Dipasquale, Mattia Veronese, PET templates working group. Cell 
-> Reports; doi: [https://doi.org/10.1016/j.celrep.2021.110173]
-> (https://doi.org/10.1016/j.celrep.2021.110173)
+> Reports; doi: [https://doi.org/10.1016/j.celrep.2021.110173](https://doi.org/10.1016/j.celrep.2021.110173)
 
 
 >*Imaging-transcriptomics: Second release update (v1.0.2)*.Alessio Giacomel, & Daniel Martins. (2021). Zenodo. https://doi.org/10.5281/zenodo.5726839

@@ -4,6 +4,7 @@ from datetime import datetime
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import nibabel as nib
 from fpdf import FPDF
 from enigmatoolbox.utils.parcellation import parcel_to_surface
 from enigmatoolbox.plotting.surface_plotting import plot_cortical, \
@@ -81,50 +82,44 @@ def make_plots(path, limit_x, data_y):
     plt.close()
     return
 
-"""
-def reorder_data(data):
-    # Indexes to match the abagen (DK) order to the enigma
-    enigma_index = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
-                             12, 13, 14, 15, 16, 17, 18, 19, 20,
-                             21, 22, 23, 24, 25, 26, 27, 28, 29,
-                             30, 31, 32, 33, 34, 75, 71, 74, 73,
-                             69, 72, 70, 35, 36, 37, 38, 39, 40,
-                             41, 42, 43, 44, 45, 46, 47, 48, 49,
-                             50, 51, 52, 53, 54, 55, 56, 57, 58,
-                             59, 60, 61, 62, 63, 64, 65, 66, 67,
-                             68, 82, 79, 81, 80, 76, 79, 77, 83],
-                            np.int32) - 1
-    if not isinstance(data, np.ndarray):
-        try:
-            data = np.array(data)
-        except TypeError:
-            raise TypeError("The data must be a numpy array.")
-    if data.shape == (83,) :
-        data = data[enigma_index]
-    elif data.shape == (41,):
-        pass
+
+def extract_from_atlas(image):
+    """Extract the average signal from the image using the DK
+    atlas.
+    """
+    # Atlas to use for parcellation
+    atlas_image = Path(__file__).parent / "data" / \
+                  "atlas-desikankilliany_1mm_MNI152.nii.gz"
+    atlas_image = nib.load(atlas_image).get_fdata()
+    max_region = int(atlas_image.max())
+
+    new_order = pd.read_csv("alessio_order_enigma.csv")["Enigma_order"]
+    new_order = new_order.to_numpy() - 1
+    image = nib.load(Path(image)).get_fdata()
+    e_values = np.zeros(max_region)
+    for i in range(1, max_region):
+        e_values[i] = np.mean(image[np.where(atlas_image==i)])
+    return e_values[new_order]
 
 
-# PLOTTING
-# TODO: add plots for the cortical and subcortical regions
-def make_surface_plots(data, save_dir):
-    pass
-    save_dir = Path(save_dir)
-    filename_cort = save_dir / "cortical_surface.png"
-    # All regions are there, just reorder them
-    if data.shape == (83,):
-        data = data[enigma_index]
-
-
-    data_cortical = parcel_to_surface(data, "aparc_fsa5")
-    plot_cortical(array_name=data_cortical, surface_name="fsa5",
-                  size=(800, 400), cmap="RdBu_r", color_bar=True,
-                  color_range=(-0.5, 0.5), interactive=False,
-                  screenshot=True, filename=str(filename_cort),
-                  transparent_bg=True
-                  )
-    plot_subcortical(array_name=data_subcortical,)
-"""
+def plot_brain(image):
+    average_val = extract_from_atlas(image)
+    avg_fs5 = parcel_to_surface(average_val, 'aparc_fsa5')
+    plot_cortical(array_name=avg_fs5,
+                  surface_name='fsa5',
+                  size=(800, 400),
+                  color_bar=True,
+                  color_range=(-0.5, 0.5),
+                  screenshot=True,
+                  filename=f"cortical.png",
+                  transparent_bg=True)
+    plot_subcortical(array_name=average_val[67:],
+                     size=(800, 400),
+                     color_bar=True,
+                     color_range=(-0.5, 0.5),
+                     screenshot=True,
+                     filename=f"subcortical.png",
+                     transparent_bg=True)
 
 
 def pls_components(data):
