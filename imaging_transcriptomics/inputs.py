@@ -139,6 +139,6 @@ def extract_average_all_regions(imaging_matrix):
     print(n_regions)
     data = np.zeros(n_regions)
     for i in range(1, n_regions + 1):
-        data[i - 1] = np.mean(imaging_matrix[np.where(atlas_data == i)])
+        data[i - 1] = np.nanmean(imaging_matrix[np.where(atlas_data == i)])
     logger.debug("Extracted values are: \n%s", data)
     return np.array(data)

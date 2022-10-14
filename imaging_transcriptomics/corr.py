@@ -149,8 +149,11 @@ class CorrAnalysis:
             _boot_es[:, i] = _gsea_res.res2d.es.to_numpy()
         # calculate the p-value
         _p_val = np.zeros((_origin_es.shape[0],))
+        _eps = .00001
         for i in range(_origin_es.shape[0]):
             _p_val[i] = np.sum(_boot_es[i, :] >= _origin_es[i]) / 1000
+            if _p_val[i] == 0.0:
+                _p_val[i] += _eps
         # calculate the p-value corrected
         _, _p_corr, _, _ = multipletests(_p_val, method='fdr_bh')
         # Prepare data to save
