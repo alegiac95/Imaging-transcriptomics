@@ -141,3 +141,6 @@ If you publish work using `imaging-transcriptomics` as part of your analysis ple
 
 
 >*Imaging-transcriptomics: Second release update (v1.0.2)*.Alessio Giacomel, & Daniel Martins. (2021). Zenodo. https://doi.org/10.5281/zenodo.5726839
+
+>*Integrating neuroimaging and gene expression data using the imaging transcriptomics toolbox*. 
+> Alessio Giacomel, Daniel Martins, Matteo Frigo, Federico Turkheimer, Steven CR Williams, Ottavia Dipasquale, and Mattia Veronese. STAR Protocols; doi: [https://doi.org/10.1016/j.xpro.2022.101315](https://doi.org/10.1016/j.xpro.2022.101315)
