@@ -98,7 +98,9 @@ def load_gene_labels():
     genes_labels_path = (
         Path(__file__).resolve().parent / "data" / "gene_expression_labels.txt"
     )
-    return pd.read_fwf(genes_labels_path, header=None).to_numpy()
+    # return pd.read_fwf(genes_labels_path, header=None).to_numpy()
+    return np.loadtxt(str(genes_labels_path), dtype="U",
+                      delimiter="\n").reshape(-1, 1)
 
 
 def get_geneset(gene_set: str):
