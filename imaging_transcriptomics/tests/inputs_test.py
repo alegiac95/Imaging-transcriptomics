@@ -81,6 +81,7 @@ def test_gene_labels_load():
     assert labels[1635] == "C6orf106"
     assert "SLC7A10" in labels
     assert "audhd49b" not in labels
+    assert "LOC102723968" in labels
 
 
 # GENESET FUNCTION TESTS
