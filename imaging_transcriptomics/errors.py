@@ -92,7 +92,8 @@ class CheckShape:
         self.function = function
 
     def __call__(self, image, *args, **kwargs):
-        if not image.shape == (182, 218, 182):
+        if not image.shape == (182, 218, 182) or not image.shape == (91,
+                                                                     109, 91):
             raise InvalidSizeError(image.shape)
         return self.function(image, *args, **kwargs)
 
