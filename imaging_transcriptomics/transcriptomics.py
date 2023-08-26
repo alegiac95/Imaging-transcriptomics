@@ -13,7 +13,7 @@ with warnings.catch_warnings():
     from netneurotools import freesurfer, stats
 
 from .inputs import load_gene_expression, load_gene_labels, \
-    extract_average, read_scan
+    extract_average, read_scan, load_atlas_imaging, get_annot_files
 from .pls import PLSAnalysis
 from .corr import CorrAnalysis
 
@@ -31,7 +31,8 @@ class ImagingTranscriptomics:
     def __init__(self,
                  scan_data,
                  regions="cort+sub",
-                 method="pls",
+                 method="corr",
+                 atlas="DK",
                  **kwargs):
         """ImagingTranscriptomics class for imaging transcriptomics analysis.
 
@@ -48,20 +49,31 @@ class ImagingTranscriptomics:
             * "n_permutations": number of permutations for permutation test.
 
         """
-        if regions == "cort+sub" or regions == "all":
-            assert scan_data.shape == (41,)
+        self.atlas = atlas
+        self.n_regions, _ = load_atlas_imaging(self.atlas)
+        if self.atlas == "DK":
+            if regions == "cort+sub" or regions == "all":
+                assert scan_data.shape == (41,)
+                self.zscore_data = zscore(scan_data, axis=0, ddof=1)
+                self._cortical = self.zscore_data[:34]
+                self._subcortical = self.zscore_data[34:]
+            elif regions == "cort":
+                assert scan_data.shape == (34,) or scan_data.shape == (41,)
+                self.zscore_data = zscore(scan_data, axis=0, ddof=1)
+                self._cortical = self.zscore_data if scan_data.shape == (34,) else\
+                    self.zscore_data[:34]
+                self._subcortical = None
+        elif self.atlas == "Schaefer_100":
+            if regions == "cort+sub" or regions == "all":
+                logging.info("The Schaefer_100 atlas only has cortical regions!")
+            if scan_data.shape != (50,):
+                raise ValueError("The scan data must have 50 regions!")
             self.zscore_data = zscore(scan_data, axis=0, ddof=1)
-            self._cortical = self.zscore_data[:34]
-            self._subcortical = self.zscore_data[34:]
-        elif regions == "cort":
-            assert scan_data.shape == (34,) or scan_data.shape == (41,)
-            self.zscore_data = zscore(scan_data, axis=0, ddof=1)
-            self._cortical = self.zscore_data if scan_data.shape == (34,) else\
-                self.zscore_data[:34]
+            self._cortical = self.zscore_data
             self._subcortical = None
         self._regions = regions
         self.scan_data = scan_data
-        self.gene_expression = load_gene_expression(self._regions)
+        self.gene_expression = load_gene_expression(self._regions, atlas)
         self.gene_labels = load_gene_labels()
         if method not in ["pls", "corr"]:
             raise ValueError(
@@ -91,7 +103,8 @@ class ImagingTranscriptomics:
         self._permutation_ind = None
 
     @classmethod
-    def from_scan(cls, scan_path, method="pls", regions="cort+sub", **kwargs):
+    def from_scan(cls, scan_path, method="pls", regions="cort+sub",
+                  atlas="DK", **kwargs):
         """Initialise an ImagingTranscriptomics object from a NIfTI scan.
         The extracted data corresponds to the average of the ROIs in the DK
         atlas.
@@ -121,11 +134,14 @@ class ImagingTranscriptomics:
                 "The regions must be either cort+sub, cort or all."
                 "Please choose one of these to run the analysis."
             )
-        scan_data = extract_average(read_scan(scan_path))
-        return cls(scan_data, method=method, regions=regions, **kwargs)
+        scan_data = extract_average(read_scan(scan_path), atlas=atlas)
+        return cls(scan_data, method=method, regions=regions,
+                   atlas=atlas, **kwargs)
 
     @classmethod
-    def from_file(cls, file_path, method="pls", regions="cort+sub", **kwargs):
+    def from_file(cls, file_path, method="pls", regions="cort+sub",
+                  atlas="DK",
+                  **kwargs):
         """Initialise an ImagingTranscriptomics object from a text file.
         The file should contain a column with the data you want to use for
         the analysis.
@@ -138,6 +154,7 @@ class ImagingTranscriptomics:
         "cort+sub" (or "all") which will perform the analysis on the
         cortical and subcortical regions, or "cort" which will only perform
         the analysis on the cortical regions.
+        :param str atlas: atlas to use for the analysis.
         :param kwargs: additional arguments for the method. This include:
             * "n_components": number of components for pls regression.
             * "var": variance explained for pls regression.
@@ -149,9 +166,8 @@ class ImagingTranscriptomics:
         if not Path(file_path).is_file():
             raise ValueError(f"{file_path} is not a file.")
         scan_data = np.loadtxt(file_path)
-        if scan_data.shape[0] > 41:
-            scan_data = scan_data[:41]
-        return cls(scan_data, method=method, regions=regions, **kwargs)
+        return cls(scan_data, method=method, regions=regions, atlas=atlas,
+                   **kwargs)
 
     # --------- PROPERTIES --------- #
     @property
@@ -163,7 +179,7 @@ class ImagingTranscriptomics:
         return self.analysis.gene_results
 
     # --------- METHODS --------- #
-    def permute_data(self, n_permutations=1000):
+    def permute_data(self, n_permutations=1000, atlas="DK"):
         """Permute the imaging data maintaining spatial autocorrelation for
         the cortical regions. The permutation is done using the
         netneurotools Python package.
@@ -176,47 +192,74 @@ class ImagingTranscriptomics:
         _perm_indexes = np.zeros((self.zscore_data.shape[0],
                                   n_permutations), dtype=np.int32)
         # Calculate the permutations on the subcortical regions.
-        if self._subcortical is not None:
-            sub_permuted = np.zeros((self._subcortical.shape[0],
-                                     n_permutations))
-            for i in range(n_permutations):
-                sub_resample = np.random.choice(7, size=7)
-                _perm_indexes[34:, i] = sub_resample + 34  # keep into
-                # account the shift of the subcortical given by the cortical
-                # regions.
-                sub_permuted[:, i] = self._subcortical[sub_resample]
-            _permuted[34:, :] = sub_permuted
-        # Cortical
-        # Annotation file for the Desikan-Killiany atlas in fs5
-        annot_lh = Path(__file__).resolve().parent / "data/fsa5_lh_aparc.annot"
-        annot_rh = Path(__file__).resolve().parent / "data/fsa5_rh_aparc.annot"
-        # Get the parcel centroids of the Desikan-Killiany atlas
-        parcel_centroids, parcel_hemi = freesurfer.find_parcel_centroids(
-            lhannot=annot_lh,
-            rhannot=annot_rh,
-            version="fsaverage5",
-            surf="sphere",
-            method="surface",
-        )
-        # Mask the results to have only the left hemisphere
-        left_hemi_mask = parcel_hemi == 0
-        parcel_centroids, parcel_hemi = (
-            parcel_centroids[left_hemi_mask],
-            parcel_hemi[left_hemi_mask],
-        )
-        # Get the spin samples
-        spins = stats.gen_spinsamples(
-            parcel_centroids, parcel_hemi,
-            n_rotate=n_permutations,
-            method="vasa",
-            seed=1234
-        )
-        cort_permuted = np.array(self._cortical[spins]).reshape(34,
-                                                                n_permutations)
-        _perm_indexes[:34, :] = spins
-        _permuted[0:34, :] = cort_permuted
-        self._permutations = _permuted
-        self._permutation_ind = _perm_indexes
+        if atlas == "DK":
+            if self._subcortical is not None:
+                sub_permuted = np.zeros((self._subcortical.shape[0],
+                                         n_permutations))
+                for i in range(n_permutations):
+                    sub_resample = np.random.choice(7, size=7)
+                    _perm_indexes[34:, i] = sub_resample + 34  # keep into
+                    # account the shift of the subcortical given by the cortical
+                    # regions.
+                    sub_permuted[:, i] = self._subcortical[sub_resample]
+                _permuted[34:, :] = sub_permuted
+            # Cortical
+            # Annotation file for the Desikan-Killiany atlas in fs5
+            annot_lh, annot_rh = get_annot_files(atlas=atlas)
+            # Get the parcel centroids of the Desikan-Killiany atlas
+            parcel_centroids, parcel_hemi = freesurfer.find_parcel_centroids(
+                lhannot=annot_lh,
+                rhannot=annot_rh,
+                version="fsaverage5",
+                surf="sphere",
+                method="surface",
+            )
+            # Mask the results to have only the left hemisphere
+            left_hemi_mask = parcel_hemi == 0
+            parcel_centroids, parcel_hemi = (
+                parcel_centroids[left_hemi_mask],
+                parcel_hemi[left_hemi_mask],
+            )
+            # Get the spin samples
+            spins = stats.gen_spinsamples(
+                parcel_centroids, parcel_hemi,
+                n_rotate=n_permutations,
+                method="vasa",
+                seed=1234
+            )
+            cort_permuted = np.array(self._cortical[spins]).reshape(34,
+                                                                    n_permutations)
+            _perm_indexes[:34, :] = spins
+            _permuted[0:34, :] = cort_permuted
+            self._permutations = _permuted
+            self._permutation_ind = _perm_indexes
+        elif atlas == "Schaefer_100":
+            # Cortical
+            # Annotation file for the Desikan-Killiany atlas in fs5
+            annot_lh, annot_rh = get_annot_files(atlas=atlas)
+            # Get the parcel centroids of the Desikan-Killiany atlas
+            parcel_centroids, parcel_hemi = freesurfer.find_parcel_centroids(
+                lhannot=annot_lh,
+                rhannot=annot_rh,
+                version="fsaverage5",
+                surf="sphere",
+                method="surface",
+            )
+            # Mask the results to have only the left hemisphere
+            left_hemi_mask = parcel_hemi == 0
+            parcel_centroids, parcel_hemi = (
+                parcel_centroids[left_hemi_mask],
+                parcel_hemi[left_hemi_mask],
+            )
+            # Get the spin samples
+            spins = stats.gen_spinsamples(
+                parcel_centroids, parcel_hemi,
+                n_rotate=n_permutations,
+                method="vasa",
+                seed=1234
+            )
+            self._permutations = self.zscore_data[spins]
+            self._permutation_ind = spins
         return
 
     def _make_output_dir(self, output_dir, name=""):
@@ -252,7 +295,7 @@ class ImagingTranscriptomics:
                                            outdir=outdir,
                                            gene_limit=gene_limit)
 
-    def run(self, outdir=None, scan_name="", gsea=True,
+    def run(self, outdir=None, scan_name="", gsea=False,
             gene_set="lake", save_res=True, n_cpu=4,
             gene_limit=500):  # pragma: no cover
         """Method to run the imaging transcriptomics analysis.
@@ -281,54 +324,79 @@ class ImagingTranscriptomics:
                 outdir = self._make_output_dir(Path.cwd(), name=scan_name)
         # Run the analysis
         # CORRELATION
-        if self._method == "corr":
+        if self.atlas == "DK":
+            if self._method == "corr":
             # Select the data or slice of data
-            if self._regions == "cort":
-                _d = self._cortical
-                if self._permutations.shape[0] == 41:
-                    _d_perm = self._permutations[0:34, :]
-                else:
+                if self._regions == "cort":
+                    _d = self._cortical
+                    if self._permutations.shape[0] == self.n_regions:
+                        _d_perm = self._permutations[0:34, :]
+                    else:
+                        _d_perm = self._permutations
+                elif self._regions == "cort+sub" or self._regions == "all":
+                    _d = self.zscore_data
                     _d_perm = self._permutations
-            elif self._regions == "cort+sub" or self._regions == "all":
-                _d = self.zscore_data
-                _d_perm = self._permutations
-            self.analysis.bootstrap_correlation(_d, _d_perm,
-                                                self.gene_expression,
-                                                self.gene_labels,
-                                                n_cpu=n_cpu)
+                self.analysis.bootstrap_correlation(_d, _d_perm,
+                                                    self.gene_expression,
+                                                    self.gene_labels)
+
             if save_res:
                 self._save_object(outdir, f"{self.method}_analysis")
                 self.analysis.save_results(outdir=outdir)
             if gsea:
                 self.gsea(gene_set=gene_set, outdir=outdir)
         # PLS
-        elif self._method == "pls":
-            # Select the data or slice of data
-            if self._regions == "cort":
-                _d = self._cortical
-                if self._permutations.shape[0] == 41:
-                    _d_perm = self._permutations[0:34, :]
-                else:
+            elif self._method == "pls":
+                # Select the data or slice of data
+                if self._regions == "cort":
+                    _d = self._cortical
+                    if self._permutations.shape[0] == 41:
+                        _d_perm = self._permutations[0:34, :]
+                    else:
+                        _d_perm = self._permutations
+                elif self._regions == "cort+sub" or self._regions == "all":
+                    _d = self.zscore_data
                     _d_perm = self._permutations
-            elif self._regions == "cort+sub" or self._regions == "all":
-                _d = self.zscore_data
-                _d_perm = self._permutations
-            assert isinstance(self.analysis, PLSAnalysis)
-            self.analysis.boot_pls(_d, _d_perm, self.gene_expression)
-            if self._regions == "cort":
-                _orig = self.scan_data if self.scan_data.shape[0] == 34 else \
-                    self.scan_data[0:34, :]
-            elif self._regions == "cort+sub" or self._regions == "all":
-                _orig = self.scan_data
-            self.gene_results.results.boot_genes(_d,
-                                                 _d_perm,
-                                                 _orig,
-                                                 self.gene_expression,
-                                                 self.gene_labels)
-            self.gene_results.results.compute()
+                assert isinstance(self.analysis, PLSAnalysis)
+                self.analysis.boot_pls(_d, _d_perm, self.gene_expression)
+                if self._regions == "cort":
+                    _orig = self.scan_data if self.scan_data.shape[0] == 34 else \
+                        self.scan_data[0:34, :]
+                elif self._regions == "cort+sub" or self._regions == "all":
+                    _orig = self.scan_data
+                self.gene_results.results.boot_genes(_d,
+                                                     _d_perm,
+                                                     _orig,
+                                                     self.gene_expression,
+                                                     self.gene_labels)
+                self.gene_results.results.compute()
+                if save_res:
+                    self._save_object(outdir, f"{self.method}_analysis")
+                    self.analysis.save_results(outdir=outdir)
+                if gsea:
+                    self.gsea(gene_set=gene_set, outdir=outdir,
+                              gene_limit=gene_limit)
+
+        elif self.atlas == "Schaefer_100":
+            _d = self.zscore_data
+            _d_perm = self._permutations
+            if self._method == "corr":
+                self.analysis.bootstrap_correlation(_d, _d_perm,
+                                                    self.gene_expression,
+                                                    self.gene_labels)
+            elif self._method == "pls":
+                assert isinstance(self.analysis, PLSAnalysis)
+                self.analysis.boot_pls(_d, _d_perm, self.gene_expression)
+                self.gene_results.results.boot_genes(_d,
+                                                     _d_perm,
+                                                     self.scan_data,
+                                                     self.gene_expression,
+                                                     self.gene_labels)
+                self.gene_results.results.compute()
             if save_res:
-                self._save_object(outdir, f"{self.method}_analysis")
+                self._save_object(outdir, f"{self.atlas}_{self.method}_analysis")
                 self.analysis.save_results(outdir=outdir)
             if gsea:
                 self.gsea(gene_set=gene_set, outdir=outdir,
                           gene_limit=gene_limit)
+

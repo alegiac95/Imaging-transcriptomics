@@ -8,7 +8,8 @@ from imaging_transcriptomics.inputs import (
     load_gene_expression,
     load_gene_labels,
     read_scan,
-    get_geneset
+    get_geneset,
+    get_annot_files
 )
 from imaging_transcriptomics.errors import InvalidSizeError, InvalidFormatError
 
@@ -44,7 +45,22 @@ def test_extract_average_errors():
     with pytest.raises(InvalidSizeError):
         extract_average(np.ones((182, 218, 182, 1)))
     with pytest.raises(InvalidSizeError):
-        extract_average(np.ones((91, 102, 91)))
+        extract_average(np.ones((91, 102, 92)))
+
+
+def test_extract_average_Schaefer_100():
+    """Test no errors are raised when the atlas is the Schaefer 100."""
+    scan = np.ones((91, 109, 91))
+    average = extract_average(scan, atlas="Schaefer_100")
+    assert average.dtype == np.float64
+    assert average.shape == (50,)
+    np.testing.assert_array_equal(average, np.ones(50))
+
+def test_Schaefer_100_annot_files():
+    atlas = "Schaefer_100"
+    lh_annot, rh_annot = get_annot_files(atlas)
+    assert lh_annot == "/Users/alessiogiacomel/Documents/Projects/ImagingTranscriptomics/imaging_transcriptomics/data/atlases/Schaefer_100/atlas-Schaefer_100_lh_aparc.annot"
+    assert rh_annot == "/Users/alessiogiacomel/Documents/Projects/ImagingTranscriptomics/imaging_transcriptomics/data/atlases/Schaefer_100/atlas-Schaefer_100_rh_aparc.annot"
 
 
 # LOAD GENE EXPRESSION FUNCTION TESTS
@@ -99,4 +115,3 @@ def test_get_geneset():
     geneset = get_geneset("GO_Biological_Process_2017")
     assert isinstance(geneset, str)
     assert geneset in gseapy.get_library_name()
-
