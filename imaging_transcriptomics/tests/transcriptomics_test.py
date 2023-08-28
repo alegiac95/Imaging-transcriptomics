@@ -192,7 +192,7 @@ def test_run_schaefer():
                                               atlas="Schaefer_100",
                                               regions="all",
                                               method="corr")
-    imt_instance.run()
+    imt_instance.run(save_res = False)
     assert imt_instance._permutations is not None
     assert imt_instance._permutations.shape == (50, 1000)
     assert imt_instance._permutations.dtype == np.float64
