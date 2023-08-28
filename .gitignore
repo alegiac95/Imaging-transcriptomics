@@ -176,3 +176,5 @@ Temporary Items
 src/
 pyls/
 ENIGMA/
+# Ignore all files in the tests directory resulting from testing
+tests/Imt_**/**/*
