@@ -100,7 +100,7 @@ class CorrAnalysis:
         return
 
     def gsea(self, gene_set="lake", outdir=None,
-             gene_limit=500, n_perm= 1_000):  # pragma: no cover, long to
+             gene_limit=500, n_perm=1_000):  # pragma: no cover, long to
         # process (t > 1 h)
                                 # - TESTED on run
         """Perform GSEA on the correlation.

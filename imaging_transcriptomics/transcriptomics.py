@@ -60,12 +60,14 @@ class ImagingTranscriptomics:
             elif regions == "cort":
                 assert scan_data.shape == (34,) or scan_data.shape == (41,)
                 self.zscore_data = zscore(scan_data, axis=0, ddof=1)
-                self._cortical = self.zscore_data if scan_data.shape == (34,) else\
+                self._cortical = self.zscore_data if scan_data.shape == (
+                34,) else \
                     self.zscore_data[:34]
                 self._subcortical = None
         elif self.atlas == "Schaefer_100":
             if regions == "cort+sub" or regions == "all":
-                logging.info("The Schaefer_100 atlas only has cortical regions!")
+                logging.info(
+                    "The Schaefer_100 atlas only has cortical regions!")
             if scan_data.shape != (50,):
                 raise ValueError("The scan data must have 50 regions!")
             self.zscore_data = zscore(scan_data, axis=0, ddof=1)
@@ -326,7 +328,7 @@ class ImagingTranscriptomics:
         # CORRELATION
         if self.atlas == "DK":
             if self._method == "corr":
-            # Select the data or slice of data
+                # Select the data or slice of data
                 if self._regions == "cort":
                     _d = self._cortical
                     if self._permutations.shape[0] == self.n_regions:
@@ -345,7 +347,7 @@ class ImagingTranscriptomics:
                 self.analysis.save_results(outdir=outdir)
             if gsea:
                 self.gsea(gene_set=gene_set, outdir=outdir)
-        # PLS
+            # PLS
             elif self._method == "pls":
                 # Select the data or slice of data
                 if self._regions == "cort":
@@ -360,7 +362,8 @@ class ImagingTranscriptomics:
                 assert isinstance(self.analysis, PLSAnalysis)
                 self.analysis.boot_pls(_d, _d_perm, self.gene_expression)
                 if self._regions == "cort":
-                    _orig = self.scan_data if self.scan_data.shape[0] == 34 else \
+                    _orig = self.scan_data if self.scan_data.shape[
+                                                  0] == 34 else \
                         self.scan_data[0:34, :]
                 elif self._regions == "cort+sub" or self._regions == "all":
                     _orig = self.scan_data
@@ -371,7 +374,8 @@ class ImagingTranscriptomics:
                                                      self.gene_labels)
                 self.gene_results.results.compute()
                 if save_res:
-                    self._save_object(outdir, f"{self.method}_analysis")
+                    self._save_object(outdir,
+                                      f"{self.atlas}_{self.method}_analysis")
                     self.analysis.save_results(outdir=outdir)
                 if gsea:
                     self.gsea(gene_set=gene_set, outdir=outdir,
@@ -394,9 +398,9 @@ class ImagingTranscriptomics:
                                                      self.gene_labels)
                 self.gene_results.results.compute()
             if save_res:
-                self._save_object(outdir, f"{self.atlas}_{self.method}_analysis")
+                self._save_object(outdir,
+                                  f"{self.atlas}_{self.method}_analysis")
                 self.analysis.save_results(outdir=outdir)
             if gsea:
                 self.gsea(gene_set=gene_set, outdir=outdir,
                           gene_limit=gene_limit)
-
