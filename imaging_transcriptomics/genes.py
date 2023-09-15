@@ -188,7 +188,7 @@ class PLSGenes:
             self.boot.pval_corr[component, :] = _p_corr
         return
 
-    def gsea(self, gene_set="lake", outdir=None, gene_limit=500):
+    def gsea(self, gene_set="lake", outdir=None, gene_limit=500, n_iter=1000):
         """Perform a GSEA analysis on the z-scored weights."""
         assert isinstance(self.orig, OrigPLS)
         assert isinstance(self.boot, BootPLS)
@@ -206,11 +206,11 @@ class PLSGenes:
             gsea_results = gseapy.prerank(rnk, gene_set,
                                           outdir=None,
                                           seed=1234,
-                                          permutation_num=1000,
+                                          permutation_num=n_iter,
                                           max_size=gene_limit)
             _origin_es = gsea_results.res2d.es.to_numpy()
-            _boot_es = np.zeros((_origin_es.shape[0], 1000))
-            for i in range(1000):
+            _boot_es = np.zeros((_origin_es.shape[0], n_iter))
+            for i in range(n_iter):
                 rnk = pd.DataFrame(zip(gene_list,
                                        zscore(
                                            self.boot.weights[_component, :, i],
@@ -225,7 +225,7 @@ class PLSGenes:
                 _boot_es[:, i] = gsea_res.res2d.es.to_numpy()
             _p_val = np.zeros((_origin_es.shape[0],))
             for i in range(_origin_es.shape[0]):
-                _p_val[i] = np.sum(_boot_es[i, :] >= _origin_es[i]) / 1000
+                _p_val[i] = np.sum(_boot_es[i, :] >= _origin_es[i]) / n_iter
             # calculate the p-value corrected
             _, _p_corr, _, _ = multipletests(_p_val, method='fdr_bh',
                                is_sorted=False)
@@ -387,7 +387,7 @@ class CorrGenes:
         order of the bootstrapped genes are ordered.
         """
         logger.info("Sorting genes in ascending order.")
-        self._index = np.argsort(self.corr, axis=1, kind='mergesort')
+        self._index = self.corr.argsort(axis=1, kind='mergesort')[::-1]
         self.corr[0, :] = self.corr[0, self._index]
         self.genes[:] = self.genes[self._index]
         self.pval[0, :] = self.pval[0, self._index]

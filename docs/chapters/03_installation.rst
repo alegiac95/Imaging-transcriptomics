@@ -6,6 +6,13 @@ Installation
 
 To install the ``imaging-transcriptomics`` Python package you must first of all have Python ``v3.6+`` installed on your system along with the ``pip`` package manager.
 
+.. warning::
+
+    At current time Python versions 3.9+ are not fully supported as there
+are some issue during the installation of the Numpy version used by the
+toolbox in these versions of Python.
+
+
 .. tip::
 
     We suggest installing the package in a dedicated python environment using `venv <https://docs.python.org/3/library/venv.html>`_ or `conda <https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html>`_ depending on your personal choice. The installation on a dedicated environment avoids the possible clashes of dependencies after or during installation.
