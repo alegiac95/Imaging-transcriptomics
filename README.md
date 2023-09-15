@@ -59,6 +59,9 @@ pip install imaging-transcriptomics
 > not due to the package but on the chip architecture in running Python. 
 > We're currently working to test some solution for this.
 
+> **WARNING** There is an issue in running the toolbox in Windows OS experienced by some users.
+> One of the packages used tries to write a file for some analyses which the OS doesn't allow,
+> resulting in a fatal error.
 ## Usage
 
 
