@@ -178,3 +178,4 @@ pyls/
 ENIGMA/
 # Ignore all files in the tests directory resulting from testing
 tests/Imt_**/**/*
+Imt__corr/**/*
