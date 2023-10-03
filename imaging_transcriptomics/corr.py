@@ -100,7 +100,7 @@ class CorrAnalysis:
         return
 
     def gsea(self, gene_set="lake", outdir=None,
-             gene_limit=500, n_perm=1_000):  # pragma: no cover, long to
+             gene_limit=500, n_perm=1_000):    # pragma: no cover, long to
         # process (t > 1 h)
                                 # - TESTED on run
         """Perform GSEA on the correlation.
@@ -118,9 +118,7 @@ class CorrAnalysis:
         logger.info("Performing GSEA.")
         gene_set = get_geneset(gene_set)
         # prepare the gene_list as a list of strings
-        gene_list = [
-            gene for gene in self.gene_results.results.genes[:, 0].tolist()
-        ]
+        gene_list = list(self.gene_results.results.genes[:, 0].tolist())
         # perform the GSEA on original results
         rnk = pd.DataFrame(
                 zip(gene_list, self.gene_results.results.corr[0, :]))

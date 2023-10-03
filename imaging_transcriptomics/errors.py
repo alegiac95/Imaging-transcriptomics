@@ -75,9 +75,10 @@ class CheckExtension:
 
     def __call__(self, path, *args, **kwargs):
         imaging_path = Path(path)
-        if str().join(imaging_path.suffixes) not in [".nii", ".nii.gz"]:
+        if str().join(imaging_path.suffixes) in {".nii", ".nii.gz"}:
+            return self.function(path, *args, **kwargs)
+        else:
             raise InvalidFormatError(path)
-        return self.function(path, *args, **kwargs)
 
 
 class CheckShape:

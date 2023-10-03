@@ -105,21 +105,25 @@ def extract_from_atlas(image):
 def plot_brain(image):
     average_val = extract_from_atlas(image)
     avg_fs5 = parcel_to_surface(average_val, 'aparc_fsa5')
-    plot_cortical(array_name=avg_fs5,
-                  surface_name='fsa5',
-                  size=(800, 400),
-                  color_bar=True,
-                  color_range=(-0.5, 0.5),
-                  screenshot=True,
-                  filename=f"cortical.png",
-                  transparent_bg=True)
-    plot_subcortical(array_name=average_val[67:],
-                     size=(800, 400),
-                     color_bar=True,
-                     color_range=(-0.5, 0.5),
-                     screenshot=True,
-                     filename=f"subcortical.png",
-                     transparent_bg=True)
+    plot_cortical(
+        array_name=avg_fs5,
+        surface_name='fsa5',
+        size=(800, 400),
+        color_bar=True,
+        color_range=(-0.5, 0.5),
+        screenshot=True,
+        filename="cortical.png",
+        transparent_bg=True,
+    )
+    plot_subcortical(
+        array_name=average_val[67:],
+        size=(800, 400),
+        color_bar=True,
+        color_range=(-0.5, 0.5),
+        screenshot=True,
+        filename="subcortical.png",
+        transparent_bg=True,
+    )
 
 
 def pls_components(data):
@@ -142,7 +146,6 @@ def make_pdf(transcriptomics_data, save_dir, name="report", scanname="", ):
     save_dir = Path(save_dir)
     WIDTH = 210  # mm
     HEIGHT = 297  # mm
-    MARGIN = 5  # mm
     report = FPDF(orientation="P", unit="mm", format="A4")
     report.set_font("Arial", size=11)
     report.add_page()
@@ -161,6 +164,7 @@ def make_pdf(transcriptomics_data, save_dir, name="report", scanname="", ):
                    transcriptomics_data.analysis.n_components,
                    transcriptomics_data.analysis.components_var)
         report.cell(WIDTH, txt="PLS Analysis")
+        MARGIN = 5  # mm
         report.image(str(save_dir / "individual_variance.png"),
                      x=MARGIN, y=53, w=WIDTH/2)
         report.image(str(save_dir / "cumulative_variance.png"),

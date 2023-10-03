@@ -199,8 +199,7 @@ class PLSGenes:
         else:
             gene_set = get_geneset(gene_set)
         for _component in range(self.n_components):
-            gene_list = [gene for gene in self.orig.genes[
-                                          _component, :]]
+            gene_list = list(self.orig.genes[_component, :])
             rnk = pd.DataFrame(zip(gene_list,
                                    self.orig.zscored[_component, :]))
             gsea_results = gseapy.prerank(rnk, gene_set,
@@ -380,7 +379,7 @@ class CorrGenes:
 
         :return: True if the list of genes is sorted, False otherwise.
         """
-        return False if self._index is None else True
+        return self._index is not None
 
     def sort_genes(self):
         """Order the genes in the list of genes. Both the order of the

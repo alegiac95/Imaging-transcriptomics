@@ -32,8 +32,7 @@ def read_scan(path):
     :return: Numpy matrix with the voxel of the input scan.
     """
     logger.debug("Reading scan: %s", path)
-    data = nib.load(Path(path)).get_fdata()
-    return data
+    return nib.load(Path(path)).get_fdata()
 
 
 @CheckShape
@@ -152,14 +151,14 @@ def load_gene_expression(regions="cort+sub", atlas="DK"):
     if atlas == "DK":
         my_data_x = expression_data.iloc[0:41, 2:].to_numpy()
         my_data = zscore(my_data_x, ddof=1)
-        if regions == "cort+sub" or regions == "all":
+        if regions in ["cort+sub", "all"]:
             my_data = my_data
         elif regions == "cort":
             my_data = my_data[:34, :]
     elif atlas == "Schaefer_100":
         my_data_x = expression_data.iloc[0:50, 2:].to_numpy()
         my_data = zscore(my_data_x, ddof=1)
-        if regions == "cort+sub" or regions == "all":
+        if regions in ["cort+sub", "all"]:
             my_data = my_data
         elif regions == "cort":
             my_data = my_data[:34, :]
