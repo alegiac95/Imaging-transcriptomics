@@ -52,20 +52,20 @@ class ImagingTranscriptomics:
         self.atlas = atlas
         self.n_regions, _ = load_atlas_imaging(self.atlas)
         if self.atlas == "DK":
-            if regions == "cort+sub" or regions == "all":
+            if regions in ["cort+sub", "all"]:
                 assert scan_data.shape == (41,)
                 self.zscore_data = zscore(scan_data, axis=0, ddof=1)
                 self._cortical = self.zscore_data[:34]
                 self._subcortical = self.zscore_data[34:]
             elif regions == "cort":
-                assert scan_data.shape == (34,) or scan_data.shape == (41,)
+                assert scan_data.shape in [(34,), (41,)]
                 self.zscore_data = zscore(scan_data, axis=0, ddof=1)
                 self._cortical = self.zscore_data if scan_data.shape == (
                 34,) else \
-                    self.zscore_data[:34]
+                        self.zscore_data[:34]
                 self._subcortical = None
         elif self.atlas == "Schaefer_100":
-            if regions == "cort+sub" or regions == "all":
+            if regions in ["cort+sub", "all"]:
                 logging.info(
                     "The Schaefer_100 atlas only has cortical regions!")
             if scan_data.shape != (50,):
@@ -88,17 +88,16 @@ class ImagingTranscriptomics:
             if "n_components" not in kwargs and "var" not in kwargs:
                 raise ValueError("You must specify either the variance or "
                                  "the number of components for pls regression")
+            if self._regions in ["all", "cort+sub"]:
+                self.analysis = PLSAnalysis(self.zscore_data,
+                                            self.gene_expression,
+                                            kwargs.get("n_components"),
+                                            kwargs.get("var"))
             else:
-                if self._regions == "all" or self._regions == "cort+sub":
-                    self.analysis = PLSAnalysis(self.zscore_data,
-                                                self.gene_expression,
-                                                kwargs.get("n_components"),
-                                                kwargs.get("var"))
-                else:
-                    self.analysis = PLSAnalysis(self._cortical,
-                                                self.gene_expression,
-                                                kwargs.get("n_components"),
-                                                kwargs.get("var"))
+                self.analysis = PLSAnalysis(self._cortical,
+                                            self.gene_expression,
+                                            kwargs.get("n_components"),
+                                            kwargs.get("var"))
         elif self._method == "corr":
             self.analysis = CorrAnalysis()
         self._permutations = None
@@ -299,7 +298,7 @@ class ImagingTranscriptomics:
 
     def run(self, outdir=None, scan_name="", gsea=False,
             gene_set="lake", save_res=True, n_cpu=4,
-            gene_limit=500):  # pragma: no cover
+            gene_limit=500):    # pragma: no cover
         """Method to run the imaging transcriptomics analysis.
 
         :param str outdir: path to the output directory, if not provided the
@@ -335,7 +334,7 @@ class ImagingTranscriptomics:
                         _d_perm = self._permutations[0:34, :]
                     else:
                         _d_perm = self._permutations
-                elif self._regions == "cort+sub" or self._regions == "all":
+                elif self._regions in ["cort+sub", "all"]:
                     _d = self.zscore_data
                     _d_perm = self._permutations
                 self.analysis.bootstrap_correlation(_d, _d_perm,
@@ -347,7 +346,6 @@ class ImagingTranscriptomics:
                 self.analysis.save_results(outdir=outdir)
             if gsea:
                 self.gsea(gene_set=gene_set, outdir=outdir)
-            # PLS
             elif self._method == "pls":
                 # Select the data or slice of data
                 if self._regions == "cort":
@@ -356,7 +354,7 @@ class ImagingTranscriptomics:
                         _d_perm = self._permutations[0:34, :]
                     else:
                         _d_perm = self._permutations
-                elif self._regions == "cort+sub" or self._regions == "all":
+                elif self._regions in ["cort+sub", "all"]:
                     _d = self.zscore_data
                     _d_perm = self._permutations
                 assert isinstance(self.analysis, PLSAnalysis)
@@ -364,8 +362,8 @@ class ImagingTranscriptomics:
                 if self._regions == "cort":
                     _orig = self.scan_data if self.scan_data.shape[
                                                   0] == 34 else \
-                        self.scan_data[0:34, :]
-                elif self._regions == "cort+sub" or self._regions == "all":
+                            self.scan_data[0:34, :]
+                elif self._regions in ["cort+sub", "all"]:
                     _orig = self.scan_data
                 self.gene_results.results.boot_genes(_d,
                                                      _d_perm,

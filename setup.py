@@ -29,10 +29,7 @@ def get_requirements():
     """Get the requirements for the installation."""
     requirements = []
     with open('requirements.txt', 'r') as f:
-        for line in f:
-            if line[0] == '#':
-                continue
-            requirements.append(line.rstrip('\n'))
+        requirements.extend(line.rstrip('\n') for line in f if line[0] != '#')
     return requirements
 
 

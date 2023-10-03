@@ -54,7 +54,7 @@ def main():
         if parsed.input is None:
             raise ValueError("Please provide an input file.")
         infile = Path(parsed.input)
-        if not infile.suffix == ".pkl":
+        if infile.suffix != ".pkl":
             raise ValueError("The input file must be a pickle file.")
         outdir = Path(parsed.output) if parsed.output else infile.parent
         with open(infile, "rb") as f:

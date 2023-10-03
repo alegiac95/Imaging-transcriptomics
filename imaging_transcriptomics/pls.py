@@ -92,7 +92,7 @@ class PLSAnalysis:
     def boot_pls(self,
                  imaging_data,
                  permuted_imaging,
-                 gene_exp):  # pragma: no cover
+                 gene_exp):    # pragma: no cover
         """Bootstrapping on the PLS components.
 
         :param imaging_data: imaging data. Allows the user to specify the
@@ -104,7 +104,7 @@ class PLSAnalysis:
         :param gene_exp: gene expression data.
         """
         # Iterate over the components
-        logger.info(f"Calculating PLS with permuted data")
+        logger.info("Calculating PLS with permuted data")
         for component in range(1, self.n_components + 1):
             _res = pls_regression(gene_exp, imaging_data.reshape(
                 imaging_data.shape[0], 1),
