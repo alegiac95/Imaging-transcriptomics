@@ -33,6 +33,7 @@ class ImagingTranscriptomics:
                  regions="cort+sub",
                  method="corr",
                  atlas="DK",
+                 n_permutations=1000,
                  **kwargs):
         """ImagingTranscriptomics class for imaging transcriptomics analysis.
 
@@ -51,6 +52,7 @@ class ImagingTranscriptomics:
         """
         self.atlas = atlas
         self.n_regions, _ = load_atlas_imaging(self.atlas)
+        self.n_permutations = n_permutations
         if self.atlas == "DK":
             if regions in ["cort+sub", "all"]:
                 assert scan_data.shape == (41,)
@@ -99,7 +101,7 @@ class ImagingTranscriptomics:
                                             kwargs.get("n_components"),
                                             kwargs.get("var"))
         elif self._method == "corr":
-            self.analysis = CorrAnalysis()
+            self.analysis = CorrAnalysis(n_iterations=self.n_permutations)
         self._permutations = None
         self._permutation_ind = None
 
@@ -180,7 +182,7 @@ class ImagingTranscriptomics:
         return self.analysis.gene_results
 
     # --------- METHODS --------- #
-    def permute_data(self, n_permutations=1000, atlas="DK"):
+    def permute_data(self, atlas="DK"):
         """Permute the imaging data maintaining spatial autocorrelation for
         the cortical regions. The permutation is done using the
         netneurotools Python package.
@@ -189,15 +191,15 @@ class ImagingTranscriptomics:
 
         """
         logger.info("Permuting data.")
-        _permuted = np.zeros((self.zscore_data.shape[0], n_permutations))
+        _permuted = np.zeros((self.zscore_data.shape[0], self.n_permutations))
         _perm_indexes = np.zeros((self.zscore_data.shape[0],
-                                  n_permutations), dtype=np.int32)
+                                  self.n_permutations), dtype=np.int32)
         # Calculate the permutations on the subcortical regions.
         if atlas == "DK":
             if self._subcortical is not None:
                 sub_permuted = np.zeros((self._subcortical.shape[0],
-                                         n_permutations))
-                for i in range(n_permutations):
+                                         self.n_permutations))
+                for i in range(self.n_permutations):
                     sub_resample = np.random.choice(7, size=7)
                     _perm_indexes[34:, i] = sub_resample + 34  # keep into
                     # account the shift of the subcortical given by the cortical
@@ -224,12 +226,12 @@ class ImagingTranscriptomics:
             # Get the spin samples
             spins = stats.gen_spinsamples(
                 parcel_centroids, parcel_hemi,
-                n_rotate=n_permutations,
+                n_rotate=self.n_permutations,
                 method="vasa",
                 seed=1234
             )
             cort_permuted = np.array(self._cortical[spins]).reshape(34,
-                                                                    n_permutations)
+                                                                    self.n_permutations)
             _perm_indexes[:34, :] = spins
             _permuted[0:34, :] = cort_permuted
             self._permutations = _permuted
@@ -255,7 +257,7 @@ class ImagingTranscriptomics:
             # Get the spin samples
             spins = stats.gen_spinsamples(
                 parcel_centroids, parcel_hemi,
-                n_rotate=n_permutations,
+                n_rotate=self.n_permutations,
                 method="vasa",
                 seed=1234
             )
@@ -316,7 +318,7 @@ class ImagingTranscriptomics:
         """
         logger.info(f"Running the {self.method} analysis.")
         # Create the permuted data matrix
-        self.permute_data()
+        self.permute_data(atlas=self.atlas)
         # Check if the ouput directory is provided and create the output folder
         if save_res:
             if outdir is not None:
@@ -396,8 +398,7 @@ class ImagingTranscriptomics:
                                                      self.gene_labels)
                 self.gene_results.results.compute()
             if save_res:
-                self._save_object(outdir,
-                                  f"{self.atlas}_{self.method}_analysis")
+                #self._save_object(outdir,f"{self.atlas}_{self.method}_analysis")
                 self.analysis.save_results(outdir=outdir)
             if gsea:
                 self.gsea(gene_set=gene_set, outdir=outdir,

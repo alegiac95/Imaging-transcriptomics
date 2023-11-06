@@ -202,3 +202,8 @@ def test_run_schaefer():
     assert imt_instance.scan_data is not None
     assert imt_instance._subcortical is None
     assert imt_instance.zscore_data is not None
+
+
+    def test_imt_gsea():
+        """Test runing an analysis with GSEA. (used for profiling"""
+

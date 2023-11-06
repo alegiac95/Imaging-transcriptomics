@@ -60,8 +60,8 @@ class CorrAnalysis:
     The only field contained is the a GeneResults object, storing all
     information about the correlation analysis.
     """
-    def __init__(self):
-        self.gene_results = GeneResults("corr")
+    def __init__(self, n_iterations=1000):
+        self.gene_results = GeneResults("corr", n_iter=n_iterations)
         self.gsea_res = None
 
     # --------- COMPUTE FUNCTIONS --------- #

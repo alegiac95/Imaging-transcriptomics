@@ -38,7 +38,7 @@ class GeneResults:
         if self.method == "pls":
             self.results = PLSGenes(kwargs.get("n_components"))
         elif self.method == "corr":
-            self.results = CorrGenes()
+            self.results = CorrGenes(n_iter=kwargs.get("n_iter"))
         else:
             raise ValueError(f"The method {method} is not supported.")
 
