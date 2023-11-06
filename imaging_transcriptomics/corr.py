@@ -140,7 +140,7 @@ class CorrAnalysis:
                                        outdir=None,
                                        seed=1234,
                                        max_size=gene_limit)
-            _boot_es[:, i] = _gsea_res.res2d.es.to_numpy()
+            _boot_es[:, i] = _gsea_res.res2d.ES.to_numpy()
         # calculate the p-value
         _p_val = np.zeros((_origin_es.shape[0],))
         _eps = .00001
@@ -149,7 +149,8 @@ class CorrAnalysis:
             if _p_val[i] == 0.0:
                 _p_val[i] += _eps
         # calculate the p-value corrected
-        _, _p_corr, _, _ = multipletests(_p_val, method='fdr_bh')
+        _, _p_corr, _, _ = multipletests(_p_val, method='fdr_bh',
+                                         is_sorted=False)
         # Prepare data to save
         _out_data = OrderedDict()
         _out_data["Term"] = gsea_results.res2d.axes[0].to_list()
