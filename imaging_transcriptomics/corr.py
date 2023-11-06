@@ -127,7 +127,7 @@ class CorrAnalysis:
                                       permutation_num=n_perm,
                                       seed=1234,
                                       max_size=gene_limit)
-        _origin_es = gsea_results.res2d.es.to_numpy()
+        _origin_es = gsea_results.res2d.ES.to_numpy()
         _boot_es = np.zeros((_origin_es.shape[0], n_perm))
         # perform the GSEA on the permutations
         for i in range(n_perm):
