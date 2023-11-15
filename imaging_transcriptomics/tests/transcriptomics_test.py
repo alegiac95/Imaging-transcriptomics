@@ -151,3 +151,59 @@ def test_make_out_dir(tmpdir):
                                               n_components=1)
     imt_instance._make_output_dir(tmpdir, "test")
     assert out_dir.exists()
+
+
+def test_atlas_transcriptomics():
+    imt_instance = imt.ImagingTranscriptomics(np.random.rand(41),
+                                              atlas="DK")
+    assert imt_instance.atlas == "DK"
+    assert imt_instance.atlas != "Schaefer_100"
+    imt_instance = imt.ImagingTranscriptomics(np.random.rand(50),
+                                              atlas="Schaefer_100")
+    assert imt_instance.atlas != "DK"
+    assert imt_instance.atlas == "Schaefer_100"
+
+
+def test_permute_data_schaefer_100():
+    """Test the permutations method."""
+    data = np.random.rand(50)
+    imt_instance = imt.ImagingTranscriptomics(data,
+                                              atlas="Schaefer_100",
+                                              regions="all",
+                                              method="corr")
+    assert imt_instance._permutations is None
+    imt_instance.permute_data()
+    assert imt_instance._permutations is not None
+    assert imt_instance._permutations.shape == (50, 1000)
+    assert imt_instance._permutations.dtype == np.float64
+
+
+def test_shaefer_error():
+    """Test the correct number of inputs."""
+    data = np.random.rand(41)
+    with pytest.raises(ValueError):
+        imt.ImagingTranscriptomics(data, atlas="Schaefer_100",
+                                   regions="all", method="corr")
+
+def test_run_schaefer():
+    """Test the run method."""
+    data = np.random.rand(50)
+    imt_instance = imt.ImagingTranscriptomics(data,
+                                              atlas="Schaefer_100",
+                                              regions="all",
+                                              method="corr")
+    imt_instance.run(save_res = False)
+    assert imt_instance._permutations is not None
+    assert imt_instance._permutations.shape == (50, 1000)
+    assert imt_instance._permutations.dtype == np.float64
+    assert imt_instance._method == "corr"
+    assert imt_instance.atlas == "Schaefer_100"
+    assert imt_instance._regions == "all"
+    assert imt_instance.scan_data is not None
+    assert imt_instance._subcortical is None
+    assert imt_instance.zscore_data is not None
+
+
+    def test_imt_gsea():
+        """Test runing an analysis with GSEA. (used for profiling"""
+

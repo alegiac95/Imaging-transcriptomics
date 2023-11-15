@@ -70,13 +70,12 @@ def main():
     input_name = infile.stem
     outdir = Path(parsed.output) if parsed.output else infile.parent
     if parsed.method == "corr":
-        if infile.suffix in [".txt", ".tsv", ".csv"]:
+        if infile.suffix in {".txt", ".tsv", ".csv"}:
             transcriptomics = imt.ImagingTranscriptomics.from_file(
                 infile,
                 method="corr",
                 regions=regions)
-        elif str().join(infile.suffixes) in [
-            ".nii", ".nii.gz"]:
+        elif str().join(infile.suffixes) in {".nii", ".nii.gz"}:
             transcriptomics = imt.ImagingTranscriptomics.from_scan(
                 infile,
                 method="corr",
@@ -87,12 +86,12 @@ def main():
             "n_components": parsed.ncomp,
             "var": parsed.var
         }
-        if infile.suffix in [".txt", ".tsv", ".csv"]:
+        if infile.suffix in {".txt", ".tsv", ".csv"}:
             transcriptomics = imt.ImagingTranscriptomics.from_file(
                 infile,
                 method="pls",
                 regions=regions, **pls_arg)
-        elif str().join(infile.suffixes) in [".nii", ".nii.gz"]:
+        elif str().join(infile.suffixes) in {".nii", ".nii.gz"}:
             transcriptomics = imt.ImagingTranscriptomics.from_scan(
                 infile,
                 method="pls",
@@ -107,11 +106,13 @@ def main():
                         n_cpu=n_cpu,
                         gene_limit=parsed.max_genes)
     # PLOTTING and PDF creation
-    imt.reporting.make_pdf(transcriptomics_data=transcriptomics,
-                           save_dir=Path(outdir) / f"Imt_{input_name}_"
-                                                   f"{transcriptomics.method}",
-                           name=str(input_name),
-                           scanname=str(infile.name))
+    imt.reporting.make_pdf(
+        transcriptomics_data=transcriptomics,
+        save_dir=Path(outdir) / f"Imt_{input_name}_"
+        f"{transcriptomics.method}",
+        name=str(input_name),
+        scanname=infile.name,
+    )
 
 
 if __name__ == "__main__":

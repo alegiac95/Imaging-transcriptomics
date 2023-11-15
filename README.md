@@ -59,6 +59,9 @@ pip install imaging-transcriptomics
 > not due to the package but on the chip architecture in running Python. 
 > We're currently working to test some solution for this.
 
+> **WARNING** There is an issue in running the toolbox in Windows OS experienced by some users.
+> One of the packages used tries to write a file for some analyses which the OS doesn't allow,
+> resulting in a fatal error.
 ## Usage
 
 
@@ -141,3 +144,6 @@ If you publish work using `imaging-transcriptomics` as part of your analysis ple
 
 
 >*Imaging-transcriptomics: Second release update (v1.0.2)*.Alessio Giacomel, & Daniel Martins. (2021). Zenodo. https://doi.org/10.5281/zenodo.5726839
+
+>*Integrating neuroimaging and gene expression data using the imaging transcriptomics toolbox*. 
+> Alessio Giacomel, Daniel Martins, Matteo Frigo, Federico Turkheimer, Steven CR Williams, Ottavia Dipasquale, and Mattia Veronese. STAR Protocols; doi: [https://doi.org/10.1016/j.xpro.2022.101315](https://doi.org/10.1016/j.xpro.2022.101315)

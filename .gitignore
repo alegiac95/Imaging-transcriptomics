@@ -27,6 +27,9 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
+dist/*
+build/*
+.pytest_cache/*
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -173,3 +176,11 @@ Temporary Items
 src/
 pyls/
 ENIGMA/
+# Ignore all files in the tests directory resulting from testing
+/tests/Imt_**/
+/Imt__corr/
+src/
+pyls/
+ENIGMA/
+imaging_transcriptomics/tests/data/*.npy
+imaging_transcriptomics/tests/Imt_**/

@@ -2,11 +2,7 @@ import numpy as np
 from pathlib import Path
 from scipy.stats import spearmanr
 import pandas as pd
-import logging
 from statsmodels.stats.multitest import multipletests
-from multiprocessing import Pool
-from functools import partial
-from itertools import product
 from collections import OrderedDict
 import gseapy
 from gseapy.plot import gseaplot
@@ -60,13 +56,13 @@ class CorrAnalysis:
     The only field contained is the a GeneResults object, storing all
     information about the correlation analysis.
     """
-    def __init__(self):
-        self.gene_results = GeneResults("corr")
+    def __init__(self, n_iterations=1000):
+        self.gene_results = GeneResults("corr", n_iter=n_iterations)
         self.gsea_res = None
 
     # --------- COMPUTE FUNCTIONS --------- #
     def bootstrap_correlation(self, imaging_data, permuted_imaging,
-                              gene_exp, gene_labels, n_cpu=4):
+                              gene_exp, gene_labels):
         """Perform bootstrapping on the correlation.
 
         The function first calculates the correlation between the imaging
@@ -84,20 +80,13 @@ class CorrAnalysis:
         represents the length of the imaging vector.
         :param np.ndarray gene_exp: the gene expression data.
         :param list gene_labels: the labels of the genes.
-        :param int n_cpu: the number of CPUs to use for the parallelization
         """
         assert isinstance(self.gene_results.results, CorrGenes)
         logger.info("Calculating correlation on original data.")
+        # Run correlation
         spearman_opt(imaging_data, gene_exp, self.gene_results.results.corr)
-        # pool = Pool(n_cpu)
-        # _ind = product(range(1000), range(self.gene_results.n_genes))
-
         logger.info("Calculating correlation on permuted data.")
-        # for ind, res in enumerate(pool.imap(partial(_spearman_op,
-        #                                             permuted=permuted_imaging,
-        #                                             y=gene_exp),
-        #                                     _ind, chunksize=15633)):
-        #     self.gene_results.results.boot_corr.flat[ind] = res
+        # Bootstrap the correlation
         for i in range(permuted_imaging.shape[1]):
             spearman_opt(permuted_imaging[:, i], gene_exp,
                          self.gene_results.results.boot_corr[:, i])
@@ -107,14 +96,15 @@ class CorrAnalysis:
         return
 
     def gsea(self, gene_set="lake", outdir=None,
-             gene_limit=500):  # pragma: no cover, long to process (t > 1 h)
-                                # - TESTED on run
+             gene_limit=500, n_perm=1_000):    # pragma: no cover, long to run
         """Perform GSEA on the correlation.
 
         The function runs a first gsea with the data and then runs the same
         analysis using the permuted data. The analysis of the permuted data
         is used ot calculate the p-values for the Enrichment scores (ES).
 
+        :param n_perm: number of permutations
+        :param gene_limit: max number of genes to use
         :param str gene_set: the gene set to use for the analysis.
         :param str outdir: the directory where to save the results.
         """
@@ -122,51 +112,51 @@ class CorrAnalysis:
         logger.info("Performing GSEA.")
         gene_set = get_geneset(gene_set)
         # prepare the gene_list as a list of strings
-        gene_list = [
-            gene for gene in self.gene_results.results.genes[:, 0].tolist()
-        ]
+        gene_list = list(self.gene_results.results.genes[:, 0].tolist())
         # perform the GSEA on original results
         rnk = pd.DataFrame(
                 zip(gene_list, self.gene_results.results.corr[0, :]))
         gsea_results = gseapy.prerank(rnk, gene_set,
                                       outdir=None,
-                                      permutation_num=1000,
+                                      permutation_num=0,
                                       seed=1234,
                                       max_size=gene_limit)
-        _origin_es = gsea_results.res2d.es.to_numpy()
-        _boot_es = np.zeros((_origin_es.shape[0], 1000))
+        _origin_es = gsea_results.res2d.ES.to_numpy()
+        _boot_es = np.zeros((_origin_es.shape[0], n_perm))
         # perform the GSEA on the permutations
-        for i in range(1000):
+        for i in range(n_perm):
             rnk = pd.DataFrame(
-                zip(gene_list, self.gene_results.results.boot_corr[:, i])
-            )
+                zip(gene_list, self.gene_results.results.boot_corr[:, i]))
             _gsea_res = gseapy.prerank(rnk, gene_set,
-                                       permutation_num=1,
+                                       permutation_num=0,
                                        no_plot=True,
                                        outdir=None,
                                        seed=1234,
                                        max_size=gene_limit)
-            _boot_es[:, i] = _gsea_res.res2d.es.to_numpy()
+            _boot_es[:, i] = _gsea_res.res2d.ES.to_numpy()
         # calculate the p-value
         _p_val = np.zeros((_origin_es.shape[0],))
         _eps = .00001
         for i in range(_origin_es.shape[0]):
-            _p_val[i] = np.sum(_boot_es[i, :] >= _origin_es[i]) / 1000
+            _p_val[i] = np.sum(_boot_es[i, :] >= _origin_es[i]) / n_perm
             if _p_val[i] == 0.0:
                 _p_val[i] += _eps
         # calculate the p-value corrected
-        _, _p_corr, _, _ = multipletests(_p_val, method='fdr_bh')
+        print(_p_val)
+        _, _p_corr, _, _ = multipletests(_p_val, method='fdr_bh',
+                                         is_sorted=False)
+        print(_p_corr)
         # Prepare data to save
         _out_data = OrderedDict()
-        _out_data["Term"] = gsea_results.res2d.axes[0].to_list()
-        _out_data["es"] = gsea_results.res2d.values[:, 0]
-        _out_data["nes"] = gsea_results.res2d.values[:, 1]
+        _out_data["Term"] = gsea_results.res2d.Term.values.tolist()
+        _out_data["es"] = gsea_results.res2d.ES.values
+        _out_data["nes"] = gsea_results.res2d.NES.values
         _out_data["p_val"] = _p_val
         _out_data["fdr"] = _p_corr
-        _out_data["genest_size"] = gsea_results.res2d.values[:, 4]
-        _out_data["matched_size"] = gsea_results.res2d.values[:, 5]
-        _out_data["matched_genes"] = gsea_results.res2d.values[:, 6]
-        _out_data["ledge_genes"] = gsea_results.res2d.values[:, 7]
+        #_out_data["genest_size"] = gsea_results.res2d.Geneset_Size.values
+        #_out_data["matched_size"] = gsea_results.res2d.values[:, 5]
+        #_out_data["matched_genes"] = gsea_results.res2d.values[:, 6]
+        #_out_data["ledge_genes"] = gsea_results.res2d.Lead_genes.values
         out_df = pd.DataFrame.from_dict(_out_data)
         if outdir is not None:
             logger.info("Saving GSEA results.")

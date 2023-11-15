@@ -1,5 +1,5 @@
 
-__version__ = "1.1.8"
+__version__ = "1.1.11"
 
 from . import inputs
 from . import reporting
