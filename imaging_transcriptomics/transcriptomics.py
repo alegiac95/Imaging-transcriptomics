@@ -295,6 +295,7 @@ class ImagingTranscriptomics:
                                gene_limit=gene_limit)
         elif self.method == "pls":
             self.gene_results.results.gsea(gene_set=gene_set,
+                                           perm_index=self._permutation_ind,
                                            outdir=outdir,
                                            gene_limit=gene_limit)
 
@@ -401,5 +402,6 @@ class ImagingTranscriptomics:
                 #self._save_object(outdir,f"{self.atlas}_{self.method}_analysis")
                 self.analysis.save_results(outdir=outdir)
             if gsea:
-                self.gsea(gene_set=gene_set, outdir=outdir,
+                self.gsea(gene_set=gene_set,
+                          outdir=outdir,
                           gene_limit=gene_limit)

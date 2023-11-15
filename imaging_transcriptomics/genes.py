@@ -3,7 +3,7 @@ import logging.config
 import yaml
 from pathlib import Path
 from pyls import pls_regression
-from scipy.stats import zscore, norm
+from scipy.stats import zscore, norm, false_discovery_rate
 from statsmodels.stats.multitest import multipletests
 import numpy as np
 from collections import OrderedDict
@@ -369,7 +369,8 @@ class CorrGenes:
             self.pval[0, i] = np.sum(
                 self.boot_corr[i, :] >= self.corr[0, i]) / self._n_iter
         _, p_corr, _, _ = multipletests(self.pval[0, :], method='fdr_bh',
-                                        is_sorted=False)
+                                        is_sorted=True)
+
         self.pval_corr[0, :] = p_corr
         return
 

@@ -150,7 +150,7 @@ class PLSAnalysis:
                        self.gene_results.results.boot.pval[i, :],
                        self.gene_results.results.boot.pval_corr[i, :])
             df = pd.DataFrame(data, columns=["Gene", "Z-score", "p-value",
-                                             "p-value (corrected)"])
+                                             "fdr"])
             df.to_csv(f"{outdir}/pls_component_{i+1}.tsv", sep='\t',
             index=False)
 
