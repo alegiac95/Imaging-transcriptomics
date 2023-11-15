@@ -2,11 +2,7 @@ import numpy as np
 from pathlib import Path
 from scipy.stats import spearmanr
 import pandas as pd
-import logging
 from statsmodels.stats.multitest import multipletests
-from multiprocessing import Pool
-from functools import partial
-from itertools import product
 from collections import OrderedDict
 import gseapy
 from gseapy.plot import gseaplot
@@ -100,9 +96,7 @@ class CorrAnalysis:
         return
 
     def gsea(self, gene_set="lake", outdir=None,
-             gene_limit=500, n_perm=1_000):    # pragma: no cover, long to
-        # process (t > 1 h)
-                                # - TESTED on run
+             gene_limit=500, n_perm=1_000):    # pragma: no cover, long to run
         """Perform GSEA on the correlation.
 
         The function runs a first gsea with the data and then runs the same
@@ -124,7 +118,7 @@ class CorrAnalysis:
                 zip(gene_list, self.gene_results.results.corr[0, :]))
         gsea_results = gseapy.prerank(rnk, gene_set,
                                       outdir=None,
-                                      permutation_num=n_perm,
+                                      permutation_num=0,
                                       seed=1234,
                                       max_size=gene_limit)
         _origin_es = gsea_results.res2d.ES.to_numpy()
@@ -132,10 +126,9 @@ class CorrAnalysis:
         # perform the GSEA on the permutations
         for i in range(n_perm):
             rnk = pd.DataFrame(
-                zip(gene_list, self.gene_results.results.boot_corr[:, i])
-            )
+                zip(gene_list, self.gene_results.results.boot_corr[:, i]))
             _gsea_res = gseapy.prerank(rnk, gene_set,
-                                       permutation_num=1,
+                                       permutation_num=0,
                                        no_plot=True,
                                        outdir=None,
                                        seed=1234,
@@ -149,19 +142,21 @@ class CorrAnalysis:
             if _p_val[i] == 0.0:
                 _p_val[i] += _eps
         # calculate the p-value corrected
+        print(_p_val)
         _, _p_corr, _, _ = multipletests(_p_val, method='fdr_bh',
                                          is_sorted=False)
+        print(_p_corr)
         # Prepare data to save
         _out_data = OrderedDict()
-        _out_data["Term"] = gsea_results.res2d.axes[0].to_list()
-        _out_data["es"] = gsea_results.res2d.values[:, 0]
-        _out_data["nes"] = gsea_results.res2d.values[:, 1]
+        _out_data["Term"] = gsea_results.res2d.Term.values.tolist()
+        _out_data["es"] = gsea_results.res2d.ES.values
+        _out_data["nes"] = gsea_results.res2d.NES.values
         _out_data["p_val"] = _p_val
         _out_data["fdr"] = _p_corr
-        _out_data["genest_size"] = gsea_results.res2d.values[:, 4]
-        _out_data["matched_size"] = gsea_results.res2d.values[:, 5]
-        _out_data["matched_genes"] = gsea_results.res2d.values[:, 6]
-        _out_data["ledge_genes"] = gsea_results.res2d.values[:, 7]
+        #_out_data["genest_size"] = gsea_results.res2d.Geneset_Size.values
+        #_out_data["matched_size"] = gsea_results.res2d.values[:, 5]
+        #_out_data["matched_genes"] = gsea_results.res2d.values[:, 6]
+        #_out_data["ledge_genes"] = gsea_results.res2d.Lead_genes.values
         out_df = pd.DataFrame.from_dict(_out_data)
         if outdir is not None:
             logger.info("Saving GSEA results.")
