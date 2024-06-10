@@ -96,7 +96,7 @@ class CorrAnalysis:
         return
 
     def gsea(self, gene_set="lake", outdir=None,
-             gene_limit=500, n_perm=1_000):    # pragma: no cover, long to run
+             gene_limit=1500, n_perm=1_000):    # pragma: no cover, long to run
         """Perform GSEA on the correlation.
 
         The function runs a first gsea with the data and then runs the same
@@ -117,10 +117,10 @@ class CorrAnalysis:
         rnk = pd.DataFrame(
                 zip(gene_list, self.gene_results.results.corr[0, :]))
         gsea_results = gseapy.prerank(rnk, gene_set,
+                                      max_size=gene_limit,
                                       outdir=None,
                                       permutation_num=0,
-                                      seed=1234,
-                                      max_size=gene_limit)
+                                      seed=1234)
         _origin_es = gsea_results.res2d.ES.to_numpy()
         _boot_es = np.zeros((_origin_es.shape[0], n_perm))
         # perform the GSEA on the permutations
@@ -128,29 +128,30 @@ class CorrAnalysis:
             rnk = pd.DataFrame(
                 zip(gene_list, self.gene_results.results.boot_corr[:, i]))
             _gsea_res = gseapy.prerank(rnk, gene_set,
+                                       max_size=gene_limit,
                                        permutation_num=0,
                                        no_plot=True,
                                        outdir=None,
-                                       seed=1234,
-                                       max_size=gene_limit)
-            _boot_es[:, i] = _gsea_res.res2d.ES.to_numpy()
-        # calculate the p-value
+                                       seed=1234)
+            _boot_es[:, i] = _gsea_res.res2d.ES.values
+        # calculate the p-value and NES
+        boot_nes_mean = np.mean(_boot_es, axis=1)
+        boot_nes_std = np.std(_boot_es, axis=1)
+        boot_nes = (boot_nes_mean - _origin_es) / boot_nes_std
         _p_val = np.zeros((_origin_es.shape[0],))
         _eps = .00001
         for i in range(_origin_es.shape[0]):
-            _p_val[i] = np.sum(_boot_es[i, :] >= _origin_es[i]) / n_perm
+            _p_val[i] = np.sum(_boot_es[i, :] >= _origin_es[i]) / n_perm if _origin_es[i] >= 0 else np.sum(_boot_es[i, :] <= _origin_es[i]) / n_perm
             if _p_val[i] == 0.0:
                 _p_val[i] += _eps
         # calculate the p-value corrected
-        print(_p_val)
         _, _p_corr, _, _ = multipletests(_p_val, method='fdr_bh',
                                          is_sorted=False)
-        print(_p_corr)
         # Prepare data to save
         _out_data = OrderedDict()
         _out_data["Term"] = gsea_results.res2d.Term.values.tolist()
         _out_data["es"] = gsea_results.res2d.ES.values
-        _out_data["nes"] = gsea_results.res2d.NES.values
+        _out_data["nes"] = boot_nes
         _out_data["p_val"] = _p_val
         _out_data["fdr"] = _p_corr
         #_out_data["genest_size"] = gsea_results.res2d.Geneset_Size.values
@@ -164,14 +165,14 @@ class CorrAnalysis:
             assert outdir.exists()
             out_df.to_csv(outdir / "gsea_corr_results.tsv", index=False,
                           sep="\t")
-            for i in range(len(gsea_results.res2d.index)):
-                term = gsea_results.res2d.index[i]
-                gsea_results.results[term]["pval"] = _p_val[i]
-                gsea_results.results[term]["fdr"] = _p_corr[i]
-                gseaplot(rank_metric=gsea_results.ranking,
-                         term=term,
-                         **gsea_results.results[term],
-                         ofname=f"{outdir}/{term}_corr_prerank.pdf")
+            # for i in range(len(gsea_results.res2d.index)):
+            #     term = gsea_results.res2d.index[i]
+            #     gsea_results.results[term]["pval"] = _p_val[i]
+            #     gsea_results.results[term]["fdr"] = _p_corr[i]
+            #     gseaplot(rank_metric=gsea_results.ranking,
+            #              term=term,
+            #              **gsea_results.results[term],
+            #              ofname=f"{outdir}/{term}_corr_prerank.pdf")
 
     # --------- SAVE FUNCTIONS --------- #
     def save_results(self, outdir):  # pragma: no cover, simply saves stuff

@@ -3,7 +3,7 @@ import logging.config
 import yaml
 from pathlib import Path
 from pyls import pls_regression
-from scipy.stats import zscore, norm, false_discovery_rate
+from scipy.stats import zscore, norm
 from statsmodels.stats.multitest import multipletests
 import numpy as np
 from collections import OrderedDict
@@ -188,7 +188,7 @@ class PLSGenes:
             self.boot.pval_corr[component, :] = _p_corr
         return
 
-    def gsea(self, gene_set="lake", outdir=None, gene_limit=500, n_iter=1000):
+    def gsea(self, gene_set="lake", outdir=None, gene_limit=1500, n_iter=1000):
         """Perform a GSEA analysis on the z-scored weights."""
         assert isinstance(self.orig, OrigPLS)
         assert isinstance(self.boot, BootPLS)
@@ -203,10 +203,10 @@ class PLSGenes:
             rnk = pd.DataFrame(zip(gene_list,
                                    self.orig.zscored[_component, :]))
             gsea_results = gseapy.prerank(rnk, gene_set,
+                                          max_size=gene_limit,
                                           outdir=None,
                                           seed=1234,
-                                          permutation_num=n_iter,
-                                          max_size=gene_limit)
+                                          permutation_num=n_iter)
             _origin_es = gsea_results.res2d.es.to_numpy()
             _boot_es = np.zeros((_origin_es.shape[0], n_iter))
             for i in range(n_iter):
@@ -217,14 +217,14 @@ class PLSGenes:
                                        )
                                    )
                 gsea_res = gseapy.prerank(rnk, gene_set,
+                                          max_size=gene_limit,
                                           outdir=None,
                                           seed=1234,
-                                          permutation_num=1,
-                                          max_size=gene_limit)
+                                          permutation_num=1)
                 _boot_es[:, i] = gsea_res.res2d.es.to_numpy()
             _p_val = np.zeros((_origin_es.shape[0],))
             for i in range(_origin_es.shape[0]):
-                _p_val[i] = np.sum(_boot_es[i, :] >= _origin_es[i]) / n_iter
+                _p_val[i] = np.sum(_boot_es[i, :] >= _origin_es[i]) / n_iter if _origin_es[i] >= 0 else np.sum(_boot_es[i, :] <= _origin_es[i]) / n_iter
             # calculate the p-value corrected
             _, _p_corr, _, _ = multipletests(_p_val, method='fdr_bh',
                                is_sorted=False)
@@ -366,10 +366,9 @@ class CorrGenes:
         # make sure the order of the other is the same.
         logger.info("Computing p values.")
         for i in range(self.n_genes):
-            self.pval[0, i] = np.sum(
-                self.boot_corr[i, :] >= self.corr[0, i]) / self._n_iter
+            self.pval[0, i] = np.sum(self.boot_corr[i, :] >= self.corr[0, i]) / self._n_iter if self.corr[0, i] >= 0 else np.sum(self.boot_corr[i, :] <= self.corr[0, i]) / self._n_iter
         _, p_corr, _, _ = multipletests(self.pval[0, :], method='fdr_bh',
-                                        is_sorted=True)
+                                        is_sorted=False)
 
         self.pval_corr[0, :] = p_corr
         return

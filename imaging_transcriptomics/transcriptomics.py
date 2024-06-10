@@ -288,7 +288,7 @@ class ImagingTranscriptomics:
         return
 
     # --------- RUN ANALYSIS --------- #
-    def gsea(self, outdir=None, gene_set="lake", gene_limit=500):
+    def gsea(self, outdir=None, gene_set="lake", gene_limit=1500):
 
         if self.method == "corr":
             self.analysis.gsea(gene_set=gene_set, outdir=outdir,
@@ -301,7 +301,7 @@ class ImagingTranscriptomics:
 
     def run(self, outdir=None, scan_name="", gsea=False,
             gene_set="lake", save_res=True, n_cpu=4,
-            gene_limit=500):    # pragma: no cover
+            gene_limit=1500):    # pragma: no cover
         """Method to run the imaging transcriptomics analysis.
 
         :param str outdir: path to the output directory, if not provided the
