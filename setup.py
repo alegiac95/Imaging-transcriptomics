@@ -70,4 +70,5 @@ setup(name="imaging-transcriptomics",
         "Bug Reports": "https://github.com/alegiac95/Imaging-transcriptomics/issues",
         "Documentation": "https://imaging-transcriptomics.rtfd.io/"
       },
+      python_requires=">=3.6, <3.9"
       )
