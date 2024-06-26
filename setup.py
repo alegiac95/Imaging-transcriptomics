@@ -1,4 +1,4 @@
-from setuptools import setup, find_packages, find_data
+from setuptools import setup, find_packages
 from pathlib import Path
 from glob import glob
 
