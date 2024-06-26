@@ -1,4 +1,4 @@
-h5py==3.3.0
+h5py
 numpy==1.21.1
 pytest==6.2.4
 tqdm==4.61.2
@@ -14,5 +14,5 @@ matplotlib==3.4.2
 netneurotools==0.2.3
 gseapy>=1.0.0
 nilearn==0.8.1
-vtk==9.1.0
+vtk
 numba==0.55.1
