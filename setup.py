@@ -1,4 +1,4 @@
-from setuptools import setup, find_packages
+from setuptools import setup, find_packages, find_data
 from pathlib import Path
 from glob import glob
 
@@ -57,7 +57,8 @@ setup(name="imaging-transcriptomics",
       packages=["imaging_transcriptomics"],
       include_package_data=True,
       package_data={"imaging_transcriptomics": ["*.yaml", "*.nii.gz",
-                                                "*.csv", "*.txt", "*.annot"]},
+                                                "*.csv", "*.txt", "*.annot",
+                                                "data/*"]},
       entry_points={
           "console_scripts": [
               "imagingtranscriptomics=imaging_transcriptomics.script"
