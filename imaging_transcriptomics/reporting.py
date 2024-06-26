@@ -6,9 +6,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import nibabel as nib
 from fpdf import FPDF
-from enigmatoolbox.utils.parcellation import parcel_to_surface
-from enigmatoolbox.plotting.surface_plotting import plot_cortical, \
-    plot_subcortical
 
 from .errors import CheckPath
 from .genes import GeneResults
