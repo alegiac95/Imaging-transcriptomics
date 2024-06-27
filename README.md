@@ -35,17 +35,15 @@ is released under the GPL v3 license.
 > have activated it, you can follow the below guide to install the package and dependencies. This process will avoid 
 > clashes between conflicting packages that could happen during/after the installation.
 
-To install the `imaging-transcriptomics` Python package, first you will need to install two packages that can't be installed directly from PyPi, but require to be downloaded from GitHub.
-The first package to install is [pypyls](https://github.com/netneurolab/pypyls). To install this package you can follow the installation on the documentation for the package or simply run the command
+
+> **TIP**: To create easily an environment on your machine download the `environment.yml` file from the [Github repo](https://github.com/alegiac95/Imaging-transcriptomics/) and install the environemnt with the command: `conda env create -f environment.yml`, then you can proceed with the following steps.
+
+To install the `imaging-transcriptomics` Python package, first you will need to install an additional package that can't be installed directly from PyPi, but require to be downloaded from GitHub.
+This package to install is [pypyls](https://github.com/netneurolab/pypyls). To install this package you can follow the installation on the documentation for the package or simply run the command
 ```shell
 pip install -e git+https://github.com/netneurolab/pypyls.git/#egg=pyls
 ```
-the second package is the [enigmatoolbox](https://enigma-toolbox.readthedocs.io/en/latest/index.html) which you can install by following the installation procedure from the developers, which is:
-```shell
-git clone https://github.com/MICA-MNI/ENIGMA.git
-cd ENIGMA
-python setup.py install
-```
+
 After this, to download the package, and its dependencies directly from GitHub by using `pip`.
 
 Once this package is installed you can install the `imaging-transcriptomics` package by running

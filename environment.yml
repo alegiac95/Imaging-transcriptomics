@@ -2,32 +2,51 @@ name: imaging-transcriptomics
 channels:
   - defaults
 dependencies:
-  - ca-certificates=2021.7.5=hecd8cb5_1
-  - certifi=2021.5.30=py37hecd8cb5_0
-  - libcxx=10.0.0=1
-  - libffi=3.3=hb1e8313_2
-  - ncurses=6.2=h0a44026_1
-  - openssl=1.1.1k=h9ed2024_0
-  - pip=21.1.3=py37hecd8cb5_0
-  - python=3.7.10=h88f2d9e_0
-  - readline=8.1=h9ed2024_0
-  - setuptools=52.0.0=py37hecd8cb5_0
-  - sqlite=3.36.0=hce871da_0
-  - tk=8.6.10=hb0a8c7a_0
-  - tqdm=4.61.2=pyhd3eb1b0_1
-  - wheel=0.36.2=pyhd3eb1b0_0
-  - xz=5.2.5=h1de35cc_0
-  - zlib=1.2.11=h1de35cc_3
+  - ca-certificates=2021.7.5
+  - certifi=2021.5.30
+  - libcxx=10.0.0
+  - libffi=3.3
+  - ncurses=6.2
+  - openssl=1.1.1k
+  - pip=21.1.3
+  - python=3.7.10
+  - readline=8.1
+  - sqlite=3.36.0
+  - tk=8.6.10
+  - tqdm=4.61.2
+  - wheel=0.36.2
+  - xz=5.2.5
+  - zlib=1.2.11
   - pip:
+    - aiohttp==4.0.0a1
     - alabaster==0.7.12
+    - appdirs==1.4.4
+    - async-timeout==3.0.1
     - attrs==21.2.0
     - babel==2.9.1
     - bctpy==0.5.2
+    - beautifulsoup4==4.10.0
+    - bioservices==1.8.2
+    - black==21.9b0
+    - bleach==4.1.0
+    - build==0.6.0.post1
     - cached-property==1.5.2
+    - cattrs==1.10.0
+    - chardet==3.0.4
     - charset-normalizer==2.0.3
+    - click==8.0.3
+    - colorama==0.4.4
+    - colorlog==6.6.0
     - cycler==0.10.0
     - docutils==0.17.1
+    - easydev==0.12.0
+    - et-xmlfile==1.1.0
+    - execnet==1.9.0
     - fpdf2==2.4.2
+    - gevent==21.12.0
+    - greenlet==1.1.2
+    - grequests==0.6.0
+    - gseapy==1.1.3
     - h5py==3.3.0
     - idna==3.2
     - imagesize==1.2.0
@@ -35,31 +54,54 @@ dependencies:
     - iniconfig==1.1.1
     - jinja2==3.0.1
     - joblib==1.0.1
+    - keyring==23.1.0
     - kiwisolver==1.3.1
+    - llvmlite==0.38.0
+    - lxml==4.7.1
     - markupsafe==2.0.1
     - matplotlib==3.4.2
-    - git+https://github.com/netneurolab/netneurotools
+    - multidict==4.7.6
+    - mypy-extensions==0.4.3
+    - netneurotools==0.2.3
     - nibabel==3.2.1
-    - nilearn==0.8.0
+    - nilearn==0.8.1
+    - numba==0.55.1
     - numpy==1.21.1
+    - openpyxl==3.0.9
     - packaging==21.0
     - pandas==1.3.1
+    - pathspec==0.9.0
     - patsy==0.5.1
+    - pep517==0.11.0
+    - pep8==1.7.1
+    - pexpect==4.8.0
     - pillow==8.3.1
+    - pkginfo==1.7.1
+    - platformdirs==2.4.0
     - pluggy==0.13.1
+    - ptyprocess==0.7.0
     - py==1.10.0
     - pygments==2.9.0
-    - git+git://github.com/rmarkello/pyls@master
     - pyparsing==2.4.7
     - pytest==6.2.4
+    - pytest-cache==1.0
     - python-dateutil==2.8.2
     - pytz==2021.1
+    - pyyaml==5.4.1
+    - readme-renderer==29.0
+    - regex==2021.10.8
     - requests==2.26.0
+    - requests-cache==0.9.0
+    - requests-toolbelt==0.9.1
+    - rfc3986==1.5.0
     - scikit-learn==0.24.2
     - scipy==1.7.0
+    - setuptools==52.0.0
     - six==1.16.0
     - snowballstemmer==2.1.0
+    - soupsieve==2.3.1
     - sphinx==4.1.2
+    - sphinx-celery==2.0.0
     - sphinxcontrib-applehelp==1.0.2
     - sphinxcontrib-devhelp==1.0.2
     - sphinxcontrib-htmlhelp==2.0.0
@@ -67,7 +109,23 @@ dependencies:
     - sphinxcontrib-qthelp==1.0.3
     - sphinxcontrib-serializinghtml==1.1.5
     - statsmodels==0.12.2
+    - style==1.1.0
+    - suds-community==1.0.0
     - threadpoolctl==2.2.0
+    - tomli==1.2.1
+    - twine==3.4.2
+    - typed-ast==1.4.3
     - typing-extensions==3.10.0.0
+    - update==0.0.1
+    - url-normalize==1.4.3
     - urllib3==1.26.6
+    - vtk==9.1.0
+    - webencodings==0.5.1
+    - wrapt==1.13.3
+    - wslink==1.3.1
+    - xmltodict==0.12.0
+    - yarl==1.7.2
     - zipp==3.5.0
+    - zope-event==4.5.0
+    - zope-interface==5.4.0
+prefix: /Users/alessiogiacomel/anaconda3/envs/imaging-transcriptomics
