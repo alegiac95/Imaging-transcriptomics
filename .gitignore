@@ -184,3 +184,5 @@ pyls/
 ENIGMA/
 imaging_transcriptomics/tests/data/*.npy
 imaging_transcriptomics/tests/Imt_**/
+
+.conda/

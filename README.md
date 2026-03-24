@@ -1,147 +1,176 @@
-# Imaging Transcriptomics
+# Imaging Transcriptomics 2.0
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6364963.svg)](https://doi.org/10.5281/zenodo.6364963)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-[![Maintainer](https://img.shields.io/badge/maintainer-alegiac95-blue)](https://github.com/alegiac95)
-[![Generic badge](https://img.shields.io/badge/python->=3.6-blue.svg)](https://www.python.org/doc/versions/)
-[![Documentation Status](https://readthedocs.org/projects/imaging-transcriptomics/badge/?version=latest)](https://imaging-transcriptomics.readthedocs.io/en/latest/?badge=latest)
+[![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/doc/versions/)
 
+`imaging-transcriptomics` links brain maps to Allen Human Brain Atlas gene-expression data. This branch is a `2.0.0` refactor with a lighter functional API, atlas-aware scan extraction, optional neuromaps-based resampling, and text-plus-plot outputs instead of PDF reports.
 
-![Imaging-transcriptomics_overwiew](https://raw.githubusercontent.com/alegiac95/imt/main/.github/images/imaging_transcriptomics.png
- "Overview of the imaging 
-transcriptomics methodology")
+## What Changed In V2
 
-Imaging transcriptomics is a methodology that allows to identify patterns of correlation between gene expression and some
-property of brain structure or function as measured by neuroimaging (e.g., MRI, fMRI, PET).
+- Functional entry points: `run_corr()` and `run_pls()`
+- Packaged atlas presets with abagen-derived expression data
+- Left-only or mirrored left+right hemisphere expression matrices
+- Direct vector, text-table, NIfTI, and surface-input handling
+- `README.txt` plus TSV tables and plot PNGs as the default outputs
+- Local SIMPLS-based PLS backend
+- A smaller v2-only public API centered on `RunConfig`, `run_corr()`, and `run_pls()`
 
----
+## Packaged Atlases
 
-The `imaging-transcriptomics` package allows performing imaging transcriptomics analysis on a neuroimaging scan 
-(e.g., PET, MRI, fMRI...). 
+Ready to run in this branch:
 
-The software is implemented in Python3 (v.3.7), its source code is available on GitHub, it can be installed via Pypi and
-is released under the GPL v3 license. 
+- `dk`
+- `schaefer-100`
 
+Preset definitions included for local abagen builds:
 
+- `schaefer-200`
+- `schaefer-400`
+- `destrieux`
+- `glasser-360`
 
-> **NOTE** Versions from v1.0.0 are or will be maintained. The original script linked by the BioRxiv preprint (v0.0) is 
-> [still available on GitHub](https://github.com/alegiac95/Imaging_Transcriptomics_preprint) but no changes will be made to that code. If you have downloaded or used that script please 
-> update to the newer version by installing this new version.
+The packaged expression matrices are still generated from `abagen`. For bilateral analyses, the right hemisphere is represented through the mirrored expression strategy supported by `abagen` (`lr_mirror="leftright"`).
 
 ## Installation
 
-> **NOTE** We recommend to install the package in a dedicated environment of your choice 
-> (e.g., [venv](https://docs.python.org/3/library/venv.html) or [anaconda](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html)). Once you have created your environment and you
-> have activated it, you can follow the below guide to install the package and dependencies. This process will avoid 
-> clashes between conflicting packages that could happen during/after the installation.
+Create an environment first if you want an isolated install:
 
-
-> **TIP**: To create easily an environment on your machine download the `environment.yml` file from the [Github repo](https://github.com/alegiac95/Imaging-transcriptomics/) and install the environemnt with the command: `conda env create -f environment.yml`, then you can proceed with the following steps.
-
-To install the `imaging-transcriptomics` Python package, first you will need to install an additional package that can't be installed directly from PyPi, but require to be downloaded from GitHub.
-This package to install is [pypyls](https://github.com/netneurolab/pypyls). To install this package you can follow the installation on the documentation for the package or simply run the command
-```shell
-pip install -e git+https://github.com/netneurolab/pypyls.git/#egg=pyls
+```bash
+conda env create -f environment-v2.yml
+conda activate imaging-transcriptomics-v2
 ```
 
-After this, to download the package, and its dependencies directly from GitHub by using `pip`.
+Install the package:
 
-Once this package is installed you can install the `imaging-transcriptomics` package by running
-```shell
-pip install imaging-transcriptomics
+```bash
+pip install -e .
 ```
 
+Optional extras:
 
-> **WARNING** At this time the package might some problems running on Mac 
-> computers that have the M1 chip instead of the Intel ones. The problem is 
-> not due to the package but on the chip architecture in running Python. 
-> We're currently working to test some solution for this.
+- `pip install -e .[gsea]` for gene-set enrichment analysis
+- `pip install -e .[maps]` for `neuromaps` and `abagen`
+- `pip install -e .[dev]` for tests and tooling
 
-> **WARNING** There is an issue in running the toolbox in Windows OS experienced by some users.
-> One of the packages used tries to write a file for some analyses which the OS doesn't allow,
-> resulting in a fatal error.
-## Usage
+## Python API
 
-
-Once installed the software can be used in two ways:
-- as standalone script
-- as part of some python script
-
-> **WARNING** Before running the script make sure the Pyhton environment where you have installed the package is activated.
-
-
-### Standalone script
----
-To run the standalone script from the terminal use the command:
-```shell
-imagingtranscriptomics options {corr, pls}
-```
-
-The `options` available are:
-- `-i (--input)`: Path to the imaging file to analise. The path should be given to the program as an absolute path (e.g., `/Users/myusername/Documents/my_scan.nii`, since a relative path could raise permission errors and crashes. The script only accepts imaging files in the NIfTI format (`.nii`, `.nii.gz`).
-- `-o (--output)` *(optional)*: Path where to save the results. If none is provided the results will be saved in the same directory as the input scan.
-- `-r` *(optional)*: Regions of the brain to use for the estimation. Can be either "cort+sub" (or equivalently "all") to use all regions or "cort" to use only cortical regions.
-- `--no-gsea` *(optional)*: If this option is provided the GSEA analysis will not be performed.
-- `--geneset` *(optional)*: Name of the geneset to use to run GSEA. The 
-  full list is available in the documentation or by running the `imt_gsea 
-  avail` command.
-Additionally to the above options two specific commands (required) are available:
-- `corr`: To run the correlation analysis.
-- `pls`: To run the PLS analysis. If you choose to run the pls analysis 
-  there are two additional options available:
-  - `--ncomp`: number of components to use in the PLS analysis.
-  - `--var`: variance to estimate from the data.
-
-### Part of Python script
-
----
-When used as part of a Python script the library can be imported as:
-```python
-import imaging_transcriptomics as imt
-```
-
-The core class of the package is the `ImagingTranscriptomics` class which  gives access to the methods used in the standalone script.
-To use the analysis in your scripts you can initialise the class and then simply call the `ImagingTranscriptomics().run()` method.
+Correlation:
 
 ```python
 import numpy as np
 import imaging_transcriptomics as imt
-my_data = np.ones(41)  # MUST be of size 41 
-                       # (corresponds to the regions in left hemisphere of the DK atlas)
 
-analysis = imt.ImagingTranscriptomics(my_data, method="pls", n_components=1,
-                                      regions="cort+sub")
-analysis.run(gsea=False)
-# If instead of running PLS you want to analysze the data with correlation you can run the analysis with:
-analysis = imt.ImagingTranscriptomics(my_data, method="corr", 
-                                      regions="cort+sub")
+scan = np.linspace(-1.0, 1.0, 41)
+result = imt.run_corr(
+    scan,
+    atlas="dk",
+    hemisphere="left",
+    regions="all",
+    n_permutations=1000,
+    output_dir="out_corr",
+)
 ```
 
-Once completed the results will be part of the `analysis` object and can be accessed with `analysis.gene_results`.
+PLS:
 
-The import of the `imaging_transcriptomics` package will import other helpful functions for input and reporting. For a complete explanation of this please refer to the [official documentation](https://imaging-transcriptomics.readthedocs.io/en/latest/) of the package.
+```python
+import numpy as np
+import imaging_transcriptomics as imt
 
+scan = np.linspace(-1.0, 1.0, 83)
+result = imt.run_pls(
+    scan,
+    atlas="dk",
+    hemisphere="both",
+    regions="all",
+    n_components=2,
+    n_permutations=1000,
+    output_dir="out_pls",
+)
+```
 
-### Documentation
+Inspect atlas presets:
 
-The documentation of the script is available at [imaging-transcriptomics.rtfd.io/](https://imaging-transcriptomics.rtfd.io/en/latest/). 
+```python
+import imaging_transcriptomics as imt
 
-### Troubleshooting
+print(imt.atlas_table(packaged_only=True))
+print(imt.describe_atlas("dk"))
+```
 
-For any problems with the software you can [open an issue in GitHub](https://github.com/alegiac95/Imaging-transcriptomics/issues) or [contact the maintainer](mailto:alessio.giacomel@kcl.ac.uk)) of the package.
+## CLI
 
-### Citing
+List atlases:
 
-If you publish work using `imaging-transcriptomics` as part of your analysis please cite:
+```bash
+imagingtranscriptomics atlases --packaged-only
+```
 
->*Imaging transcriptomics: Convergent cellular, transcriptomic, and 
-> molecular neuroimaging signatures in the healthy adult human brain.* 
-> Daniel Martins, Alessio Giacomel, Steven CR Williams, Federico Turkheimer,
-> Ottavia Dipasquale, Mattia Veronese, PET templates working group. Cell 
-> Reports; doi: [https://doi.org/10.1016/j.celrep.2021.110173](https://doi.org/10.1016/j.celrep.2021.110173)
+Run correlation:
 
+```bash
+imagingtranscriptomics corr \
+  --input /abs/path/scan.nii.gz \
+  --atlas dk \
+  --hemisphere left \
+  --null-method vasa \
+  --regions all \
+  --output /abs/path/out_dir
+```
 
->*Imaging-transcriptomics: Second release update (v1.0.2)*.Alessio Giacomel, & Daniel Martins. (2021). Zenodo. https://doi.org/10.5281/zenodo.5726839
+Run PLS:
 
->*Integrating neuroimaging and gene expression data using the imaging transcriptomics toolbox*. 
-> Alessio Giacomel, Daniel Martins, Matteo Frigo, Federico Turkheimer, Steven CR Williams, Ottavia Dipasquale, and Mattia Veronese. STAR Protocols; doi: [https://doi.org/10.1016/j.xpro.2022.101315](https://doi.org/10.1016/j.xpro.2022.101315)
+```bash
+imagingtranscriptomics pls \
+  --input /abs/path/scan.nii.gz \
+  --atlas schaefer-100 \
+  --hemisphere both \
+  --null-method auto \
+  --ncomp 2 \
+  --output /abs/path/out_dir
+```
+
+Available null methods are `auto`, `vasa`, `alexander_bloch`, `moran`, and `random`. The default `auto` mode prefers `vasa` for cortical parcellated data and falls back to within-hemisphere random shuffles when a surface null model is unavailable locally.
+
+## Inputs And Resampling
+
+The v2 scan layer accepts:
+
+- regional vectors as NumPy arrays or text tables
+- volumetric NIfTI data in `MNI152`
+- non-MNI or surface data through `neuromaps` when the `maps` extra is installed
+
+For volumetric maps already in `MNI152`, the package can extract regional values directly with the packaged atlas image. For cross-space or surface workflows, `neuromaps` is used to resample/parcellate the input before analysis.
+
+## Outputs
+
+Each run writes:
+
+- `README.txt`
+- `metadata.json`
+- `regional_values.tsv`
+- analysis tables such as `corr_genes.tsv`, `pls_summary.tsv`, `pls_component_<n>.tsv`
+- plot PNGs in `plots/`
+
+If GSEA is enabled, the corresponding `gsea_*.tsv` tables are also written.
+
+PDF reporting was intentionally removed in this refactor.
+
+## Development
+
+Run the targeted test suite used for this refactor:
+
+```bash
+pytest -q imaging_transcriptomics/tests/v2_test.py
+pytest -q imaging_transcriptomics/tests/pvalues_test.py
+pytest -q imaging_transcriptomics/tests/auto_test.py imaging_transcriptomics/tests/plotting_test.py
+```
+
+## Citing
+
+If you publish work using this toolbox, please cite:
+
+- Martins D, Giacomel A, Williams SCR, Turkheimer F, Dipasquale O, Veronese M. *Imaging transcriptomics: Convergent cellular, transcriptomic, and molecular neuroimaging signatures in the healthy adult human brain.* Cell Reports. [https://doi.org/10.1016/j.celrep.2021.110173](https://doi.org/10.1016/j.celrep.2021.110173)
+- Giacomel A, Martins D. *Imaging-transcriptomics: Second release update (v1.0.2).* Zenodo. [https://doi.org/10.5281/zenodo.5726839](https://doi.org/10.5281/zenodo.5726839)
+- Giacomel A, Martins D, Frigo M, Turkheimer F, Williams SCR, Dipasquale O, Veronese M. *Integrating neuroimaging and gene expression data using the imaging transcriptomics toolbox.* STAR Protocols. [https://doi.org/10.1016/j.xpro.2022.101315](https://doi.org/10.1016/j.xpro.2022.101315)

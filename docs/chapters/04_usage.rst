@@ -1,71 +1,39 @@
-
 .. _Usage:
 
 ============
 Script usage
 ============
 
-Once you have installed the package you can run the analysis script as:
+Once installed, the v2 CLI exposes atlas-aware workflows:
 
 .. code:: bash
 
-    imagingtranscriptomics --input /path-to-your-in-file [options] {corr|pls [options]}
+    imagingtranscriptomics atlases --packaged-only
+    imagingtranscriptomics corr --input /path/to/map.nii.gz --atlas dk --output /path/to/out
+    imagingtranscriptomics pls --input /path/to/map.tsv --atlas schaefer-100 --ncomp 2 --output /path/to/out
 
-The script has some options that allow the user to tune the analysis to their specific application. The options are as follows:
+The shared analysis options are:
 
-- ``--input`` (``-i``, **mandatory**): path to the input data. This can be either a neuroimaging scan (*i.e.*, .nii[.gz]) or a text file (*i.e.*, .txt).
-  
-  .. warning::
+- ``--input`` / ``-i``: input regional vector, volumetric NIfTI, or surface file pair.
+- ``--input-rh``: right-hemisphere surface file when using surface inputs.
+- ``--atlas`` / ``-a``: atlas preset, for example ``dk`` or ``schaefer-100``.
+- ``--hemisphere``: ``left`` or ``both``. Packaged expression data preserve the abagen left-only workflow and also expose mirrored right-hemisphere values when available.
+- ``--regions`` / ``-r``: ``all``, ``cort``, or ``cort+sub``.
+- ``--space``: source space for non-native inputs, for example ``MNI152``, ``fsaverage``, ``fsLR``, or ``CIVET``.
+- ``--permutations`` / ``-p``: number of permutations or spatial null samples.
+- ``--null-method``: ``auto``, ``vasa``, ``alexander_bloch``, ``moran``, or ``random``.
+- ``--seed``: random seed for reproducible permutations and null-model generation.
+- ``--geneset`` and ``--no-gsea``: enable or disable optional GSEA output.
 
-      If the input scan is a neuroimaging scan (*i.e.*, .nii, .nii.gz) this is expected to be in the same resolution as the Desikan-Killiany (DK) atlas used which is 1mm isotropic (matrix size 182x218x182). On the other hand if the input is a text file, this must be a text file with one column and no headers, with the rows containing the values of interest in the same order as the DK atlas used.
+``corr`` runs Spearman correlation against all genes. ``pls`` runs the local SIMPLS-based PLS backend and requires either ``--ncomp`` or ``--var``.
 
-- ``--output`` (``-o``, **optional**): path to the output directory. If none is provided the results will be saved in the same folder as the input scan.
-- ``--regions`` (``-r``, **optional**): regions to use for the analysis, can be *cort+sub* (or equivalently *all*) which specifies that all the regions are used, or, alternatively, *cort* for the cortical regions only. The latter  is useful with some certain types of data, where the subcortical regions might not be available (*e.g.*, EEG).
-- ``--no-gsea`` (**optional**): specifies whether or not Gene Set Enrihment Analysis should be performed.
-- ``--geneset`` (**optional**): specifies the name of the gene set or the path to the file to use for Gene Set Enrichment Analysis.
-  
-  .. warning:: 
+Outputs are written as lightweight text and image files:
 
-      The ``--geneset`` argument will be ignored if you also specify the ``--no-gsea`` flag. If the GSEA analysis is performed, the name of the gene set, or a path to a custom made gene set, should be given. To lookup the name of the available gene sets or on how to create a custom one refer to the GSEA section.
-
-After the selection of the above options, you can now specify the type of
-analysis to perform. The available analyses are:
-
-- ``corr``: to perform mass univariate correlation analysis using Spearman's rank correlation.
-- ``pls``: to perform partial least squares (PLS) analysis. If you select this option you must additionally specify either the number of components  to use in the analysis, with the ``--ncomp`` option, or the amount of  variance to retain from the data, with the ``--var`` option.
-
-
-.. tip::
-
-    All paths given as input should be given as absolute paths instead of relative paths to avoid any errors in reading the file.
-
-
-The ``imagingtranscriptomics`` script allows the user to specify the options to perform also the GSEA analysis, directly after the correlation analysis.
-However, it is not uncommon that on the same imaging data a researcher might have different research questions, which results in different gene sets to use for the investigation. For this reason, in the toolbox there is an additional script that, once a first correlation analysis is performed, allows to run directly the GSEA analysis.
-This script can be invoked as:
-
-.. code:: bash
-
-    imt_gsea --input /path-to-your-in-file [options]
-
-The running of this script is pretty straightforward, and the options
-available are:
-
-- ``--input`` (``-i``, **mandatory**): path to the input data. To run this script you must have already have performed a correlation analysis, either with mass univariate correlation or with PLS, as the input file is one of the output files of the previous step. The required file is located in the output folder and has ``.pkl`` extension.
-
-.. warning::
-
-    The ``--input`` argument **MUST** be a ``.pkl`` file generated by running the ``imagingtranscriptomics`` script.
-
-In addition to the ``--input`` argument, the script has the following options:
-
-- ``--output`` (``-o``, **optional**): path to the output directory. If none is
-provided the results will be saved in the same folder as the input file.
-- ``--geneset`` (**optional**): specifies the name of the gene set or the path to the file to use for Gene Set Enrichment Analysis. If you want to use one of the provided gene sets you can browse the available ones by running the script with only the ``--geneset avail`` option.
-
-.. tip::
-
-    To see the gene sets available in the package, run the script with the   ``--geneset avail`` option, i.e. ``imt_gsea --geneset avail``.
+- ``README.txt``: human-readable run summary.
+- ``metadata.json``: machine-readable metadata, including atlas and null-model settings.
+- ``regional_values.tsv``: parcellated input values aligned to atlas labels.
+- ``corr_genes.tsv`` or ``pls_component_<n>.tsv`` / ``pls_summary.tsv``: analysis tables.
+- ``plots/*.png``: overview plots instead of a PDF report.
 
 
 .. _library:
@@ -74,105 +42,47 @@ provided the results will be saved in the same folder as the input file.
 Usage as python library
 =======================
 
-Once installed the library can be used like any other Python package in custom written analysis pipelines.
-To the library can be imported by running:
+The v2 API is function-first:
 
 .. code:: python
 
     import imaging_transcriptomics as imt
 
-Once imported the package will contain the core ``ImagingTranscriptomics``
-class, along with other useful functions. To see all the available functions
-imported in the library run:
+    corr_result = imt.run_corr(
+        "/path/to/map.nii.gz",
+        atlas="dk",
+        hemisphere="left",
+        null_method="auto",
+        output_dir="/path/to/out",
+    )
+
+    pls_result = imt.run_pls(
+        "/path/to/map.tsv",
+        atlas="schaefer-100",
+        hemisphere="both",
+        n_components=2,
+        output_dir="/path/to/out",
+    )
+
+You can also build an explicit configuration object:
 
 .. code:: python
 
-    dir(imt)
+    config = imt.build_run_config(
+        "corr",
+        atlas="dk",
+        hemisphere="left",
+        regions="all",
+        n_permutations=1000,
+        null_method="vasa",
+        output_dir="/path/to/out",
+    )
+    result = imt.run_analysis("/path/to/map.nii.gz", config)
 
-which will display all the functions and modules imported in the library.
-
-ImagingTranscriptomics Class
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-The ``ImagingTranscriptomics`` class is the core class of the entire package and allows you to run the entire analysis on your data.
-To use the class you simply need to initialise it and then run the ``.run()``
-method.
-
-To initialise the class, you will need to already have decided the type of correlation analysis to perform, as this will be needed as initialisation keyword for the class.
-The initialisation of the class can be done as follows:
-
-.. code:: python
-
-    # To initialise the class with PLS analysis
-    analysis = imt.ImagingTranscriptomics(my_data,
-                method="pls",
-                n_components=1)
-
-    # To initialise the class with mass univariate correlation analysis
-    analysis = imt.ImagingTranscriptomics(my_data,
-                method="corr")
-
-In the above code snippets the ``my_data`` argument is a ``numpy.ndarray``
-vector with the imaging data of interest (e.g. the mean intensity of the
-ROI). The vector **MUST** be a vector with either 35 or 41 elements,
-corresponding to the number of ROIs in the left hemisphere of the brain (35
-for the cortical regions and the remaining for the subcortical regions).
-
-There are addiotional parameters that can be used for the initialisation of
-the class, which are:
-
-- ``method`` (``"pls"`` or ``"corr"``, **mandatory**): specifies the type of analysis to perform.
-- ``n_components`` (``int``, **optional**): specifies the number of components to use for the PLS analysis.
-- ``var`` (``float``, **optional**): specifies the variance explained threshold to use for the PLS analysis.
-- ``regions``: specifies if the analysis should be performed on the cortical regions only or on the whole brain. The possible values are: ``"cort+sub"`` (or ``"all"``) or ``"cort"``.
-
-
-Once the class is initialise you can run the analysis by running the ``.run()`` method.
+Atlas selection and scan extraction are exposed directly:
 
 .. code:: python
 
-    analysis.run()
-
-The method has some additional parameters that can be used to run the method.
-Some of the parameters are:
-
-- ``gsea``: ``bool`` variable to indicate whether the GSEA analysis should be run.
-- ``gene_set``: ``str`` variable to indicate the gene set to use for the GSEA analysis.
-- ``outdir``: ``str`` variable to indicate the output directory.
-- ``scan_name``: ``str`` variable to indicate the name of the scan to use to save the results.
-- ``save_res``: ``bool`` variable to indicate whether the results should be saved. Default is ``True``.
-- ``gene_limit``: number of genes to use for the GSEA analysis. Default is  ``500``.
-
-Once the correlation analysis is completed, the results can be accessed in
-the ``analysis.gene_results`` attribute. If you want to perform the GSEA
-analysis after the correlation, or on a second gene set, you can run the
-``analysis.gsea()`` method. The method has the following parameters:
-
-- ``gene_set``: ``str`` variable to indicate the gene set to use for the GSEA analysis.
-- ``outdir``: ``str`` variable to indicate the output directory.
-- ``gene_limit``: number of genes to use for the GSEA analysis. Default is  ``500``.
-
-
-It is to note that since in most cases the analysis is performed having as
-inputs either a neuroimaging scan (i.e., a .nii or .nii.gz file) or a txt
-file with some measure of interest (e.g., measures extracted using
-Freesurfer), we also included two additional methods to initialise the class
-which are:
-
-.. code:: python
-
-    analysis = imt.ImagignTranscriptomics.from_scan(my_scan,
-                method="corr")
-
-to initialise the class from a scan, extracting the average from the regions,
-and:
-
-.. code:: python
-
-    analysis = imt.ImagignTranscriptomics.from_file(my_txt_file,
-                method="corr")
-
-These methods allow you to initialise the class from a scan or a txt file
-respectively. In both cases the input is a path to the file of interest,
-while the rest of the input parameters are the same as the initialisation of
-the normal class explained above.
+    atlas = imt.get_atlas("dk")
+    selection = imt.select_atlas_data(atlas="dk", hemisphere="both", regions="all")
+    extracted = imt.extract_scan_data("/path/to/map.nii.gz", atlas="dk", hemisphere="left")
