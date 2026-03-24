@@ -1,14 +1,56 @@
+from __future__ import annotations
 
-__version__ = "1.1.15"
+from importlib import import_module
 
-from . import inputs
-from . import reporting
+__version__ = "2.0.0"
 
-from .transcriptomics import ImagingTranscriptomics
-from .inputs import (
-    read_scan,
-    extract_average,
+from .api import run_analysis, run_corr, run_pls
+from .atlas_registry import atlas_table, describe_atlas, get_atlas, list_atlases
+from .config import RunConfig, build_run_config
+from .gene_expression import load_expression_frame, load_gene_labels, select_atlas_data
+from .models import (
+    AnalysisMetadata,
+    AtlasSelection,
+    AtlasSpec,
+    CorrelationResult,
+    ExtractedScan,
+    PLSComponentResult,
+    PLSResult,
 )
-from .genes import GeneResults
-from .corr import CorrAnalysis
-from .pls import PLSAnalysis
+from .scan import extract_scan_data, regional_values_frame
+
+__all__ = [
+    "__version__",
+    "AnalysisMetadata",
+    "AtlasSelection",
+    "AtlasSpec",
+    "CorrelationResult",
+    "ExtractedScan",
+    "RunConfig",
+    "PLSComponentResult",
+    "PLSResult",
+    "atlas_table",
+    "build_run_config",
+    "describe_atlas",
+    "extract_scan_data",
+    "get_atlas",
+    "list_atlases",
+    "load_expression_frame",
+    "load_gene_labels",
+    "regional_values_frame",
+    "run_analysis",
+    "run_corr",
+    "run_pls",
+    "select_atlas_data",
+    "build_expression_assets",
+]
+
+
+def __getattr__(name):
+    if name == "build_expression_assets":
+        return getattr(import_module(".build_atlas", __name__), "build_expression_assets")
+    raise AttributeError(name)
+
+
+def __dir__():
+    return sorted(set(globals()) | set(__all__))

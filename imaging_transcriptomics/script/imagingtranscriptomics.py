@@ -1,117 +1,149 @@
 #!/usr/bin/env python3
 
+from __future__ import annotations
+
 import argparse
-import imaging_transcriptomics as imt
 from pathlib import Path
+
+from imaging_transcriptomics import atlas_table, run_corr, run_pls
+
+
+def _default_output_dir(input_path: str, method: str) -> Path:
+    path = Path(input_path)
+    name = path.name
+    if name.endswith(".nii.gz"):
+        stem = name[:-7]
+    else:
+        stem = path.stem
+    return path.parent / f"Imt_{stem}_{method}"
 
 
 def parse_cmdline():
-    DESCRIPTION = """Perform imaging transcriptomics analysis of a 
-    neuroimaging data."""
-    EPILOG = """
-    If you use this software in your work, please cite:
-    
-    * Imaging transcriptomics: Convergent cellular, transcriptomic, 
-    and molecular neuroimaging signatures in the healthy adult human brain.* 
-    Daniel Martins, Alessio Giacomel, Steven CR Williams, Federico Turkheimer,
-    Ottavia Dipasquale, Mattia Veronese, PET templates working group. Cell 
-    Reports; doi: [https://doi.org/10.1016/j.celrep.2021.110173]
-    (https://doi.org/10.1016/j.celrep.2021.110173)
-    """
-    parser = argparse.ArgumentParser(description=DESCRIPTION,
-                                     epilog=EPILOG)
-    # IO arguments
-    parser.add_argument("-i", "--input", type=str, required=True,
-                        help="Input file, can be a neuroimaging file (e.g., "
-                             ".nii[.gz] or a text file (e.g, .txt, .tsv, "
-                             ".csv) containing the values in a column")
-    parser.add_argument("-o", "--output", type=str, required=False,
-                        help="Output directory, if not provided, the same of "
-                             "the input file is used")
-    # Control arguments
-    parser.add_argument("-r", "--regions", type=str, required=False,
-                        choices=["all", "cort+sub", "cort"], default="all",
-                        help="Regions to be used for the analysis, can be "
-                             "either 'all' (default), 'cort+sub' or 'cort'."
-                             "The behaviour with 'all' is the same as "
-                             "'cort+sub' and will use all regions to perform "
-                             "the analysis, while with 'cort' will use only "
-                             "the cortical regions.")
-    parser.add_argument("--no-gsea", action="store_false", required=False,
-                        help="If True perform GSEA analysis, otherwise skip.")
-    parser.add_argument("--geneset", type=str, required=False, default="lake",
-                        help="geneset to use for the GSEA analysis. Can be "
-                             "either 'lake' (default), 'pooled' or any of "
-                             "the genesets included in the gseapy package.")
-    parser.add_argument("--max_genes", type=int, required=False,
-                        default=500,
-                        help="Maximum number of genes to use in the "
-                             "analysis. Default is 500.")
-    subparser = parser.add_subparsers(title="method", dest="method")
-    parse_corr = subparser.add_parser("corr")
-    parse_corr.add_argument("--cpu", type=int, required=False, default=4,
-                            help="Number of CPUs to use for the analysis.")
-    parse_pls = subparser.add_parser("pls")
-    pls_group = parse_pls.add_mutually_exclusive_group(required=True)
-    pls_group.add_argument("--ncomp", type=int, help="Number of "
-                                                     "PLS components.")
-    pls_group.add_argument("--var", type=float,
-                           help="Percentage of variance to extract form "
-                                "the data.")
+    description = "Run imaging transcriptomics 2.0 analyses with atlas-aware scan extraction."
+    parser = argparse.ArgumentParser(description=description)
+    subparsers = parser.add_subparsers(dest="command", required=True)
+
+    atlas_parser = subparsers.add_parser("atlases", help="List packaged and buildable atlas presets.")
+    atlas_parser.add_argument(
+        "--packaged-only",
+        action="store_true",
+        help="Show only atlases that ship ready-to-run expression data in this branch.",
+    )
+
+    shared = argparse.ArgumentParser(add_help=False)
+    shared.add_argument("-i", "--input", required=True, help="Input scan, vector file, or volumetric image.")
+    shared.add_argument(
+        "--input-rh",
+        default=None,
+        help="Right-hemisphere surface file when using surface inputs.",
+    )
+    shared.add_argument("-o", "--output", default=None, help="Output directory. Defaults to a method-specific folder next to the input.")
+    shared.add_argument(
+        "-a",
+        "--atlas",
+        default="dk",
+        help="Atlas preset to use. Examples: dk, schaefer-100, schaefer-200, schaefer-400, destrieux, glasser-360.",
+    )
+    shared.add_argument(
+        "--hemisphere",
+        choices=["left", "both"],
+        default="left",
+        help="Use left-hemisphere only or both hemispheres from the packaged abagen matrix.",
+    )
+    shared.add_argument(
+        "-r",
+        "--regions",
+        choices=["all", "cort+sub", "cort"],
+        default="all",
+        help="Region scope to analyze.",
+    )
+    shared.add_argument(
+        "--space",
+        default=None,
+        help="Source space for the input data, e.g. MNI152, fsaverage, fsLR, CIVET.",
+    )
+    shared.add_argument(
+        "-p",
+        "--permutations",
+        type=int,
+        default=1000,
+        help="Number of permutations or spins to use.",
+    )
+    shared.add_argument(
+        "--seed",
+        type=int,
+        default=1234,
+        help="Random seed for permutation and null-model generation.",
+    )
+    shared.add_argument(
+        "--null-method",
+        choices=["auto", "vasa", "alexander_bloch", "moran", "random"],
+        default="auto",
+        help="Spatial null model for cortical permutations. 'auto' prefers Vasa spins and falls back to random within-hemisphere shuffles.",
+    )
+    shared.add_argument(
+        "--geneset",
+        default="lake",
+        help="Gene set library to use when GSEA is enabled.",
+    )
+    shared.add_argument(
+        "--no-gsea",
+        action="store_true",
+        help="Skip GSEA and only write the regional and gene tables plus plots.",
+    )
+
+    corr_parser = subparsers.add_parser("corr", parents=[shared], help="Run correlation-based imaging transcriptomics.")
+    corr_parser.set_defaults(method="corr")
+
+    pls_parser = subparsers.add_parser("pls", parents=[shared], help="Run PLS-based imaging transcriptomics.")
+    pls_group = pls_parser.add_mutually_exclusive_group(required=True)
+    pls_group.add_argument("--ncomp", type=int, default=None, help="Number of PLS components to retain.")
+    pls_group.add_argument("--var", type=float, default=None, help="Cumulative variance target for selecting PLS components.")
+    pls_parser.set_defaults(method="pls")
     return parser.parse_args()
 
 
 def main():
     parsed = parse_cmdline()
-    regions = parsed.regions
-    gsea = parsed.no_gsea
-    geneset = parsed.geneset
-    infile = Path(parsed.input)
-    input_name = infile.stem
-    outdir = Path(parsed.output) if parsed.output else infile.parent
+    if parsed.command == "atlases":
+        print(atlas_table(packaged_only=parsed.packaged_only).to_string(index=False))
+        return
+
+    output_dir = Path(parsed.output) if parsed.output else _default_output_dir(parsed.input, parsed.method)
+    run_gsea = not parsed.no_gsea
+
     if parsed.method == "corr":
-        if infile.suffix in {".txt", ".tsv", ".csv"}:
-            transcriptomics = imt.ImagingTranscriptomics.from_file(
-                infile,
-                method="corr",
-                regions=regions)
-        elif str().join(infile.suffixes) in {".nii", ".nii.gz"}:
-            transcriptomics = imt.ImagingTranscriptomics.from_scan(
-                infile,
-                method="corr",
-                regions=regions)
-        n_cpu = parsed.cpu
-    elif parsed.method == "pls":
-        pls_arg = {
-            "n_components": parsed.ncomp,
-            "var": parsed.var
-        }
-        if infile.suffix in {".txt", ".tsv", ".csv"}:
-            transcriptomics = imt.ImagingTranscriptomics.from_file(
-                infile,
-                method="pls",
-                regions=regions, **pls_arg)
-        elif str().join(infile.suffixes) in {".nii", ".nii.gz"}:
-            transcriptomics = imt.ImagingTranscriptomics.from_scan(
-                infile,
-                method="pls",
-                regions=regions, **pls_arg)
-        n_cpu = 4
-    else:
-        raise ValueError("Method not recognized")
-    transcriptomics.run(outdir,
-                        scan_name=input_name,
-                        gsea=gsea,
-                        gene_set=geneset,
-                        n_cpu=n_cpu,
-                        gene_limit=parsed.max_genes)
-    # PLOTTING and PDF creation
-    imt.reporting.make_pdf(
-        transcriptomics_data=transcriptomics,
-        save_dir=Path(outdir) / f"Imt_{input_name}_"
-        f"{transcriptomics.method}",
-        name=str(input_name),
-        scanname=infile.name,
+        run_corr(
+            parsed.input,
+            atlas=parsed.atlas,
+            hemisphere=parsed.hemisphere,
+            regions=parsed.regions,
+            source_space=parsed.space,
+            input_rh=parsed.input_rh,
+            n_permutations=parsed.permutations,
+            null_method=parsed.null_method,
+            output_dir=output_dir,
+            run_gsea=run_gsea,
+            gene_set=parsed.geneset,
+            seed=parsed.seed,
+        )
+        return
+
+    run_pls(
+        parsed.input,
+        atlas=parsed.atlas,
+        hemisphere=parsed.hemisphere,
+        regions=parsed.regions,
+        source_space=parsed.space,
+        input_rh=parsed.input_rh,
+        n_components=parsed.ncomp,
+        var=parsed.var,
+        n_permutations=parsed.permutations,
+        null_method=parsed.null_method,
+        output_dir=output_dir,
+        run_gsea=run_gsea,
+        gene_set=parsed.geneset,
+        seed=parsed.seed,
     )
 
 
