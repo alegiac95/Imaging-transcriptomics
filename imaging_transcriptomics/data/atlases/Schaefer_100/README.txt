@@ -31,9 +31,10 @@ abagen parameters
 Outputs in this folder
 ----------------------
 - `atlas-Schaefer_100_gene_expression_data.npz`: 100 regions x 15,677 genes
-  compressed NumPy archive with `ids`, `regions`, `genes`, and `float32` `values`
+  compressed NumPy archive with `float32` values only
 - `atlas-schaefer-100_sample_counts.csv`
 - `atlas-Schaefer_100_labels.csv`
+- `../shared/genes-ahba-15677.npy`
 - `provenance.json`
 
 Region summary
@@ -45,3 +46,5 @@ Region summary
 Notes
 -----
 This atlas was rebuilt from the packaged Schaefer 100 atlas assets already tracked in the repository. The resulting matrix is cortical only and is used directly by the v2 atlas registry.
+Rows in the expression archive are aligned to `atlas-Schaefer_100_labels.csv`,
+and gene columns are aligned to `../shared/genes-ahba-15677.npy`.

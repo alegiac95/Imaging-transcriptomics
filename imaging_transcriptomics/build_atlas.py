@@ -14,35 +14,37 @@ from .atlas_registry import get_atlas
 MirrorMode = Literal[None, "bidirectional", "leftright", "rightleft"]
 
 
-def _expression_frame(expression: pd.DataFrame, atlas_info) -> pd.DataFrame:
-    expression = expression.reset_index().rename(columns={expression.index.name or "index": "id"})
-    if "Region" in expression.columns:
-        return expression
-
+def _clean_labels(atlas_info) -> pd.DataFrame:
     labels = pd.read_csv(atlas_info)
     if "Unnamed: 0" in labels.columns:
         labels = labels.drop(columns=["Unnamed: 0"])
-    regions = labels[["id", "label"]].copy()
-    if "hemisphere" in labels.columns:
-        hemi = labels["hemisphere"].astype(str)
-        mask = hemi.isin(["L", "R"])
-        regions["Region"] = labels["label"].astype(str)
-        regions.loc[mask, "Region"] = hemi.loc[mask] + "_" + labels.loc[mask, "label"].astype(str)
-    else:
-        regions["Region"] = labels["label"].astype(str)
-    return regions[["id", "Region"]].merge(expression, on="id", how="right")
+    return labels
 
 
-def _write_expression_archive(expression: pd.DataFrame, path: Path) -> None:
-    genes = expression.columns[2:].to_numpy(dtype=str)
-    values = expression.iloc[:, 2:].to_numpy(dtype=np.float32, copy=True)
-    np.savez_compressed(
-        path,
-        ids=expression.iloc[:, 0].to_numpy(dtype=np.int32, copy=True),
-        regions=expression.iloc[:, 1].astype(str).to_numpy(dtype=str, copy=True),
-        genes=genes,
-        values=values,
-    )
+def _expression_frame(expression: pd.DataFrame, atlas_info) -> tuple[pd.DataFrame, pd.DataFrame]:
+    expression = expression.reset_index().rename(columns={expression.index.name or "index": "id"})
+    labels = _clean_labels(atlas_info)
+    gene_columns = [column for column in expression.columns if column not in {"id", "Region"}]
+    aligned = labels[["id"]].merge(expression[["id", *gene_columns]], on="id", how="left", validate="1:1")
+    if aligned[gene_columns].isna().any(axis=None):
+        missing_ids = aligned.loc[aligned[gene_columns].isna().any(axis=1), "id"].astype(str).tolist()
+        raise ValueError(f"Missing expression rows for atlas ids: {', '.join(missing_ids[:5])}")
+    return labels, aligned
+
+
+def _write_gene_labels(genes: np.ndarray, path: Path) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    genes = np.asarray(genes, dtype=str)
+    if path.exists():
+        existing = np.load(path, allow_pickle=False).astype(str, copy=False)
+        if existing.shape != genes.shape or np.any(existing != genes):
+            raise ValueError(f"Shared gene labels file {path} does not match the current atlas gene ordering.")
+        return
+    np.save(path, genes)
+
+
+def _write_expression_archive(values: np.ndarray, path: Path) -> None:
+    np.savez_compressed(path, values=np.asarray(values, dtype=np.float32, copy=True))
 
 
 def _patch_abagen_pandas_compat(abagen) -> None:
@@ -146,12 +148,19 @@ def build_expression_assets(
     report_out = output_path / "README.txt"
     provenance_out = output_path / "provenance.json"
     atlas_info_out = output_path / labels_name
+    gene_labels_out = (
+        spec.gene_labels_path
+        if spec.gene_labels_path is not None
+        else output_path / f"atlas-{spec.id}_gene_labels.npy"
+    )
 
-    expression = _expression_frame(expression, atlas_info)
-    _write_expression_archive(expression, expression_out)
+    labels, expression = _expression_frame(expression, atlas_info)
+    genes = expression.columns[1:].to_numpy(dtype=str)
+    _write_gene_labels(genes, gene_labels_out)
+    _write_expression_archive(expression.iloc[:, 1:].to_numpy(dtype=np.float32, copy=True), expression_out)
     counts.to_csv(counts_out, index=True)
     if Path(atlas_info).exists():
-        pd.read_csv(atlas_info).to_csv(atlas_info_out, index=False)
+        labels.to_csv(atlas_info_out, index=False)
     report_out.write_text(report)
     provenance_out.write_text(
         json.dumps(
@@ -166,12 +175,15 @@ def build_expression_assets(
                 "source_info": str(atlas_info),
                 "expression_format": "npz",
                 "value_dtype": "float32",
+                "gene_labels": str(gene_labels_out),
+                "row_order": "aligned to labels csv order",
             },
             indent=2,
         )
     )
     return {
         "expression": expression_out,
+        "gene_labels": gene_labels_out,
         "counts": counts_out,
         "report": report_out,
         "provenance": provenance_out,

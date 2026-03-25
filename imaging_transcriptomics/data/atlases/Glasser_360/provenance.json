@@ -8,5 +8,7 @@
   "source_image": "AtlasTree[n_rois=360, n_vertex=59412]",
   "source_info": "/Users/alessiogiacomel/Imaging-transcriptomics/imaging_transcriptomics/data/atlases/Glasser_360/atlas-glasser-360_labels.csv",
   "expression_format": "npz",
-  "value_dtype": "float32"
+  "value_dtype": "float32",
+  "gene_labels": "/Users/alessiogiacomel/Imaging-transcriptomics/imaging_transcriptomics/data/atlases/shared/genes-ahba-15675.npy",
+  "row_order": "aligned to labels csv order"
 }

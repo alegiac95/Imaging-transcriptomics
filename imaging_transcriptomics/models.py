@@ -32,6 +32,7 @@ class AtlasSpec:
     n_regions_both: int
     labels_path: Path | None = None
     expression_path: Path | None = None
+    gene_labels_path: Path | None = None
     volume_1mm_path: Path | None = None
     volume_2mm_path: Path | None = None
     lh_annot_path: Path | None = None

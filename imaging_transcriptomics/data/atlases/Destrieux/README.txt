@@ -33,9 +33,10 @@ abagen parameters
 Outputs in this folder
 ----------------------
 - `atlas-destrieux_gene_expression_data.npz`: 148 regions x 15,675 genes
-  compressed NumPy archive with `ids`, `regions`, `genes`, and `float32` `values`
+  compressed NumPy archive with `float32` values only
 - `atlas-destrieux_sample_counts.csv`
 - `atlas-destrieux_labels.csv`
+- `../shared/genes-ahba-15675.npy`
 - `provenance.json`
 
 Region summary
@@ -47,3 +48,5 @@ Region summary
 Notes
 -----
 The label table was normalized during atlas preparation so hemisphere metadata and region names are explicit and stable for the v2 API.
+Rows in the expression archive are aligned to `atlas-destrieux_labels.csv`,
+and gene columns are aligned to `../shared/genes-ahba-15675.npy`.

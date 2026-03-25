@@ -8,5 +8,7 @@
   "source_image": "/Users/alessiogiacomel/Imaging-transcriptomics/imaging_transcriptomics/data/atlases/Schaefer_200/atlas-Schaefer_200_1mm.nii.gz",
   "source_info": "/Users/alessiogiacomel/Imaging-transcriptomics/imaging_transcriptomics/data/atlases/Schaefer_200/atlas-schaefer-200_labels.csv",
   "expression_format": "npz",
-  "value_dtype": "float32"
+  "value_dtype": "float32",
+  "gene_labels": "/Users/alessiogiacomel/Imaging-transcriptomics/imaging_transcriptomics/data/atlases/shared/genes-ahba-15677.npy",
+  "row_order": "aligned to labels csv order"
 }

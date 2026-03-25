@@ -31,9 +31,10 @@ abagen parameters
 Outputs in this folder
 ----------------------
 - `atlas-DK_gene_expression_data.npz`: 83 regions x 15,677 genes
-  compressed NumPy archive with `ids`, `regions`, `genes`, and `float32` `values`
+  compressed NumPy archive with `float32` values only
 - `atlas-dk_sample_counts.csv`
 - `atlas-DK_labels.csv`
+- `../shared/genes-ahba-15677.npy`
 - `provenance.json`
 
 Region summary
@@ -45,3 +46,5 @@ Region summary
 Notes
 -----
 This atlas was rebuilt from the packaged DK atlas assets already tracked in the repository. The generated expression matrix is the one consumed by the v2 API for `hemisphere="left"` and `hemisphere="both"` workflows.
+Rows in the expression archive are aligned to `atlas-DK_labels.csv`, and gene
+columns are aligned to `../shared/genes-ahba-15677.npy`.

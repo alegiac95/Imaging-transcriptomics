@@ -8,10 +8,15 @@ from .models import AtlasSpec
 
 
 ATLAS_DATA_DIR = Path(__file__).resolve().parent / "data" / "atlases"
+ATLAS_SHARED_DIR = ATLAS_DATA_DIR / "shared"
 
 
 def _atlas_path(*parts: str) -> Path:
     return ATLAS_DATA_DIR.joinpath(*parts)
+
+
+def _shared_path(*parts: str) -> Path:
+    return ATLAS_SHARED_DIR.joinpath(*parts)
 
 
 ATLAS_REGISTRY: dict[str, AtlasSpec] = {
@@ -30,6 +35,7 @@ ATLAS_REGISTRY: dict[str, AtlasSpec] = {
         n_regions_both=83,
         labels_path=_atlas_path("DK", "atlas-DK_labels.csv"),
         expression_path=_atlas_path("DK", "atlas-DK_gene_expression_data.npz"),
+        gene_labels_path=_shared_path("genes-ahba-15677.npy"),
         volume_1mm_path=_atlas_path("DK", "atlas-DK_1mm.nii.gz"),
         volume_2mm_path=_atlas_path("DK", "atlas-DK_2mm.nii.gz"),
         lh_annot_path=_atlas_path("DK", "atlas-DK_fsa5_lh_aparc.annot"),
@@ -55,6 +61,7 @@ ATLAS_REGISTRY: dict[str, AtlasSpec] = {
         expression_path=_atlas_path(
             "Schaefer_100", "atlas-Schaefer_100_gene_expression_data.npz"
         ),
+        gene_labels_path=_shared_path("genes-ahba-15677.npy"),
         volume_1mm_path=_atlas_path("Schaefer_100", "atlas-Schaefer_100_1mm.nii.gz"),
         volume_2mm_path=_atlas_path("Schaefer_100", "atlas-Schaefer_100_2mm.nii.gz"),
         lh_annot_path=_atlas_path("Schaefer_100", "atlas-Schaefer_100_lh_aparc.annot"),
@@ -80,6 +87,7 @@ ATLAS_REGISTRY: dict[str, AtlasSpec] = {
         expression_path=_atlas_path(
             "Schaefer_200", "atlas-schaefer-200_gene_expression_data.npz"
         ),
+        gene_labels_path=_shared_path("genes-ahba-15677.npy"),
         volume_1mm_path=_atlas_path("Schaefer_200", "atlas-Schaefer_200_1mm.nii.gz"),
         volume_2mm_path=_atlas_path("Schaefer_200", "atlas-Schaefer_200_2mm.nii.gz"),
         lh_annot_path=_atlas_path("Schaefer_200", "atlas-Schaefer_200_lh_aparc.annot"),
@@ -105,6 +113,7 @@ ATLAS_REGISTRY: dict[str, AtlasSpec] = {
         expression_path=_atlas_path(
             "Schaefer_400", "atlas-schaefer-400_gene_expression_data.npz"
         ),
+        gene_labels_path=_shared_path("genes-ahba-15675.npy"),
         volume_1mm_path=_atlas_path("Schaefer_400", "atlas-Schaefer_400_1mm.nii.gz"),
         volume_2mm_path=_atlas_path("Schaefer_400", "atlas-Schaefer_400_2mm.nii.gz"),
         lh_annot_path=_atlas_path("Schaefer_400", "atlas-Schaefer_400_lh_aparc.annot"),
@@ -128,6 +137,7 @@ ATLAS_REGISTRY: dict[str, AtlasSpec] = {
         n_regions_both=148,
         labels_path=_atlas_path("Destrieux", "atlas-destrieux_labels.csv"),
         expression_path=_atlas_path("Destrieux", "atlas-destrieux_gene_expression_data.npz"),
+        gene_labels_path=_shared_path("genes-ahba-15675.npy"),
         volume_1mm_path=_atlas_path("Destrieux", "atlas-Destrieux_1mm.nii.gz"),
         volume_2mm_path=_atlas_path("Destrieux", "atlas-Destrieux_2mm.nii.gz"),
         surface_space="fsaverage",
@@ -149,6 +159,7 @@ ATLAS_REGISTRY: dict[str, AtlasSpec] = {
         n_regions_both=360,
         labels_path=_atlas_path("Glasser_360", "atlas-glasser-360_labels.csv"),
         expression_path=_atlas_path("Glasser_360", "atlas-glasser-360_gene_expression_data.npz"),
+        gene_labels_path=_shared_path("genes-ahba-15675.npy"),
         lh_surface_path=_atlas_path("Glasser_360", "atlas-Glasser_360_lh.label.gii"),
         rh_surface_path=_atlas_path("Glasser_360", "atlas-Glasser_360_rh.label.gii"),
         geometry_lh_path=_atlas_path("Glasser_360", "atlas-Glasser_360_lh.surf.gii"),

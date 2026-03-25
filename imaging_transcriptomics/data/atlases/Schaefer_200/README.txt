@@ -34,9 +34,10 @@ abagen parameters
 Outputs in this folder
 ----------------------
 - `atlas-schaefer-200_gene_expression_data.npz`: 200 regions x 15,677 genes
-  compressed NumPy archive with `ids`, `regions`, `genes`, and `float32` `values`
+  compressed NumPy archive with `float32` values only
 - `atlas-schaefer-200_sample_counts.csv`
 - `atlas-schaefer-200_labels.csv`
+- `../shared/genes-ahba-15677.npy`
 - `provenance.json`
 
 Region summary
@@ -48,3 +49,5 @@ Region summary
 Notes
 -----
 The Schaefer 200 atlas assets were prepared locally before running abagen so that the repository can ship a ready-to-run preset instead of requiring end users to rebuild it.
+Rows in the expression archive are aligned to `atlas-schaefer-200_labels.csv`,
+and gene columns are aligned to `../shared/genes-ahba-15677.npy`.

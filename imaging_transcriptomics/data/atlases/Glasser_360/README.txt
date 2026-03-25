@@ -35,9 +35,10 @@ abagen parameters
 Outputs in this folder
 ----------------------
 - `atlas-glasser-360_gene_expression_data.npz`: 360 regions x 15,675 genes
-  compressed NumPy archive with `ids`, `regions`, `genes`, and `float32` `values`
+  compressed NumPy archive with `float32` values only
 - `atlas-glasser-360_sample_counts.csv`
 - `atlas-glasser-360_labels.csv`
+- `../shared/genes-ahba-15675.npy`
 - `provenance.json`
 
 Region summary
@@ -49,3 +50,5 @@ Region summary
 Notes
 -----
 This is the only packaged surface-first atlas in the repository. The build path uses `abagen.check_atlas()` with explicit fsLR 32k geometry before expression extraction.
+Rows in the expression archive are aligned to `atlas-glasser-360_labels.csv`,
+and gene columns are aligned to `../shared/genes-ahba-15675.npy`.

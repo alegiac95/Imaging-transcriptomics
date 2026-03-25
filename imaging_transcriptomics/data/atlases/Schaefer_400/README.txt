@@ -34,9 +34,10 @@ abagen parameters
 Outputs in this folder
 ----------------------
 - `atlas-schaefer-400_gene_expression_data.npz`: 400 regions x 15,675 genes
-  compressed NumPy archive with `ids`, `regions`, `genes`, and `float32` `values`
+  compressed NumPy archive with `float32` values only
 - `atlas-schaefer-400_sample_counts.csv`
 - `atlas-schaefer-400_labels.csv`
+- `../shared/genes-ahba-15675.npy`
 - `provenance.json`
 
 Region summary
@@ -48,3 +49,5 @@ Region summary
 Notes
 -----
 The Schaefer 400 atlas uses a higher-resolution cortical parcellation, so its retained gene set is slightly smaller than the lower-resolution presets after abagen filtering and donor aggregation.
+Rows in the expression archive are aligned to `atlas-schaefer-400_labels.csv`,
+and gene columns are aligned to `../shared/genes-ahba-15675.npy`.
