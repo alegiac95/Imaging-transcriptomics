@@ -25,7 +25,12 @@ class PLSAnalysis:
         self.n_iter = n_iter
         self._p_val = np.zeros(self.n_components, dtype=float)
         self._r2 = np.zeros(self.n_components, dtype=float)
-        self.gene_results = GeneResults("pls", n_components=self.n_components, n_iter=n_iter)
+        self.gene_results = GeneResults(
+            "pls",
+            n_components=self.n_components,
+            n_iter=n_iter,
+            n_genes=np.asarray(gene_exp).shape[1],
+        )
 
     @staticmethod
     def check_var(var: float):

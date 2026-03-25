@@ -186,3 +186,6 @@ imaging_transcriptomics/tests/data/*.npy
 imaging_transcriptomics/tests/Imt_**/
 
 .conda/
+tmp_atlas_fetch/
+tmp_atlas_fetch_nnt/
+tmp_atlas_fetch_neuromaps/

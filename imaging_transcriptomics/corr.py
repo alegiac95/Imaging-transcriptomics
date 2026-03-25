@@ -64,8 +64,8 @@ def _spearman_correlation_bootstrap(permuted_imaging: np.ndarray, ranked_genes: 
 class CorrAnalysis:
     """Store correlation analysis results and optional GSEA output."""
 
-    def __init__(self, n_iterations=1000):
-        self.gene_results = GeneResults("corr", n_iter=n_iterations)
+    def __init__(self, n_iterations=1000, n_genes=None):
+        self.gene_results = GeneResults("corr", n_iter=n_iterations, n_genes=n_genes)
 
     def bootstrap_correlation(self, imaging_data, permuted_imaging, gene_exp, gene_labels):
         """Run the original and bootstrapped correlation analyses."""

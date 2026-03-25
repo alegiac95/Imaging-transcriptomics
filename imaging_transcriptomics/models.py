@@ -36,6 +36,12 @@ class AtlasSpec:
     volume_2mm_path: Path | None = None
     lh_annot_path: Path | None = None
     rh_annot_path: Path | None = None
+    lh_surface_path: Path | None = None
+    rh_surface_path: Path | None = None
+    surface_space: str | None = None
+    surface_density: str | None = None
+    geometry_lh_path: Path | None = None
+    geometry_rh_path: Path | None = None
     notes: str | None = None
 
     def volume_path(self, resolution: str) -> Path | None:
@@ -44,6 +50,20 @@ class AtlasSpec:
         if resolution == "2mm":
             return self.volume_2mm_path
         raise ValueError(f"Unsupported atlas resolution: {resolution}")
+
+    @property
+    def surface_paths(self) -> tuple[Path, Path] | None:
+        if self.lh_surface_path is not None and self.rh_surface_path is not None:
+            return self.lh_surface_path, self.rh_surface_path
+        if self.lh_annot_path is not None and self.rh_annot_path is not None:
+            return self.lh_annot_path, self.rh_annot_path
+        return None
+
+    @property
+    def surface_geometry(self) -> tuple[Path, Path] | None:
+        if self.geometry_lh_path is not None and self.geometry_rh_path is not None:
+            return self.geometry_lh_path, self.geometry_rh_path
+        return None
 
 
 @dataclass(frozen=True)

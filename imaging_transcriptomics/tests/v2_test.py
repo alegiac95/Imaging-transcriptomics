@@ -18,7 +18,14 @@ import imaging_transcriptomics.nulls as spatial_nulls
 
 def test_packaged_atlas_table_contains_ready_to_run_presets():
     table = atlas_table(packaged_only=True)
-    assert set(table["id"]) == {"dk", "schaefer-100"}
+    assert set(table["id"]) == {
+        "dk",
+        "schaefer-100",
+        "schaefer-200",
+        "schaefer-400",
+        "destrieux",
+        "glasser-360",
+    }
 
 
 def test_select_atlas_data_supports_left_and_both_hemispheres():
@@ -58,7 +65,7 @@ def test_run_corr_writes_readme_tables_and_plots(tmp_path, monkeypatch):
         run_gsea=False,
     )
 
-    assert result.gene_table.shape[0] == 15633
+    assert result.gene_table.shape[0] == select_atlas_data(atlas="dk", hemisphere="left", regions="all").gene_labels.shape[0]
     assert result.metadata.null_method == "moran"
     assert (tmp_path / "README.txt").exists()
     assert (tmp_path / "metadata.json").exists()

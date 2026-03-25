@@ -9,6 +9,7 @@ import pandas as pd
 
 from .gene_expression import select_atlas_data
 from .models import AtlasSelection, ExtractedScan, HemisphereMode, RegionScope
+from .surfaces import load_surface_parcellation
 
 
 _TEXT_SUFFIXES = {".txt", ".tsv", ".csv"}
@@ -117,14 +118,13 @@ def _parcellate_nifti_direct(scan_path: Path, selection: AtlasSelection) -> np.n
 
 def _import_neuromaps():
     try:
-        from neuromaps.images import annot_to_gifti
         from neuromaps.parcellate import Parcellater
     except ImportError as exc:  # pragma: no cover - optional dependency
         raise ImportError(
             "neuromaps is required for cross-space resampling or surface inputs. "
             "Install imaging-transcriptomics[maps]."
         ) from exc
-    return Parcellater, annot_to_gifti
+    return Parcellater
 
 
 def _parcellate_with_neuromaps(
@@ -134,7 +134,7 @@ def _parcellate_with_neuromaps(
     source_space: str,
     hemi: str | None = None,
 ) -> np.ndarray:
-    Parcellater, annot_to_gifti = _import_neuromaps()
+    Parcellater = _import_neuromaps()
     atlas = selection.atlas
     if atlas.volume_1mm_path is not None and source_space == "MNI152" and not isinstance(data, tuple):
         parcellater = Parcellater(
@@ -142,11 +142,11 @@ def _parcellate_with_neuromaps(
             space="MNI152",
             resampling_target="parcellation",
         )
-    elif atlas.lh_annot_path is not None and atlas.rh_annot_path is not None:
-        parcellation = annot_to_gifti((str(atlas.lh_annot_path), str(atlas.rh_annot_path)))
+    elif atlas.surface_paths is not None and atlas.surface_space is not None:
+        parcellation = load_surface_parcellation(atlas, "both")
         parcellater = Parcellater(
             parcellation,
-            space="fsaverage",
+            space=atlas.surface_space,
             resampling_target="parcellation",
         )
     else:  # pragma: no cover - depends on optional atlas assets

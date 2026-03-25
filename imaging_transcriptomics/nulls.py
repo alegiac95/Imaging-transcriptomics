@@ -6,6 +6,7 @@ from functools import lru_cache
 import numpy as np
 
 from .config import DEFAULT_NULL_METHOD, DEFAULT_SEED, VALID_NULL_METHODS
+from .surfaces import load_surface_parcellation
 
 
 NULL_METHODS = VALID_NULL_METHODS
@@ -15,13 +16,12 @@ SURFACE_NULL_METHODS = {"vasa", "alexander_bloch", "moran"}
 def _import_neuromaps_nulls():
     try:
         from neuromaps import nulls
-        from neuromaps.images import annot_to_gifti
     except ImportError as exc:  # pragma: no cover - optional dependency
         raise ImportError(
             "neuromaps is required for surface-based spatial null models. "
             "Install imaging-transcriptomics[maps]."
         ) from exc
-    return nulls, annot_to_gifti
+    return nulls
 
 
 def _standardize_vector(values: np.ndarray) -> np.ndarray:
@@ -58,13 +58,22 @@ def shuffle_within_groups(
 
 @lru_cache(maxsize=None)
 def _surface_parcellation(
-    lh_annot_path: str,
-    rh_annot_path: str | None,
+    atlas_id: str,
+    lh_surface_path: str,
+    rh_surface_path: str | None,
     hemisphere: str,
 ):
-    _, annot_to_gifti = _import_neuromaps_nulls()
-    annot_paths = (lh_annot_path,) if hemisphere == "left" else (lh_annot_path, rh_annot_path)
-    return annot_to_gifti(annot_paths)
+    del atlas_id
+
+    class _AtlasProxy:
+        def __init__(self):
+            if rh_surface_path is None:
+                self.surface_paths = (lh_surface_path, lh_surface_path)
+            else:
+                self.surface_paths = (lh_surface_path, rh_surface_path)
+            self.id = "surface"
+
+    return load_surface_parcellation(_AtlasProxy(), hemisphere)
 
 
 def _normalize_null_maps(null_maps: np.ndarray, n_values: int, n_permutations: int, method: str) -> np.ndarray:
@@ -90,23 +99,30 @@ def generate_surface_nulls(
     if method not in SURFACE_NULL_METHODS:
         raise ValueError(f"Unsupported surface null method: {method}")
     atlas = selection.atlas
-    if atlas.lh_annot_path is None:
-        raise FileNotFoundError(f"Atlas '{atlas.id}' does not have a left-hemisphere annotation file.")
-    if selection.hemisphere == "both" and atlas.rh_annot_path is None:
+    if atlas.surface_paths is None:
         raise FileNotFoundError(
-            f"Atlas '{atlas.id}' does not have a right-hemisphere annotation file for bilateral null models."
+            f"Atlas '{atlas.id}' does not have surface parcellation files for cortical null models."
+        )
+    if atlas.surface_space is None or atlas.surface_density is None:
+        raise ValueError(
+            f"Atlas '{atlas.id}' is missing surface space/density metadata required for cortical null models."
+        )
+    if selection.hemisphere == "both" and atlas.surface_paths[1] is None:
+        raise FileNotFoundError(
+            f"Atlas '{atlas.id}' does not have a right-hemisphere surface parcellation file for bilateral null models."
         )
 
-    nulls, _ = _import_neuromaps_nulls()
+    nulls = _import_neuromaps_nulls()
     parcellation = _surface_parcellation(
-        str(atlas.lh_annot_path),
-        None if atlas.rh_annot_path is None else str(atlas.rh_annot_path),
+        atlas.id,
+        str(atlas.surface_paths[0]),
+        str(atlas.surface_paths[1]),
         selection.hemisphere,
     )
     kwargs = dict(
         data=np.asarray(cortical_values, dtype=float),
-        atlas="fsaverage",
-        density="10k",
+        atlas=atlas.surface_space,
+        density=atlas.surface_density,
         parcellation=parcellation,
         n_perm=n_permutations,
         seed=seed,

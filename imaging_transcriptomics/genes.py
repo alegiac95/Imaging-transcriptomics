@@ -26,11 +26,13 @@ class GeneResults:
         components used, for the initialisation of the pls class.
         """
         self.method = method
+        n_genes = kwargs.get("n_genes")
         if self.method == "pls":
             self.results = PLSGenes(kwargs.get("n_components"),
-                                    n_iter=kwargs.get("n_iter", 1000))
+                                    n_iter=kwargs.get("n_iter", 1000),
+                                    n_genes=n_genes)
         elif self.method == "corr":
-            self.results = CorrGenes(n_iter=kwargs.get("n_iter"))
+            self.results = CorrGenes(n_iter=kwargs.get("n_iter"), n_genes=n_genes)
         else:
             raise ValueError(f"The method {method} is not supported.")
 
@@ -76,7 +78,7 @@ class GeneResults:
 
 # --------- PLS GENES --------- #
 class PLSGenes:
-    def __init__(self, n_components, n_iter=1000):
+    def __init__(self, n_components, n_iter=1000, n_genes=None):
         """ Initialize the results of the PLS analysis. The result will
         include both the permuted and the original results. The class
         contains two subclasses, one for the original results and one for
@@ -84,7 +86,7 @@ class PLSGenes:
 
         :param int n_components: number of components used for the analysis.
         """
-        self.n_genes = 15633
+        self.n_genes = int(n_genes) if n_genes is not None else 15633
         self.n_components = n_components
         self.n_iter = n_iter
         self.orig = OrigPLS(n_components, self.n_genes)
@@ -337,12 +339,12 @@ class CorrGenes:
     * pval_corr: the p-value of the correlation corrected for multiple
     comparisons using the Benjamini-Hochberg method.
     """
-    def __init__(self, n_iter=1000):
+    def __init__(self, n_iter=1000, n_genes=None):
         """Initialise the class.
 
         :param int n_iter: number of iterations used for the bootstrapping,
         """
-        self.n_genes = 15633
+        self.n_genes = int(n_genes) if n_genes is not None else 15633
         self._n_iter = n_iter
         self.boot_corr = np.zeros((self.n_genes, self._n_iter))
         self.corr = np.zeros((1, self.n_genes))

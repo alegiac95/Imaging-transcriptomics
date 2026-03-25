@@ -110,7 +110,7 @@ def _run_corr_configured(data, config: RunConfig, *, input_rh=None) -> Correlati
         seed=config.seed,
     )
 
-    analysis = CorrAnalysis(n_iterations=config.n_permutations)
+    analysis = CorrAnalysis(n_iterations=config.n_permutations, n_genes=gene_labels.shape[0])
     analysis.bootstrap_correlation(imaging, permuted, gene_exp, gene_labels)
 
     gsea_table = None

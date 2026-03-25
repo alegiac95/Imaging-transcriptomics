@@ -45,7 +45,19 @@ def _read_expression(expression_path: Path) -> pd.DataFrame:
 
 @lru_cache(maxsize=None)
 def _read_expression_cached(expression_path: str) -> pd.DataFrame:
-    expression = pd.read_csv(expression_path)
+    path = Path(expression_path)
+    if path.suffix == ".npz":
+        with np.load(path, allow_pickle=False) as archive:
+            ids = archive["ids"].astype(np.int32, copy=False)
+            regions = archive["regions"].astype(str, copy=False)
+            genes = archive["genes"].astype(str, copy=False)
+            values = archive["values"].astype(np.float32, copy=False)
+        frame = pd.DataFrame(values, columns=genes)
+        frame.insert(0, "Region", regions)
+        frame.insert(0, "id", ids)
+        return frame
+
+    expression = pd.read_csv(path)
     first_col = str(expression.columns[0]).lstrip("\ufeff")
     if first_col != expression.columns[0]:
         expression = expression.rename(columns={expression.columns[0]: first_col})

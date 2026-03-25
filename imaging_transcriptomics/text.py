@@ -69,7 +69,7 @@ def render_readme(result: CorrelationResult | PLSResult) -> str:
             "Notes",
             "-----",
             "This v2 branch keeps the abagen-derived expression matrices and adds hemisphere-aware atlas selection.",
-            "Packaged atlases currently ship ready-to-run assets for DK and Schaefer-100; additional presets can be built locally with abagen.",
+            "Packaged atlases now ship ready-to-run assets for dk, schaefer-100, schaefer-200, schaefer-400, destrieux, and glasser-360.",
             "When neuromaps is installed, non-MNI inputs and surface inputs can be resampled/parcellated through the new scan extraction helpers.",
         ]
     )

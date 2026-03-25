@@ -22,9 +22,6 @@ Ready to run in this branch:
 
 - `dk`
 - `schaefer-100`
-
-Preset definitions included for local abagen builds:
-
 - `schaefer-200`
 - `schaefer-400`
 - `destrieux`
