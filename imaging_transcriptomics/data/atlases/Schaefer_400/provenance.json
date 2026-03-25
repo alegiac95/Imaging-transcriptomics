@@ -1,0 +1,12 @@
+{
+  "atlas": "schaefer-400",
+  "atlas_label": "Schaefer 400",
+  "lr_mirror": "leftright",
+  "missing": null,
+  "donors": "all",
+  "n_proc": 4,
+  "source_image": "/Users/alessiogiacomel/Imaging-transcriptomics/imaging_transcriptomics/data/atlases/Schaefer_400/atlas-Schaefer_400_1mm.nii.gz",
+  "source_info": "/Users/alessiogiacomel/Imaging-transcriptomics/imaging_transcriptomics/data/atlases/Schaefer_400/atlas-schaefer-400_labels.csv",
+  "expression_format": "npz",
+  "value_dtype": "float32"
+}
