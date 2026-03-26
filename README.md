@@ -4,21 +4,21 @@
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/doc/versions/)
 
-`imaging-transcriptomics` links brain maps to Allen Human Brain Atlas gene-expression data. This branch is a `2.0.0` refactor with a lighter functional API, atlas-aware scan extraction, optional neuromaps-based resampling, and text-plus-plot outputs instead of PDF reports.
+`imaging-transcriptomics` links brain maps to Allen Human Brain Atlas gene-expression data. Version `2.0.0` keeps the package lighter and easier to use: simpler function-based entry points, built-in atlas handling, optional `neuromaps` resampling, and text-plus-plot outputs instead of PDF reports.
 
 ## What Changed In V2
 
 - Functional entry points: `run_corr()` and `run_pls()`
-- Packaged atlas presets with abagen-derived expression data
-- Left-only or mirrored left+right hemisphere expression matrices
-- Direct vector, text-table, NIfTI, and surface-input handling
+- Included atlases with `abagen`-derived expression data
+- Left-only or both-hemisphere expression data
+- Direct support for vectors, text tables, NIfTI files, and surface files
 - `README.txt` plus TSV tables and plot PNGs as the default outputs
 - Local SIMPLS-based PLS backend
 - A smaller v2-only public API centered on `RunConfig`, `run_corr()`, and `run_pls()`
 
-## Packaged Atlases
+## Included Atlases
 
-Ready to run in this branch:
+Included in this branch and ready to use:
 
 - `dk`
 - `schaefer-100`
@@ -27,7 +27,7 @@ Ready to run in this branch:
 - `destrieux`
 - `glasser-360`
 
-The packaged expression matrices are still generated from `abagen`. For bilateral analyses, the right hemisphere is represented through the mirrored expression strategy supported by `abagen` (`lr_mirror="leftright"`).
+The expression matrices are still generated from `abagen`. For two-hemisphere analyses, the right side comes from the `abagen` mirror option (`lr_mirror="leftright"`).
 
 ## Installation
 
@@ -46,7 +46,7 @@ pip install -e .
 
 Optional extras:
 
-- `pip install -e .[gsea]` for gene-set enrichment analysis
+- `pip install -e .[gsea]` for GSEA support
 - `pip install -e .[maps]` for `neuromaps` and `abagen`
 - `pip install -e .[dev]` for tests and tooling
 
@@ -87,7 +87,7 @@ result = imt.run_pls(
 )
 ```
 
-Inspect atlas presets:
+Inspect available atlases:
 
 ```python
 import imaging_transcriptomics as imt
@@ -128,17 +128,17 @@ imagingtranscriptomics pls \
   --output /abs/path/out_dir
 ```
 
-Available null methods are `auto`, `vasa`, `alexander_bloch`, `moran`, and `random`. The default `auto` mode prefers `vasa` for cortical parcellated data and falls back to within-hemisphere random shuffles when a surface null model is unavailable locally.
+Available null methods are `auto`, `vasa`, `alexander_bloch`, `moran`, and `random`. The default `auto` mode tries `vasa` first for cortical data and falls back to random shuffling within each hemisphere if a surface-based method is not available locally.
 
 ## Inputs And Resampling
 
-The v2 scan layer accepts:
+Version 2 accepts:
 
 - regional vectors as NumPy arrays or text tables
 - volumetric NIfTI data in `MNI152`
 - non-MNI or surface data through `neuromaps` when the `maps` extra is installed
 
-For volumetric maps already in `MNI152`, the package can extract regional values directly with the packaged atlas image. For cross-space or surface workflows, `neuromaps` is used to resample/parcellate the input before analysis.
+For maps already in `MNI152`, the package can extract region values directly from the included atlas image. For other standard spaces or surface inputs, `neuromaps` can resample the input before analysis.
 
 ## Outputs
 
@@ -150,7 +150,7 @@ Each run writes:
 - analysis tables such as `corr_genes.tsv`, `pls_summary.tsv`, `pls_component_<n>.tsv`
 - plot PNGs in `plots/`
 
-If GSEA is enabled, the corresponding `gsea_*.tsv` tables are also written.
+If GSEA is enabled, matching `gsea_*.tsv` tables are also written.
 
 PDF reporting was intentionally removed in this refactor.
 

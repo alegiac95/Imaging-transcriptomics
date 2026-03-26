@@ -1,7 +1,7 @@
-Shared atlas gene-label assets
-==============================
+Shared atlas gene-label files
+=============================
 
-This directory stores shared AHBA gene label arrays used by the packaged atlas
+This directory stores shared AHBA gene-name arrays used by the included atlas
 expression matrices.
 
 Files
@@ -13,12 +13,12 @@ Files
 
 Why this exists
 ---------------
-The atlas `.npz` expression archives only store the numeric matrix. Region
-metadata lives in each atlas `labels.csv`, and gene names are shared here so
-the same list is not duplicated inside every atlas archive.
+The atlas `.npz` files only store the numeric matrix. Region metadata stays in
+each atlas `labels.csv`, and gene names live here so the same list is not
+copied into every atlas file.
 
 Runtime contract
 ----------------
-- Expression matrix rows are aligned to the order of each atlas `labels.csv`
-- Expression matrix columns are aligned to the shared gene-label file declared
-  in the atlas registry
+- Expression matrix rows follow the order of each atlas `labels.csv`
+- Expression matrix columns follow the shared gene-label file listed in the
+  atlas registry

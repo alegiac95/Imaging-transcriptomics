@@ -4,7 +4,7 @@
 Script usage
 ============
 
-Once installed, the v2 CLI exposes atlas-aware workflows:
+Once installed, the v2 CLI gives you a few simple atlas-based workflows:
 
 .. code:: bash
 
@@ -16,22 +16,22 @@ The shared analysis options are:
 
 - ``--input`` / ``-i``: input regional vector, volumetric NIfTI, or surface file pair.
 - ``--input-rh``: right-hemisphere surface file when using surface inputs.
-- ``--atlas`` / ``-a``: atlas preset, for example ``dk`` or ``schaefer-100``.
-- ``--hemisphere``: ``left`` or ``both``. Packaged expression data preserve the abagen left-only workflow and also expose mirrored right-hemisphere values when available.
+- ``--atlas`` / ``-a``: atlas name, for example ``dk`` or ``schaefer-100``.
+- ``--hemisphere``: ``left`` or ``both``. In ``both``, the right side comes from the ``abagen`` mirror option.
 - ``--regions`` / ``-r``: ``all``, ``cort``, or ``cort+sub``.
 - ``--space``: source space for non-native inputs, for example ``MNI152``, ``fsaverage``, ``fsLR``, or ``CIVET``.
-- ``--permutations`` / ``-p``: number of permutations or spatial null samples.
+- ``--permutations`` / ``-p``: number of permutations or null samples.
 - ``--null-method``: ``auto``, ``vasa``, ``alexander_bloch``, ``moran``, or ``random``.
-- ``--seed``: random seed for reproducible permutations and null-model generation.
+- ``--seed``: random seed for reproducible permutations and null generation.
 - ``--geneset`` and ``--no-gsea``: enable or disable optional GSEA output.
 
-``corr`` runs Spearman correlation against all genes. ``pls`` runs the local SIMPLS-based PLS backend and requires either ``--ncomp`` or ``--var``.
+``corr`` runs Spearman correlation against all genes. ``pls`` runs the local SIMPLS-based PLS backend and needs either ``--ncomp`` or ``--var``.
 
 Outputs are written as lightweight text and image files:
 
-- ``README.txt``: human-readable run summary.
-- ``metadata.json``: machine-readable metadata, including atlas and null-model settings.
-- ``regional_values.tsv``: parcellated input values aligned to atlas labels.
+- ``README.txt``: plain-language run summary.
+- ``metadata.json``: machine-readable metadata, including atlas and null settings.
+- ``regional_values.tsv``: input values lined up with atlas labels.
 - ``corr_genes.tsv`` or ``pls_component_<n>.tsv`` / ``pls_summary.tsv``: analysis tables.
 - ``plots/*.png``: overview plots instead of a PDF report.
 
