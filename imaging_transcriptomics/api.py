@@ -56,7 +56,8 @@ def _metadata(extracted, config: RunConfig, *, null_method: str, n_components: i
         source_space=extracted.source_space,
         n_permutations=config.n_permutations,
         null_method=null_method,
-        geneset=config.gene_set if config.run_gsea else None,
+        geneset=config.gene_set if (config.run_gsea or config.ora_p_threshold is not None) else None,
+        ora_p_threshold=config.ora_p_threshold,
         n_components=n_components,
     )
 
@@ -68,11 +69,16 @@ def _corr_gene_table(analysis) -> pd.DataFrame:
             "score": analysis.gene_results.results.corr[0, :],
             "p_value": analysis.gene_results.results.pval[0, :],
             "fdr": analysis.gene_results.results.pval_corr[0, :],
+            "fwer_maxT": analysis.gene_results.results.pval_fwer[0, :],
         }
     )
 
 
-def _pls_components(analysis, gsea_tables: list[pd.DataFrame | None]) -> tuple[PLSComponentResult, ...]:
+def _pls_components(
+    analysis,
+    gsea_tables: list[pd.DataFrame | None],
+    ora_tables: list[dict[str, pd.DataFrame] | None],
+) -> tuple[PLSComponentResult, ...]:
     return tuple(
         PLSComponentResult(
             index=index + 1,
@@ -80,14 +86,16 @@ def _pls_components(analysis, gsea_tables: list[pd.DataFrame | None]) -> tuple[P
             p_value=float(analysis.p_val[index]),
             gene_table=pd.DataFrame(
                 {
-                    "gene": analysis.gene_results.results.orig.genes[index, :],
-                    "weight": analysis.gene_results.results.orig.weights[index, :],
-                    "zscore": analysis.gene_results.results.orig.zscored[index, :],
+                    "gene": analysis.gene_results.results.boot.genes[index, :],
+                    "weight": analysis.gene_results.results.boot.weights_sorted[index, :],
+                    "zscore": analysis.gene_results.results.boot.z_score[index, :],
                     "p_value": analysis.gene_results.results.boot.pval[index, :],
                     "fdr": analysis.gene_results.results.boot.pval_corr[index, :],
+                    "fwer_maxT": analysis.gene_results.results.boot.pval_fwer[index, :],
                 }
             ),
             gsea_table=gsea_tables[index],
+            ora_tables=ora_tables[index],
         )
         for index in range(analysis.n_components)
     )
@@ -121,11 +129,25 @@ def _run_corr_configured(data, config: RunConfig, *, input_rh=None) -> Correlati
             lambda outdir: [outdir / "gsea_corr_results.tsv"],
         )[0]
 
+    ora_tables = None
+    if config.ora_p_threshold is not None:
+        ora_up, ora_down = _run_to_tables(
+            config.output_dir,
+            lambda outdir: analysis.ora(
+                gene_set=config.gene_set,
+                outdir=outdir,
+                p_threshold=config.ora_p_threshold,
+            ),
+            lambda outdir: [outdir / "ora_corr_up.tsv", outdir / "ora_corr_down.tsv"],
+        )
+        ora_tables = {"up": ora_up, "down": ora_down}
+
     result = CorrelationResult(
         metadata=_metadata(extracted, config, null_method=resolved_null_method),
         regional_values=regional_values_frame(extracted),
         gene_table=_corr_gene_table(analysis),
         gsea_table=gsea_table,
+        ora_tables=ora_tables,
         output_dir=config.output_dir,
     )
     if config.output_dir is not None:
@@ -150,14 +172,14 @@ def _run_pls_configured(data, config: RunConfig, *, input_rh=None) -> PLSResult:
         n_components=config.n_components,
         var=config.var,
         n_iter=config.n_permutations,
+        n_jobs=config.n_jobs,
     )
-    analysis.boot_pls(imaging, permuted, gene_exp)
-    analysis.gene_results.results.boot_genes(
+    analysis.boot_pls(
         imaging,
         permuted,
-        extracted.values,
         gene_exp,
-        gene_labels,
+        scan_data=extracted.values,
+        gene_labels=gene_labels,
     )
     analysis.gene_results.results.compute()
 
@@ -173,6 +195,27 @@ def _run_pls_configured(data, config: RunConfig, *, input_rh=None) -> PLSResult:
     else:
         gsea_tables = [None] * analysis.n_components
 
+    if config.ora_p_threshold is not None:
+        ora_files = _run_to_tables(
+            config.output_dir,
+            lambda outdir: analysis.gene_results.results.ora(
+                gene_set=config.gene_set,
+                outdir=outdir,
+                p_threshold=config.ora_p_threshold,
+            ),
+            lambda outdir: [
+                outdir / f"ora_pls{index}_{direction}.tsv"
+                for index in range(1, analysis.n_components + 1)
+                for direction in ("up", "down")
+            ],
+        )
+        ora_tables = [
+            {"up": ora_files[2 * index], "down": ora_files[2 * index + 1]}
+            for index in range(analysis.n_components)
+        ]
+    else:
+        ora_tables = [None] * analysis.n_components
+
     result = PLSResult(
         metadata=_metadata(
             extracted,
@@ -181,7 +224,7 @@ def _run_pls_configured(data, config: RunConfig, *, input_rh=None) -> PLSResult:
             n_components=analysis.n_components,
         ),
         regional_values=regional_values_frame(extracted),
-        components=_pls_components(analysis, gsea_tables),
+        components=_pls_components(analysis, gsea_tables, ora_tables),
         cumulative_variance=np.cumsum(analysis.components_var),
         output_dir=config.output_dir,
     )
@@ -203,7 +246,9 @@ def run_corr(
     output_dir=None,
     run_gsea: bool = False,
     gene_set: str = "lake",
+    ora_p_threshold: float | None = None,
     seed: int = 1234,
+    n_jobs: int = 1,
 ) -> CorrelationResult:
     config = build_run_config(
         "corr",
@@ -216,7 +261,9 @@ def run_corr(
         output_dir=output_dir,
         run_gsea=run_gsea,
         gene_set=gene_set,
+        ora_p_threshold=ora_p_threshold,
         seed=seed,
+        n_jobs=n_jobs,
     )
     return _run_corr_configured(data, config, input_rh=input_rh)
 
@@ -236,7 +283,9 @@ def run_pls(
     output_dir=None,
     run_gsea: bool = False,
     gene_set: str = "lake",
+    ora_p_threshold: float | None = None,
     seed: int = 1234,
+    n_jobs: int = 1,
 ) -> PLSResult:
     config = build_run_config(
         "pls",
@@ -249,8 +298,10 @@ def run_pls(
         output_dir=output_dir,
         run_gsea=run_gsea,
         gene_set=gene_set,
+        ora_p_threshold=ora_p_threshold,
         n_components=n_components,
         var=var,
         seed=seed,
+        n_jobs=n_jobs,
     )
     return _run_pls_configured(data, config, input_rh=input_rh)

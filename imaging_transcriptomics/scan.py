@@ -6,7 +6,9 @@ from typing import Iterable
 import nibabel as nib
 import numpy as np
 import pandas as pd
+from nibabel.processing import resample_from_to
 
+from ._compat import suppress_pkg_resources_deprecation
 from .gene_expression import select_atlas_data
 from .models import AtlasSelection, ExtractedScan, HemisphereMode, RegionScope
 from .surfaces import load_surface_parcellation
@@ -40,22 +42,6 @@ def _make_extracted_scan(
         source=source,
         source_space=source_space,
         source_kind=source_kind,
-    )
-
-
-def _infer_resolution(image: nib.Nifti1Image) -> str:
-    shape = image.shape[:3]
-    if shape == (182, 218, 182):
-        return "1mm"
-    if shape == (91, 109, 91):
-        return "2mm"
-    zooms = tuple(round(val, 3) for val in image.header.get_zooms()[:3])
-    if zooms == (1.0, 1.0, 1.0):
-        return "1mm"
-    if zooms == (2.0, 2.0, 2.0):
-        return "2mm"
-    raise ValueError(
-        f"Unsupported image resolution/shape for direct volumetric extraction: shape={shape}, zooms={zooms}."
     )
 
 
@@ -110,15 +96,96 @@ def extract_volume_values(
     return _region_means(image_data, atlas_data, atlas_ids)
 
 
-def _parcellate_nifti_direct(scan_path: Path, selection: AtlasSelection) -> np.ndarray:
+def _grid_matches(image: nib.Nifti1Image, atlas_image: nib.Nifti1Image) -> bool:
+    return image.shape[:3] == atlas_image.shape[:3] and np.allclose(
+        image.affine,
+        atlas_image.affine,
+        atol=1e-3,
+    )
+
+
+def _atlas_volume_image(selection: AtlasSelection, resolution: str) -> nib.Nifti1Image:
+    atlas_path = selection.atlas.volume_path(resolution)
+    if atlas_path is None:
+        raise FileNotFoundError(
+            f"Atlas '{selection.atlas.id}' does not have a packaged volumetric parcellation for {resolution}."
+        )
+    return nib.load(atlas_path)
+
+
+def _matching_atlas_grid(
+    image: nib.Nifti1Image,
+    selection: AtlasSelection,
+) -> tuple[str, nib.Nifti1Image] | None:
+    for resolution in ("1mm", "2mm"):
+        atlas_path = selection.atlas.volume_path(resolution)
+        if atlas_path is None:
+            continue
+        atlas_image = nib.load(atlas_path)
+        if _grid_matches(image, atlas_image):
+            return resolution, atlas_image
+    return None
+
+
+def _preferred_resolution(image: nib.Nifti1Image, selection: AtlasSelection) -> str:
+    zoom_mean = float(np.mean(np.abs(image.header.get_zooms()[:3])))
+    preferred = "1mm" if zoom_mean <= 1.5 else "2mm"
+    if selection.atlas.volume_path(preferred) is not None:
+        return preferred
+    fallback = "2mm" if preferred == "1mm" else "1mm"
+    if selection.atlas.volume_path(fallback) is None:
+        raise FileNotFoundError(
+            f"Atlas '{selection.atlas.id}' does not have a packaged volumetric parcellation for direct extraction."
+        )
+    return fallback
+
+
+def _native_space_error(image: nib.Nifti1Image, selection: AtlasSelection) -> ValueError:
+    shape = image.shape[:3]
+    zooms = tuple(round(float(val), 3) for val in image.header.get_zooms()[:3])
+    return ValueError(
+        "Input NIfTI is not aligned to the packaged MNI atlas grids for "
+        f"atlas '{selection.atlas.id}'. Got shape={shape}, zooms={zooms}. "
+        "This command does not register native-space subject T1w images into MNI152. "
+        "Register the image to MNI152 first, then rerun with `--space MNI152`, "
+        "or provide a precomputed regional vector."
+    )
+
+
+def _extract_with_atlas_image(
+    image_data: np.ndarray,
+    atlas_image: nib.Nifti1Image,
+    selection: AtlasSelection,
+) -> np.ndarray:
+    atlas_ids = selection.labels["id"].astype(int).to_numpy()
+    return _region_means(image_data, atlas_image.get_fdata(), atlas_ids)
+
+
+def _parcellate_nifti_direct(
+    scan_path: Path,
+    selection: AtlasSelection,
+    *,
+    allow_resample: bool,
+) -> np.ndarray:
     image = nib.load(scan_path)
-    resolution = _infer_resolution(image)
-    return extract_volume_values(image.get_fdata(), selection, resolution=resolution)
+    matched = _matching_atlas_grid(image, selection)
+    if matched is not None:
+        _, atlas_image = matched
+        return _extract_with_atlas_image(image.get_fdata(), atlas_image, selection)
+
+    if not allow_resample:
+        raise _native_space_error(image, selection)
+
+    resolution = _preferred_resolution(image, selection)
+    atlas_image = _atlas_volume_image(selection, resolution)
+    resampled = resample_from_to(image, atlas_image, order=1)
+    return _extract_with_atlas_image(resampled.get_fdata(), atlas_image, selection)
 
 
 def _import_neuromaps():
     try:
-        from neuromaps.parcellate import Parcellater
+        with suppress_pkg_resources_deprecation():
+            from neuromaps.parcellate import Parcellater
     except ImportError as exc:  # pragma: no cover - optional dependency
         raise ImportError(
             "neuromaps is required for cross-space resampling or surface inputs. "
@@ -224,9 +291,12 @@ def extract_scan_data(
             source_kind="vector",
         )
     if suffix in _NIFTI_SUFFIXES:
-        if source_space in {None, "MNI152"}:
-            values = _parcellate_nifti_direct(path, selection)
-            resolved_space = source_space or "MNI152"
+        if source_space is None:
+            values = _parcellate_nifti_direct(path, selection, allow_resample=False)
+            resolved_space = "MNI152"
+        elif source_space == "MNI152":
+            values = _parcellate_nifti_direct(path, selection, allow_resample=True)
+            resolved_space = "MNI152"
         elif prefer_neuromaps:
             values = _parcellate_with_neuromaps(path.as_posix(), selection, source_space=source_space)
             resolved_space = source_space

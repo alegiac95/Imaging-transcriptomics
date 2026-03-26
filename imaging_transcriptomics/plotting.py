@@ -65,6 +65,52 @@ def _gsea_dot_frame(gsea_table: pd.DataFrame, top_n: int) -> pd.DataFrame:
     return ranked.sort_values("nes", ascending=True, kind="mergesort").reset_index(drop=True)
 
 
+def _ora_heatmap_frame(ora_tables: dict[str, pd.DataFrame]) -> tuple[list[str], np.ndarray] | None:
+    frames: dict[str, pd.DataFrame] = {}
+    score_maps: dict[str, dict[str, float]] = {}
+    ranking_rows: list[pd.DataFrame] = []
+    for direction in ("up", "down"):
+        table = ora_tables.get(direction)
+        if table is None or table.empty:
+            frames[direction] = pd.DataFrame(columns=["Term", "fdr", "enrichment_ratio"])
+            score_maps[direction] = {}
+            continue
+        frame = table.copy()
+        frame["fdr"] = pd.to_numeric(frame["fdr"], errors="coerce")
+        frame["enrichment_ratio"] = pd.to_numeric(frame["enrichment_ratio"], errors="coerce")
+        frame = frame.dropna(subset=["Term", "fdr", "enrichment_ratio"])
+        if frame.empty:
+            frames[direction] = frame
+            score_maps[direction] = {}
+            continue
+        frame["_score"] = -np.log10(np.clip(frame["fdr"].to_numpy(dtype=float), 1e-300, 1.0))
+        frames[direction] = frame
+        score_maps[direction] = dict(zip(frame["Term"].astype(str), frame["_score"], strict=False))
+        ranking_rows.append(frame[["Term", "fdr", "enrichment_ratio"]])
+
+    if not ranking_rows:
+        return None
+
+    combined = pd.concat(ranking_rows, ignore_index=True)
+    term_order = (
+        combined.groupby("Term", sort=False)
+        .agg(min_fdr=("fdr", "min"), max_ratio=("enrichment_ratio", "max"))
+        .sort_values(["min_fdr", "max_ratio"], ascending=[True, False], kind="mergesort")
+        .index.astype(str)
+        .tolist()
+    )
+    if not term_order:
+        return None
+
+    matrix = np.full((2, len(term_order)), np.nan, dtype=float)
+    for row_index, direction in enumerate(("up", "down")):
+        mapping = score_maps[direction]
+        for col_index, term in enumerate(term_order):
+            if term in mapping:
+                matrix[row_index, col_index] = mapping[term]
+    return term_order, matrix
+
+
 def plot_gsea_dotplot(
     gsea_table: pd.DataFrame,
     output_path: Path,
@@ -98,6 +144,31 @@ def plot_gsea_dotplot(
     ax.grid(axis="x", alpha=0.2)
     colorbar = fig.colorbar(scatter, ax=ax, pad=0.02)
     colorbar.set_label("NES")
+    return _save(fig, output_path)
+
+
+def plot_ora_heatmap(
+    ora_tables: dict[str, pd.DataFrame],
+    output_path: Path,
+    *,
+    title: str,
+) -> Path | None:
+    heatmap = _ora_heatmap_frame(ora_tables)
+    if heatmap is None:
+        return None
+    terms, matrix = heatmap
+    fig_width = max(8.0, 0.45 * len(terms))
+    fig, ax = plt.subplots(figsize=(fig_width, 2.8))
+    cmap = plt.get_cmap("YlOrRd").copy()
+    cmap.set_bad("#f8fafc")
+    image = ax.imshow(matrix, aspect="auto", cmap=cmap, interpolation="nearest")
+    ax.set_title(title)
+    ax.set_xlabel("Gene set")
+    ax.set_ylabel("Direction")
+    ax.set_yticks([0, 1], labels=["up", "down"])
+    ax.set_xticks(np.arange(len(terms)), labels=terms, rotation=60, ha="right")
+    colorbar = fig.colorbar(image, ax=ax, pad=0.02)
+    colorbar.set_label("-log10(FDR)")
     return _save(fig, output_path)
 
 
@@ -191,6 +262,14 @@ def save_result_plots(result: CorrelationResult | PLSResult, output_dir: Path) -
             )
             if gsea_path is not None:
                 paths.append(gsea_path)
+        if result.ora_tables is not None:
+            ora_path = plot_ora_heatmap(
+                result.ora_tables,
+                output_dir / "plots" / "ora_corr_heatmap.png",
+                title="ORA up/down heatmap",
+            )
+            if ora_path is not None:
+                paths.append(ora_path)
         return paths
     paths.extend(plot_pls_variance(result, output_dir))
     for component in result.components:
@@ -203,4 +282,12 @@ def save_result_plots(result: CorrelationResult | PLSResult, output_dir: Path) -
             )
             if gsea_path is not None:
                 paths.append(gsea_path)
+        if component.ora_tables is not None:
+            ora_path = plot_ora_heatmap(
+                component.ora_tables,
+                output_dir / "plots" / f"ora_pls{component.index}_heatmap.png",
+                title=f"PLS component {component.index} ORA up/down heatmap",
+            )
+            if ora_path is not None:
+                paths.append(ora_path)
     return paths

@@ -2,14 +2,23 @@ from __future__ import annotations
 
 import logging
 from collections import OrderedDict
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from statsmodels.stats.multitest import multipletests
 
 from ._logging import get_logger
 from .genes import CorrGenes, GeneResults
+from .gsea_utils import (
+    gsea_style_fdr,
+    make_prerank_table,
+    nominal_pvalues_from_nulls,
+    normalize_enrichment_nulls,
+    normalize_enrichment_scores,
+    run_prerank,
+)
 from .genesets import get_geneset
+from .ora import ora_from_gene_table
 
 logger = get_logger("genes")
 logger.setLevel(logging.DEBUG)
@@ -94,8 +103,9 @@ class CorrAnalysis:
 
         gene_set = get_geneset(gene_set)
         gene_list = list(self.gene_results.results.genes[:, 0].tolist())
-        rnk = pd.DataFrame(zip(gene_list, self.gene_results.results.corr[0, :]))
-        gsea_results = gseapy.prerank(
+        rnk = make_prerank_table(gene_list, self.gene_results.results.corr[0, :])
+        gsea_results = run_prerank(
+            gseapy,
             rnk,
             gene_set,
             max_size=gene_limit,
@@ -106,8 +116,9 @@ class CorrAnalysis:
         origin_es = gsea_results.res2d.ES.to_numpy()
         boot_es = np.zeros((origin_es.shape[0], n_perm))
         for index in range(n_perm):
-            rnk = pd.DataFrame(zip(gene_list, self.gene_results.results.boot_corr[:, index]))
-            gsea_res = gseapy.prerank(
+            rnk = make_prerank_table(gene_list, self.gene_results.results.boot_corr[:, index])
+            gsea_res = run_prerank(
+                gseapy,
                 rnk,
                 gene_set,
                 max_size=gene_limit,
@@ -118,18 +129,10 @@ class CorrAnalysis:
             )
             boot_es[:, index] = gsea_res.res2d.ES.values
 
-        boot_nes_mean = np.mean(boot_es, axis=1)
-        boot_nes_std = np.std(boot_es, axis=1)
-        boot_nes = (boot_nes_mean - origin_es) / boot_nes_std
-        p_val = np.zeros(origin_es.shape[0], dtype=float)
-        for index in range(origin_es.shape[0]):
-            count = (
-                np.sum(boot_es[index, :] >= origin_es[index])
-                if origin_es[index] >= 0
-                else np.sum(boot_es[index, :] <= origin_es[index])
-            )
-            p_val[index] = (count + 1) / (n_perm + 1)
-        _, p_corr, _, _ = multipletests(p_val, method="fdr_bh", is_sorted=False)
+        boot_nes = normalize_enrichment_scores(origin_es, boot_es)
+        boot_nes_null = normalize_enrichment_nulls(origin_es, boot_es)
+        p_val = nominal_pvalues_from_nulls(origin_es, boot_es)
+        p_corr = gsea_style_fdr(boot_nes, boot_nes_null)
 
         out_df = pd.DataFrame.from_dict(
             OrderedDict(
@@ -145,3 +148,29 @@ class CorrAnalysis:
             outdir = Path(outdir)
             assert outdir.exists()
             out_df.to_csv(outdir / "gsea_corr_results.tsv", index=False, sep="\t")
+
+    def ora(self, gene_set="lake", outdir=None, p_threshold=0.05):
+        """Perform ORA on positively and negatively associated genes."""
+
+        assert isinstance(self.gene_results.results, CorrGenes)
+        logger.info("Performing ORA.")
+        gene_table = pd.DataFrame(
+            {
+                "gene": self.gene_results.results.genes[:, 0],
+                "score": self.gene_results.results.corr[0, :],
+                "p_value": self.gene_results.results.pval[0, :],
+            }
+        )
+        ora_tables = ora_from_gene_table(
+            gene_table,
+            gene_set=gene_set,
+            score_column="score",
+            p_threshold=p_threshold,
+        )
+        if outdir is not None:
+            logger.info("Saving ORA results.")
+            outdir = Path(outdir)
+            assert outdir.exists()
+            for direction, table in ora_tables.items():
+                table.to_csv(outdir / f"ora_corr_{direction}.tsv", index=False, sep="\t")
+        return ora_tables

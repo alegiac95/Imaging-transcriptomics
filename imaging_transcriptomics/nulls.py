@@ -5,6 +5,7 @@ from functools import lru_cache
 
 import numpy as np
 
+from ._compat import suppress_pkg_resources_deprecation
 from .config import DEFAULT_NULL_METHOD, DEFAULT_SEED, VALID_NULL_METHODS
 from .surfaces import load_surface_parcellation
 
@@ -15,7 +16,8 @@ SURFACE_NULL_METHODS = {"vasa", "alexander_bloch", "moran"}
 
 def _import_neuromaps_nulls():
     try:
-        from neuromaps import nulls
+        with suppress_pkg_resources_deprecation():
+            from neuromaps import nulls
     except ImportError as exc:  # pragma: no cover - optional dependency
         raise ImportError(
             "neuromaps is required for surface-based spatial null models. "

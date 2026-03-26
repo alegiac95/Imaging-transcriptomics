@@ -1,51 +1,50 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 import numpy as np
 
 
-def resid_yscores(x_scores, y_scores, copy: bool = True):
-    """Orthogonalize Y scores with respect to preceding X scores.
+@dataclass(frozen=True)
+class PreparedPLS1:
+    """Prepared X-side data for repeated PLS-1 fits with different Y vectors."""
 
-    This follows the standard SIMPLS score orthogonalization step.
-    """
-
-    x_scores = np.array(x_scores, dtype=float, copy=False)
-    y_scores = np.array(y_scores, dtype=float, copy=copy)
-
-    for comp in range(x_scores.shape[1]):
-        ui = y_scores[:, [comp]]
-        for _ in range(2):
-            for j in range(comp):
-                tj = x_scores[:, [j]]
-                ui = ui - ((tj.T @ ui) * tj)
-        y_scores[:, [comp]] = ui
-
-    return y_scores
+    X: np.ndarray
+    X0: np.ndarray
+    x_mean: np.ndarray
+    x_ss_total: float
 
 
 def _get_mask(X, Y):
     return np.logical_not(np.logical_or(np.all(np.isnan(X), axis=1), np.all(np.isnan(Y), axis=1)))
 
 
-def _first_svd_component(crosscov):
-    """Return the leading left singular vector / value / right singular vector."""
-
-    U, singular_values, Vt = np.linalg.svd(np.asarray(crosscov, dtype=float), full_matrices=False)
-    return Vt[:1, :].T, np.diag(singular_values[:1]), U[:, [0]]
-
-
-def _simpls(X, Y, n_components: int | None = None):
-    """Small SIMPLS implementation for the repo's PLS-1 use case."""
-
+def prepare_pls1(X) -> PreparedPLS1:
     X = np.asarray(X, dtype=float)
+    x_mean = X.mean(axis=0, keepdims=True)
+    X0 = X - x_mean
+    return PreparedPLS1(
+        X=X,
+        X0=X0,
+        x_mean=x_mean,
+        x_ss_total=float(np.sum(X0 * X0)),
+    )
+
+
+def _simpls_prepared_pls1(prepared: PreparedPLS1, Y, n_components: int | None = None, *, return_full: bool = True):
+    """Small SIMPLS implementation specialized for the repo's PLS-1 use case."""
+
+    X = prepared.X
+    X0 = prepared.X0
     Y = np.asarray(Y, dtype=float)
     if Y.ndim == 1:
         Y = Y.reshape(-1, 1)
     if n_components is None:
         n_components = min(len(X) - 1, X.shape[1])
 
-    X0 = X - X.mean(axis=0, keepdims=True)
-    Y0 = Y - Y.mean(axis=0, keepdims=True)
+    y_mean = Y.mean(axis=0, keepdims=True)
+    Y0 = Y - y_mean
+    y_ss_total = float(np.sum(Y0 * Y0))
     cov = X0.T @ Y0
 
     x_loadings = np.zeros((X.shape[1], n_components), dtype=float)
@@ -56,7 +55,10 @@ def _simpls(X, Y, n_components: int | None = None):
     basis = np.zeros((X.shape[1], n_components), dtype=float)
 
     for comp in range(n_components):
-        _, singular_values, right_vector = _first_svd_component(cov)
+        cov_norm = np.linalg.norm(cov)
+        if cov_norm == 0:
+            break
+        right_vector = cov / cov_norm
         ti = X0 @ right_vector
         normti = np.linalg.norm(ti)
         if normti == 0:
@@ -72,32 +74,37 @@ def _simpls(X, Y, n_components: int | None = None):
         y_scores[:, [comp]] = Y0 @ qi
 
         vi = x_loadings[:, [comp]]
-        for _ in range(2):
-            for j in range(comp):
-                vj = basis[:, [j]]
-                vi = vi - ((vj.T @ vi) * vj)
+        if comp > 0:
+            previous = basis[:, :comp]
+            vi = vi - (previous @ (previous.T @ vi))
         vi_norm = np.linalg.norm(vi)
         if vi_norm == 0:
             break
         vi = vi / vi_norm
         basis[:, [comp]] = vi
 
-        cov = cov - (vi @ (vi.T @ cov))
-        if comp > 0:
-            previous = basis[:, :comp]
-            cov = cov - (previous @ (previous.T @ cov))
-
-    y_scores = resid_yscores(x_scores, y_scores)
-    beta = x_weights @ y_loadings.T
-    beta = np.vstack([Y.mean(axis=0) - (X.mean(axis=0) @ beta), beta])
+        active_basis = basis[:, : comp + 1]
+        cov = cov - (active_basis @ (active_basis.T @ cov))
 
     pctvar = [
-        np.sum(x_loadings ** 2, axis=0) / np.sum(X0 ** 2),
-        np.sum(y_loadings ** 2, axis=0) / np.sum(Y0 ** 2),
+        np.sum(x_loadings ** 2, axis=0) / prepared.x_ss_total,
+        np.sum(y_loadings ** 2, axis=0) / y_ss_total if y_ss_total else np.zeros(n_components, dtype=float),
     ]
+    varexp = np.asarray(pctvar[1], dtype=float)
+    if not return_full:
+        return dict(
+            x_weights=x_weights,
+            x_scores=x_scores,
+            y_scores=y_scores,
+            varexp=varexp,
+        )
+
+    beta = x_weights @ y_loadings.T
+    beta = np.vstack([y_mean - (prepared.x_mean @ beta), beta])
+
     mse = np.zeros((2, n_components + 1), dtype=float)
-    mse[0, 0] = np.sum(np.abs(X0) ** 2)
-    mse[1, 0] = np.sum(np.abs(Y0) ** 2)
+    mse[0, 0] = prepared.x_ss_total
+    mse[1, 0] = y_ss_total
     X0_recon = np.zeros_like(X0)
     Y0_recon = np.zeros_like(Y0)
     for i in range(n_components):
@@ -123,8 +130,12 @@ def _simpls(X, Y, n_components: int | None = None):
         pctvar=pctvar,
         mse=mse,
         t2=t2,
-        varexp=np.asarray(pctvar[1], dtype=float),
+        varexp=varexp,
     )
+
+
+def fit_prepared_pls1(prepared: PreparedPLS1, Y, *, n_components: int | None = None, return_full: bool = True):
+    return _simpls_prepared_pls1(prepared, Y, n_components=n_components, return_full=return_full)
 
 
 def pls_regression(
@@ -156,7 +167,8 @@ def pls_regression(
     if Y.ndim == 1:
         Y = Y.reshape(-1, 1)
     mask = _get_mask(X, Y)
-    result = _simpls(X[mask], Y[mask], n_components=n_components)
+    prepared = prepare_pls1(X[mask])
+    result = fit_prepared_pls1(prepared, Y[mask], n_components=n_components, return_full=True)
 
     # Re-expand score arrays to the original sample axis for compatibility.
     x_scores = np.full((len(Y), result["x_scores"].shape[1]), np.nan, dtype=float)

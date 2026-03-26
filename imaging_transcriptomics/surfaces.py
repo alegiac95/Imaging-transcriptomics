@@ -2,10 +2,13 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from ._compat import suppress_pkg_resources_deprecation
+
 
 def _import_neuromaps_images():
     try:
-        from neuromaps.images import annot_to_gifti
+        with suppress_pkg_resources_deprecation():
+            from neuromaps.images import annot_to_gifti
     except ImportError as exc:  # pragma: no cover - optional dependency
         raise ImportError(
             "neuromaps is required for surface atlas support. "

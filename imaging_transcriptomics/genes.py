@@ -1,4 +1,5 @@
 import logging
+import warnings
 from pathlib import Path
 from scipy.stats import zscore, norm
 from statsmodels.stats.multitest import multipletests
@@ -6,11 +7,42 @@ import numpy as np
 from collections import OrderedDict
 import pandas as pd
 from ._logging import get_logger
+from .gsea_utils import (
+    gsea_style_fdr,
+    make_prerank_table,
+    nominal_pvalues_from_nulls,
+    normalize_enrichment_nulls,
+    normalize_enrichment_scores,
+    run_prerank,
+)
 from .genesets import get_geneset
+from .ora import ora_from_gene_table
 from .pls_backend import pls_regression
 
 logger = get_logger("genes")
 logger.setLevel(logging.DEBUG)
+
+
+def _correlate_pls_scores(scores: np.ndarray, values: np.ndarray) -> np.ndarray:
+    stacked = np.hstack((np.asarray(scores, dtype=float), np.asarray(values, dtype=float).reshape(-1, 1)))
+    return np.corrcoef(stacked, rowvar=False)[0, 1:]
+
+
+def _rowwise_corrsign(
+    reference: np.ndarray,
+    candidate: np.ndarray,
+    reference_centered: np.ndarray,
+    reference_ss: np.ndarray,
+) -> np.ndarray:
+    centered = candidate - candidate.mean(axis=1, keepdims=True)
+    denom = np.sqrt(reference_ss * np.sum(centered * centered, axis=1))
+    corr = np.divide(
+        np.sum(reference_centered * centered, axis=1),
+        denom,
+        out=np.zeros(reference.shape[0], dtype=float),
+        where=denom != 0,
+    )
+    return np.where(corr < 0, -1.0, 1.0)
 
 
 # --------- GENE ANALYSIS --------- #
@@ -75,6 +107,14 @@ class GeneResults:
         elif isinstance(self.results, CorrGenes):
             return self.results.pval_corr
 
+    @property
+    def pvals_fwer(self):
+        if isinstance(self.results, PLSGenes):
+            return self.results.boot.pval_fwer
+        if isinstance(self.results, CorrGenes):
+            return self.results.pval_fwer
+        return None
+
 
 # --------- PLS GENES --------- #
 class PLSGenes:
@@ -91,6 +131,39 @@ class PLSGenes:
         self.n_iter = n_iter
         self.orig = OrigPLS(n_components, self.n_genes)
         self.boot = BootPLS(n_components, self.n_genes, n_iter=n_iter)
+        self._orig_centered = None
+        self._orig_ss = None
+
+    def prepare_from_fit(self, fit_result, scan_data, gene_labels):
+        """Prepare original gene weights from a fitted PLS result."""
+
+        weights = np.asarray(fit_result.get("x_weights"), dtype=float).copy()
+        scores = np.asarray(fit_result.get("x_scores"), dtype=float).copy()
+        score_corr = _correlate_pls_scores(scores, scan_data)
+        for component in range(score_corr.size):
+            if score_corr[component] < 0:
+                weights[:, component] *= -1
+                scores[:, component] *= -1
+        for component in range(self.n_components):
+            sort_index = np.argsort(weights[:, component], kind="mergesort")[::-1]
+            self.orig.index[component, :] = sort_index
+            self.orig.genes[component, :] = gene_labels[:, 0][sort_index]
+            self.orig.weights[component, :] = weights[:, component][sort_index]
+            self.orig.zscored[component, :] = zscore(self.orig.weights[component, :], axis=0, ddof=1)
+        self._orig_centered = self.orig.weights - self.orig.weights.mean(axis=1, keepdims=True)
+        self._orig_ss = np.sum(self._orig_centered * self._orig_centered, axis=1)
+        return
+
+    def store_permuted_weights(self, iteration: int, x_weights):
+        """Store one permuted PLS fit after aligning it to the original gene order."""
+
+        if self._orig_centered is None or self._orig_ss is None:
+            raise RuntimeError("Call prepare_from_fit() before storing permuted weights.")
+        weights = np.asarray(x_weights, dtype=float).T
+        reordered = np.take_along_axis(weights, self.orig.index, axis=1)
+        sign = _rowwise_corrsign(self.orig.weights, reordered, self._orig_centered, self._orig_ss)
+        self.boot.weights[:, :, iteration] = reordered * sign.reshape(-1, 1)
+        return
 
     def boot_genes(self, imaging_data, permuted_imaging,
                    scan_data, gene_exp, gene_labels):
@@ -108,45 +181,11 @@ class PLSGenes:
         """
         logger.info("Performing bootstrapping of the genes.")
 
-        def correlate(c1, c2):
-            """Return the MATLAB style correlation between two vectors."""
-            return np.corrcoef(np.hstack((c1, c2)), rowvar=False)[0, 1:]
-
-        def rowwise_corrsign(reference, candidate, reference_centered, reference_ss):
-            centered = candidate - candidate.mean(axis=1, keepdims=True)
-            denom = np.sqrt(reference_ss * np.sum(centered * centered, axis=1))
-            corr = np.divide(
-                np.sum(reference_centered * centered, axis=1),
-                denom,
-                out=np.zeros(reference.shape[0], dtype=float),
-                where=denom != 0,
-            )
-            return np.where(corr < 0, -1.0, 1.0)
-
         _res = pls_regression(gene_exp, imaging_data.reshape(
             imaging_data.shape[0], 1),
                               n_components=self.n_components,
                               n_boot=0, n_perm=0)
-        r1 = correlate(_res.get("x_scores"), scan_data.reshape(
-            scan_data.shape[0], 1))
-        _weights = _res.get("x_weights")
-        _scores = _res.get("x_scores")
-        for i in range(r1.size):
-            if r1[i] < 0:
-                _weights[:, i] *= -1
-                _scores[:, i] *= -1
-        for _idx in range(self.n_components):
-            _sort_weights_indexes = np.argsort(_weights[:, _idx],
-                                               kind="mergesort")[::-1]
-            self.orig.index[_idx, :] = _sort_weights_indexes
-            self.orig.genes[_idx, :] = gene_labels[:, 0][_sort_weights_indexes]
-            self.orig.weights[_idx, :] = _weights[:, _idx][
-                _sort_weights_indexes]
-            self.orig.zscored[_idx, :] = zscore(self.orig.weights[_idx, :],
-                                                axis=0,
-                                                ddof=1)
-        orig_centered = self.orig.weights - self.orig.weights.mean(axis=1, keepdims=True)
-        orig_ss = np.sum(orig_centered * orig_centered, axis=1)
+        self.prepare_from_fit(_res, scan_data, gene_labels)
         if permuted_imaging.shape[1] != self.boot.weights.shape[2]:
             raise ValueError("The number of bootstrapped permutations does "
                              "not match the configured iteration count.")
@@ -156,10 +195,7 @@ class PLSGenes:
                                         _perm_imaging.shape[0], 1),
                                         n_components=self.n_components,
                                         n_boot=0, n_perm=0)
-            _weights_i = _i_results.get("x_weights").T
-            _new_weights = np.take_along_axis(_weights_i, self.orig.index, axis=1)
-            _sign = rowwise_corrsign(self.orig.weights, _new_weights, orig_centered, orig_ss)
-            self.boot.weights[:, :, _iter] = _new_weights * _sign.reshape(-1, 1)
+            self.store_permuted_weights(_iter, _i_results.get("x_weights"))
         return
 
     def compute(self):
@@ -174,15 +210,29 @@ class PLSGenes:
         safe_std = np.where(self.boot.std == 0, np.finfo(float).eps, self.boot.std)
         zscores = self.orig.weights / safe_std
         indices = np.argsort(zscores, axis=1, kind='mergesort')[:, ::-1]
+        raw_pval = 2 * norm.sf(np.abs(zscores))
+        raw_pval_fwer = np.zeros((self.n_components, self.n_genes), dtype=float)
+        self.boot.weights_sorted[:, :] = np.take_along_axis(self.orig.weights, indices, axis=1)
         self.boot.z_score[:, :] = np.take_along_axis(zscores, indices, axis=1)
         self.boot.genes[:, :] = np.take_along_axis(self.orig.genes, indices, axis=1)
-        self.boot.pval[:, :] = 2 * norm.sf(np.abs(self.boot.z_score))
         for component in range(self.n_components):
-            _, self.boot.pval_corr[component, :], _, _ = multipletests(
-                self.boot.pval[component, :],
+            observed = self.orig.weights[component, :]
+            perm_max = np.max(self.boot.weights[component, :, :], axis=0)
+            perm_min = np.min(self.boot.weights[component, :, :], axis=0)
+            counts = np.where(
+                observed >= 0,
+                np.sum(perm_max.reshape(1, -1) >= observed.reshape(-1, 1), axis=1),
+                np.sum(perm_min.reshape(1, -1) <= observed.reshape(-1, 1), axis=1),
+            )
+            raw_pval_fwer[component, :] = (counts + 1) / (self.n_iter + 1)
+            _, corrected, _, _ = multipletests(
+                raw_pval[component, :],
                 method='fdr_bh',
                 is_sorted=False,
             )
+            self.boot.pval[component, :] = raw_pval[component, indices[component, :]]
+            self.boot.pval_corr[component, :] = corrected[indices[component, :]]
+            self.boot.pval_fwer[component, :] = raw_pval_fwer[component, indices[component, :]]
         return
 
     def gsea(self, gene_set="lake", outdir=None, gene_limit=1500, n_iter=1000):
@@ -201,42 +251,40 @@ class PLSGenes:
             gene_set = get_geneset(gene_set)
         for _component in range(self.n_components):
             gene_list = list(self.orig.genes[_component, :])
-            rnk = pd.DataFrame(zip(gene_list,
-                                   self.orig.zscored[_component, :]))
-            gsea_results = gseapy.prerank(rnk, gene_set,
-                                          max_size=gene_limit,
-                                          outdir=None,
-                                          seed=1234,
-                                          permutation_num=n_iter)
+            rnk = make_prerank_table(
+                gene_list,
+                self.orig.zscored[_component, :],
+            )
+            gsea_results = run_prerank(gseapy, rnk, gene_set,
+                                       max_size=gene_limit,
+                                       outdir=None,
+                                       seed=1234,
+                                       permutation_num=0)
             _origin_es = gsea_results.res2d.es.to_numpy()
             _boot_es = np.zeros((_origin_es.shape[0], n_iter))
             for i in range(n_iter):
-                rnk = pd.DataFrame(zip(gene_list,
-                                       zscore(
-                                           self.boot.weights[_component, :, i],
-                                           ddof=1)
-                                       )
-                                   )
-                gsea_res = gseapy.prerank(rnk, gene_set,
-                                          max_size=gene_limit,
-                                          outdir=None,
-                                          seed=1234,
-                                          permutation_num=1)
+                rnk = make_prerank_table(
+                    gene_list,
+                    zscore(
+                        self.boot.weights[_component, :, i],
+                        ddof=1,
+                    ),
+                )
+                gsea_res = run_prerank(gseapy, rnk, gene_set,
+                                       max_size=gene_limit,
+                                       outdir=None,
+                                       seed=1234,
+                                       permutation_num=0)
                 _boot_es[:, i] = gsea_res.res2d.es.to_numpy()
-            _p_val = np.zeros((_origin_es.shape[0],))
-            for i in range(_origin_es.shape[0]):
-                _count = np.sum(_boot_es[i, :] >= _origin_es[i]) \
-                    if _origin_es[i] >= 0 else \
-                    np.sum(_boot_es[i, :] <= _origin_es[i])
-                _p_val[i] = (_count + 1) / (n_iter + 1)
-            # calculate the p-value corrected
-            _, _p_corr, _, _ = multipletests(_p_val, method='fdr_bh',
-                               is_sorted=False)
+            _nes = normalize_enrichment_scores(_origin_es, _boot_es)
+            _nes_null = normalize_enrichment_nulls(_origin_es, _boot_es)
+            _p_val = nominal_pvalues_from_nulls(_origin_es, _boot_es)
+            _p_corr = gsea_style_fdr(_nes, _nes_null)
             # Prepare data to save
             _out_data = OrderedDict()
             _out_data["Term"] = gsea_results.res2d.axes[0].to_list()
             _out_data["es"] = gsea_results.res2d.values[:, 0]
-            _out_data["nes"] = gsea_results.res2d.values[:, 1]
+            _out_data["nes"] = _nes
             _out_data["p_val"] = _p_val
             _out_data["fdr"] = _p_corr
             _out_data["genest_size"] = gsea_results.res2d.values[:, 4]
@@ -252,6 +300,40 @@ class PLSGenes:
                     outdir / f"gsea_pls{_component + 1}_results.tsv",
                     index=False,
                     sep="\t")
+
+    def ora(self, gene_set="lake", outdir=None, p_threshold=0.05):
+        """Perform ORA on positively and negatively weighted genes per component."""
+
+        assert isinstance(self.orig, OrigPLS)
+        assert isinstance(self.boot, BootPLS)
+        logger.info("Performing ORA.")
+        results: list[dict[str, pd.DataFrame]] = []
+        for _component in range(self.n_components):
+            gene_table = pd.DataFrame(
+                {
+                    "gene": self.boot.genes[_component, :],
+                    "zscore": self.boot.z_score[_component, :],
+                    "p_value": self.boot.pval[_component, :],
+                }
+            )
+            ora_tables = ora_from_gene_table(
+                gene_table,
+                gene_set=gene_set,
+                score_column="zscore",
+                p_threshold=p_threshold,
+            )
+            if outdir is not None:
+                logger.info("Saving ORA results for PLS component %d.", _component + 1)
+                output_dir = Path(outdir)
+                assert output_dir.exists()
+                for direction, table in ora_tables.items():
+                    table.to_csv(
+                        output_dir / f"ora_pls{_component + 1}_{direction}.tsv",
+                        index=False,
+                        sep="\t",
+                    )
+            results.append(ora_tables)
+        return results
 
 
 # --------- ORIG PLS --------- #
@@ -314,10 +396,12 @@ class BootPLS:
         self.n_iter = n_iter
         self.weights = np.zeros((n_components, n_genes, n_iter))
         self.genes = np.zeros((n_components, n_genes), dtype=object)
+        self.weights_sorted = np.zeros((n_components, n_genes))
         self.std = np.zeros((n_components, n_genes))
         self._z_score = np.zeros((n_components, n_genes))
         self.pval = np.zeros((n_components, n_genes))
         self.pval_corr = np.zeros((n_components, n_genes))
+        self.pval_fwer = np.zeros((n_components, n_genes))
 
     @property
     def z_score(self):
@@ -351,6 +435,7 @@ class CorrGenes:
         self.genes = np.zeros((self.n_genes, 1), dtype=object)
         self.pval = np.zeros((1, self.n_genes))
         self.pval_corr = np.zeros((1, self.n_genes))
+        self.pval_fwer = np.zeros((1, self.n_genes))
         self._index = None
 
     def compute_pval(self):
@@ -365,6 +450,26 @@ class CorrGenes:
         neg_counts = np.sum(self.boot_corr <= self.corr.T, axis=1)
         counts = np.where(self.corr[0, :] >= 0, pos_counts, neg_counts)
         self.pval[0, :] = (counts + 1) / (self._n_iter + 1)
+        perm_max = np.max(self.boot_corr, axis=0)
+        perm_min = np.min(self.boot_corr, axis=0)
+        max_counts = np.where(
+            self.corr[0, :] >= 0,
+            np.sum(perm_max >= self.corr.T, axis=1),
+            np.sum(perm_min <= self.corr.T, axis=1),
+        )
+        self.pval_fwer[0, :] = (max_counts + 1) / (self._n_iter + 1)
+        min_possible_p = 1.0 / (self._n_iter + 1)
+        min_possible_bh = min_possible_p * self.n_genes
+        if min_possible_bh >= 1.0:
+            warnings.warn(
+                "Correlation gene FDR uses Benjamini-Hochberg on permutation p-values, "
+                f"but with {self._n_iter} permutations across {self.n_genes} genes the "
+                f"smallest possible nominal p-value is {min_possible_p:.6g}, so adjusted "
+                "p-values will collapse to 1. Increase permutations above the number of "
+                "genes for non-trivial gene-level FDR.",
+                RuntimeWarning,
+                stacklevel=2,
+            )
         _, p_corr, _, _ = multipletests(self.pval[0, :], method='fdr_bh',
                                         is_sorted=False)
 
@@ -389,5 +494,6 @@ class CorrGenes:
         self.genes = self.genes[self._index, :]
         self.pval[0, :] = self.pval[0, self._index]
         self.pval_corr[0, :] = self.pval_corr[0, self._index]
+        self.pval_fwer[0, :] = self.pval_fwer[0, self._index]
         self.boot_corr = self.boot_corr[self._index, :]
         return

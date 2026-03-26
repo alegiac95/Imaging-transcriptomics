@@ -121,6 +121,7 @@ class AnalysisMetadata:
     n_permutations: int
     null_method: str = "auto"
     geneset: str | None = None
+    ora_p_threshold: float | None = None
     n_components: int | None = None
 
 
@@ -132,6 +133,7 @@ class CorrelationResult:
     regional_values: pd.DataFrame
     gene_table: pd.DataFrame
     gsea_table: pd.DataFrame | None = None
+    ora_tables: dict[str, pd.DataFrame] | None = None
     output_dir: Path | None = None
 
 
@@ -144,6 +146,7 @@ class PLSComponentResult:
     p_value: float
     gene_table: pd.DataFrame
     gsea_table: pd.DataFrame | None = None
+    ora_tables: dict[str, pd.DataFrame] | None = None
 
 
 @dataclass(frozen=True)

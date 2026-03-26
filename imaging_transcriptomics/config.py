@@ -10,6 +10,7 @@ from .models import AnalysisMethod, HemisphereMode, RegionScope
 DEFAULT_PERMUTATIONS = 1000
 DEFAULT_NULL_METHOD = "auto"
 DEFAULT_SEED = 1234
+DEFAULT_N_JOBS = 1
 VALID_HEMISPHERES = {"left", "both"}
 VALID_REGIONS = {"all", "cort", "cort+sub"}
 VALID_METHODS = {"corr", "pls"}
@@ -30,9 +31,11 @@ class RunConfig:
     output_dir: Path | None = None
     run_gsea: bool = False
     gene_set: str = "lake"
+    ora_p_threshold: float | None = None
     n_components: int | None = None
     var: float | None = None
     seed: int = DEFAULT_SEED
+    n_jobs: int = DEFAULT_N_JOBS
 
 
 def ensure_output_dir(output_dir: str | Path | None) -> Path | None:
@@ -55,9 +58,11 @@ def build_run_config(
     output_dir: str | Path | None = None,
     run_gsea: bool = False,
     gene_set: str = "lake",
+    ora_p_threshold: float | None = None,
     n_components: int | None = None,
     var: float | None = None,
     seed: int = DEFAULT_SEED,
+    n_jobs: int = DEFAULT_N_JOBS,
 ) -> RunConfig:
     method = str(method).lower()
     if method not in VALID_METHODS:
@@ -76,8 +81,13 @@ def build_run_config(
     if null_method not in VALID_NULL_METHODS:
         valid = ", ".join(sorted(VALID_NULL_METHODS))
         raise ValueError(f"Unknown null_method '{null_method}'. Expected one of: {valid}.")
+    if ora_p_threshold is not None and not 0 < float(ora_p_threshold) <= 1:
+        raise ValueError("ora_p_threshold must be in the interval (0, 1].")
 
     seed = int(seed)
+    n_jobs = int(n_jobs)
+    if n_jobs < 1:
+        raise ValueError("n_jobs must be at least 1.")
     resolved_output = ensure_output_dir(output_dir)
 
     if method == "pls":
@@ -99,7 +109,9 @@ def build_run_config(
         output_dir=resolved_output,
         run_gsea=bool(run_gsea),
         gene_set=gene_set,
+        ora_p_threshold=None if ora_p_threshold is None else float(ora_p_threshold),
         n_components=None if n_components is None else int(n_components),
         var=None if var is None else float(var),
         seed=seed,
+        n_jobs=n_jobs,
     )

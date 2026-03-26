@@ -40,6 +40,10 @@ def write_result_bundle(result: CorrelationResult | PLSResult, output_dir: Path)
         result.gene_table.to_csv(output_dir / "corr_genes.tsv", sep="\t", index=False)
         if result.gsea_table is not None:
             result.gsea_table.to_csv(output_dir / "gsea_corr_results.tsv", sep="\t", index=False)
+        if result.ora_tables is not None:
+            for direction, table in result.ora_tables.items():
+                if table is not None:
+                    table.to_csv(output_dir / f"ora_corr_{direction}.tsv", sep="\t", index=False)
         return
 
     pd.DataFrame(
@@ -58,6 +62,14 @@ def write_result_bundle(result: CorrelationResult | PLSResult, output_dir: Path)
                 sep="\t",
                 index=False,
             )
+        if component.ora_tables is not None:
+            for direction, table in component.ora_tables.items():
+                if table is not None:
+                    table.to_csv(
+                        output_dir / f"ora_pls{component.index}_{direction}.tsv",
+                        sep="\t",
+                        index=False,
+                    )
 
 
 def read_optional_table(path: Path) -> pd.DataFrame | None:

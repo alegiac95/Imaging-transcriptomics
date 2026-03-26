@@ -1,6 +1,6 @@
 import numpy as np
 
-from imaging_transcriptomics.pls_backend import pls_regression
+from imaging_transcriptomics.pls_backend import fit_prepared_pls1, pls_regression, prepare_pls1
 
 
 def test_local_pls_backend_runs_and_returns_expected_shapes():
@@ -29,3 +29,17 @@ def test_local_pls_backend_is_deterministic():
     np.testing.assert_allclose(first["x_scores"], second["x_scores"])
     np.testing.assert_allclose(first["y_scores"], second["y_scores"])
     np.testing.assert_allclose(first["varexp"], second["varexp"])
+
+
+def test_prepared_pls_backend_matches_direct_fit():
+    rs = np.random.RandomState(11)
+    X = rs.normal(size=(28, 10))
+    y = rs.normal(size=(28, 1))
+
+    direct = pls_regression(X, y, n_components=3, n_perm=0, n_boot=0)
+    prepared = fit_prepared_pls1(prepare_pls1(X), y, n_components=3)
+
+    np.testing.assert_allclose(prepared["x_weights"], direct["x_weights"])
+    np.testing.assert_allclose(prepared["x_scores"], direct["x_scores"])
+    np.testing.assert_allclose(prepared["y_scores"], direct["y_scores"])
+    np.testing.assert_allclose(prepared["varexp"], direct["varexp"])
