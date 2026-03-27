@@ -43,3 +43,23 @@ def test_prepared_pls_backend_matches_direct_fit():
     np.testing.assert_allclose(prepared["x_scores"], direct["x_scores"])
     np.testing.assert_allclose(prepared["y_scores"], direct["y_scores"])
     np.testing.assert_allclose(prepared["varexp"], direct["varexp"])
+
+
+def test_reduced_prepared_pls_backend_matches_full_weights_and_variance():
+    rs = np.random.RandomState(19)
+    X = rs.normal(size=(32, 11))
+    y = rs.normal(size=(32, 1))
+
+    full = fit_prepared_pls1(prepare_pls1(X), y, n_components=4)
+    reduced = fit_prepared_pls1(
+        prepare_pls1(X),
+        y,
+        n_components=4,
+        return_full=False,
+        return_x_scores=False,
+        return_x_weights=True,
+    )
+
+    np.testing.assert_allclose(reduced["x_weights"], full["x_weights"])
+    np.testing.assert_allclose(reduced["varexp"], full["varexp"])
+    assert "x_scores" not in reduced

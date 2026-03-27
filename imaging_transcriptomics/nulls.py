@@ -5,6 +5,7 @@ from functools import lru_cache
 
 import numpy as np
 
+from ._logging import get_logger
 from ._compat import suppress_pkg_resources_deprecation
 from .config import DEFAULT_NULL_METHOD, DEFAULT_SEED, VALID_NULL_METHODS
 from .exceptions import AtlasAssetError, NullModelError
@@ -13,9 +14,12 @@ from .surfaces import infer_surface_density, load_surface_parcellation, surface_
 
 NULL_METHODS = VALID_NULL_METHODS
 SURFACE_NULL_METHODS = {"vasa", "alexander_bloch", "moran"}
+logger = get_logger(__name__)
 
 
 def _import_neuromaps_nulls():
+    """Import neuromaps null generators lazily and under warning suppression."""
+
     try:
         with suppress_pkg_resources_deprecation():
             from neuromaps import nulls
@@ -28,6 +32,8 @@ def _import_neuromaps_nulls():
 
 
 def _standardize_vector(values: np.ndarray) -> np.ndarray:
+    """Center and scale a vector while ignoring NaNs."""
+
     vector = np.asarray(values, dtype=float).reshape(-1)
     centered = vector - np.nanmean(vector)
     scale = np.nanstd(centered, ddof=1)
@@ -37,6 +43,8 @@ def _standardize_vector(values: np.ndarray) -> np.ndarray:
 
 
 def _group_index_arrays(groups: np.ndarray) -> tuple[np.ndarray, ...]:
+    """Return index arrays for each unique grouping label."""
+
     groups = np.asarray(groups)
     _, inverse = np.unique(groups.astype(str), return_inverse=True)
     return tuple(np.flatnonzero(inverse == idx) for idx in range(inverse.max() + 1))
@@ -49,6 +57,8 @@ def shuffle_within_groups(
     *,
     rng: np.random.Generator,
 ) -> np.ndarray:
+    """Permute values independently within predefined region groups."""
+
     values = np.asarray(values, dtype=float).reshape(-1)
     permuted = np.repeat(values[:, None], n_permutations, axis=1)
     for idx in _group_index_arrays(groups):
@@ -66,6 +76,8 @@ def _surface_parcellation(
     rh_surface_path: str | None,
     hemisphere: str,
 ):
+    """Load and cache the surface parcellation used by neuromaps null models."""
+
     del atlas_id
 
     class _AtlasProxy:
@@ -80,6 +92,8 @@ def _surface_parcellation(
 
 
 def _normalize_null_maps(null_maps: np.ndarray, n_values: int, n_permutations: int, method: str) -> np.ndarray:
+    """Normalize neuromaps null output orientation to values-by-permutation."""
+
     null_maps = np.asarray(null_maps, dtype=float)
     if null_maps.shape == (n_values, n_permutations):
         return null_maps
@@ -99,6 +113,8 @@ def generate_surface_nulls(
     n_permutations: int,
     seed: int,
 ) -> np.ndarray:
+    """Generate cortical spatial nulls with a requested neuromaps method."""
+
     if method not in SURFACE_NULL_METHODS:
         raise NullModelError(f"Unsupported surface null method: {method}")
     atlas = selection.atlas
@@ -115,6 +131,12 @@ def generate_surface_nulls(
             f"Atlas '{atlas.id}' does not have a right-hemisphere surface parcellation file for bilateral null models."
         )
 
+    logger.info(
+        "Generating %d cortical spatial nulls with '%s' for atlas '%s'.",
+        n_permutations,
+        method,
+        atlas.id,
+    )
     nulls = _import_neuromaps_nulls()
     parcellation = _surface_parcellation(
         atlas.id,
@@ -149,10 +171,21 @@ def permute_scan_values(
     null_method: str = DEFAULT_NULL_METHOD,
     seed: int = DEFAULT_SEED,
 ) -> tuple[np.ndarray, str]:
+    """Generate regional null maps for one extracted imaging vector.
+
+    Cortical regions use the requested surface null model when possible, while
+    non-cortical regions are permuted within hemisphere groups.
+    """
+
     if null_method not in NULL_METHODS:
         valid = ", ".join(sorted(NULL_METHODS))
         raise NullModelError(f"Unknown null method '{null_method}'. Expected one of: {valid}.")
 
+    logger.info(
+        "Generating %d permuted maps with null method '%s'.",
+        n_permutations,
+        null_method,
+    )
     values = _standardize_vector(extracted.values)
     labels = extracted.labels.reset_index(drop=True)
     permuted = np.zeros((values.shape[0], n_permutations), dtype=float)
@@ -164,6 +197,10 @@ def permute_scan_values(
     if cortical_idx.size:
         cortical_hemi = labels.iloc[cortical_idx]["hemisphere"].astype(str).to_numpy()
         if null_method == "random":
+            logger.info(
+                "Using within-hemisphere random shuffling for %d cortical regions.",
+                cortical_idx.size,
+            )
             permuted[cortical_idx, :] = shuffle_within_groups(
                 values[cortical_idx],
                 cortical_hemi,
@@ -174,6 +211,11 @@ def permute_scan_values(
             method_order = [null_method] if null_method != "auto" else ["vasa", "alexander_bloch"]
             last_error = None
             for method in method_order:
+                logger.info(
+                    "Trying cortical null method '%s' for %d cortical regions.",
+                    method,
+                    cortical_idx.size,
+                )
                 try:
                     permuted[cortical_idx, :] = generate_surface_nulls(
                         values[cortical_idx],
@@ -183,6 +225,7 @@ def permute_scan_values(
                         seed=seed,
                     )
                     resolved_method = method
+                    logger.info("Using cortical null method '%s'.", method)
                     break
                 except Exception as exc:
                     last_error = exc
@@ -208,10 +251,15 @@ def permute_scan_values(
     non_cortical_idx = np.flatnonzero(label_structures != "cortex")
     if non_cortical_idx.size:
         non_cortical_hemi = labels.iloc[non_cortical_idx]["hemisphere"].astype(str).to_numpy()
+        logger.info(
+            "Generating within-hemisphere permutations for %d non-cortical regions.",
+            non_cortical_idx.size,
+        )
         permuted[non_cortical_idx, :] = shuffle_within_groups(
             values[non_cortical_idx],
             non_cortical_hemi,
             n_permutations,
             rng=rng,
         )
+    logger.info("Finished generating permuted maps with resolved method '%s'.", resolved_method)
     return permuted, resolved_method

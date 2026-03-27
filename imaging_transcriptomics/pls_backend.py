@@ -31,6 +31,77 @@ def prepare_pls1(X) -> PreparedPLS1:
     )
 
 
+def _simpls_prepared_pls1_reduced(
+    prepared: PreparedPLS1,
+    Y,
+    n_components: int | None = None,
+    *,
+    return_x_scores: bool,
+    return_x_weights: bool,
+):
+    """Specialized fast path for repeated PLS-1 fits.
+
+    This reduced path is used during permutation testing, where the code only
+    needs explained variance plus a subset of the latent variables.
+    """
+
+    X = prepared.X
+    X0 = prepared.X0
+    y = np.asarray(Y, dtype=float).reshape(-1)
+    if n_components is None:
+        n_components = min(len(X) - 1, X.shape[1])
+
+    y_mean = float(np.mean(y))
+    y0 = y - y_mean
+    y_ss_total = float(np.dot(y0, y0))
+    cov = X0.T @ y0
+
+    x_scores = np.zeros((X.shape[0], n_components), dtype=float) if return_x_scores else None
+    x_weights = np.zeros((X.shape[1], n_components), dtype=float) if return_x_weights else None
+    varexp = np.zeros(n_components, dtype=float)
+    basis = np.zeros((X.shape[1], n_components), dtype=float)
+
+    for comp in range(n_components):
+        cov_norm = float(np.linalg.norm(cov))
+        if cov_norm == 0:
+            break
+        right_vector = cov / cov_norm
+        ti = X0 @ right_vector
+        normti = float(np.linalg.norm(ti))
+        if normti == 0:
+            break
+
+        weight = right_vector / normti
+        ti = ti / normti
+        if return_x_weights:
+            x_weights[:, comp] = weight
+        if return_x_scores:
+            x_scores[:, comp] = ti
+
+        x_loading = X0.T @ ti
+        qi = float(np.dot(y0, ti))
+        varexp[comp] = (qi * qi) / y_ss_total if y_ss_total else 0.0
+
+        vi = x_loading
+        if comp > 0:
+            previous = basis[:, :comp]
+            vi = vi - (previous @ (previous.T @ vi))
+        vi_norm = float(np.linalg.norm(vi))
+        if vi_norm == 0:
+            break
+        basis[:, comp] = vi / vi_norm
+
+        active_basis = basis[:, : comp + 1]
+        cov = cov - (active_basis @ (active_basis.T @ cov))
+
+    result = {"varexp": varexp}
+    if return_x_weights:
+        result["x_weights"] = x_weights
+    if return_x_scores:
+        result["x_scores"] = x_scores
+    return result
+
+
 def _simpls_prepared_pls1(prepared: PreparedPLS1, Y, n_components: int | None = None, *, return_full: bool = True):
     """Small SIMPLS implementation specialized for the repo's PLS-1 use case."""
 
@@ -134,8 +205,31 @@ def _simpls_prepared_pls1(prepared: PreparedPLS1, Y, n_components: int | None = 
     )
 
 
-def fit_prepared_pls1(prepared: PreparedPLS1, Y, *, n_components: int | None = None, return_full: bool = True):
-    return _simpls_prepared_pls1(prepared, Y, n_components=n_components, return_full=return_full)
+def fit_prepared_pls1(
+    prepared: PreparedPLS1,
+    Y,
+    *,
+    n_components: int | None = None,
+    return_full: bool = True,
+    return_x_scores: bool = True,
+    return_x_weights: bool = True,
+):
+    """Fit a prepared PLS-1 model.
+
+    ``return_full=True`` preserves the original compatibility-heavy output.
+    ``return_full=False`` switches to a reduced permutation-friendly path that
+    only materializes the requested arrays.
+    """
+
+    if return_full:
+        return _simpls_prepared_pls1(prepared, Y, n_components=n_components, return_full=True)
+    return _simpls_prepared_pls1_reduced(
+        prepared,
+        Y,
+        n_components=n_components,
+        return_x_scores=return_x_scores,
+        return_x_weights=return_x_weights,
+    )
 
 
 def pls_regression(
