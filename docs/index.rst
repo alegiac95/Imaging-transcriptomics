@@ -1,17 +1,32 @@
-.. imaging-transcriptomics documentation master file, created by
-   sphinx-quickstart on Fri Jul 30 22:43:35 2021.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+Imaging Transcriptomics 2.0
+===========================
 
-Welcome to imaging-transcriptomics's documentation!
-===================================================
+This documentation is structured as a complete user and developer guide for the
+v2 toolbox.
+
+It is intentionally organized as a full skeleton so each major part of the
+package has a clear home:
+
+- getting started and installation
+- CLI and Python API usage
+- workflow-specific guides
+- atlases, inputs, outputs, and enrichment analyses
+- methods and statistical choices
+- development, testing, and reference material
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
-   :glob:
+   :caption: Contents
 
-   chapters/*
+   chapters/01_getting_started
+   chapters/03_installation
+   chapters/04_usage
+   chapters/05_what_to_do
+   chapters/02_theory
+   chapters/06_contributing
+   chapters/09_reference
+   chapters/08_faq
+   chapters/07_contact_us
 
 
 Indices and tables

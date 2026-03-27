@@ -4,37 +4,51 @@
 Installation
 ============
 
-``imaging-transcriptomics`` 2.0 targets Python ``3.10+`` and installs directly from PyPI or from a local checkout.
+This page should become the canonical install guide for all supported setups.
 
-.. tip::
+Core requirements
+-----------------
 
-    Install the package in a dedicated virtual environment or conda environment to keep optional neuroimaging dependencies isolated from other projects.
+- Python ``3.10+``
+- optional extras for GSEA and map resampling
+- a writable environment for ``neuromaps`` caches if surface nulls are used
 
-Minimal installation:
+Recommended install paths
+-------------------------
+
+Minimal install:
 
 .. code:: bash
 
     pip install imaging-transcriptomics
 
+Repository checkout:
+
+.. code:: bash
+
+    pip install -e .
+
 Optional extras:
 
 .. code:: bash
 
-    pip install imaging-transcriptomics[gsea]
-    pip install imaging-transcriptomics[maps]
-    pip install imaging-transcriptomics[dev]
+    pip install -e .[gsea]
+    pip install -e .[maps]
+    pip install -e .[dev]
 
-For a full local development environment from the repository root:
-
-.. code:: bash
-
-    pip install -e .[dev,maps,gsea]
-
-Or with conda:
+Conda environment
+-----------------
 
 .. code:: bash
 
     conda env create -f environment-v2.yml
     conda activate imaging-transcriptomics-v2
 
-The package now ships with a local SIMPLS-based PLS backend, so no external ``pyls`` install is required.
+What this page should later document in more detail
+---------------------------------------------------
+
+- platform-specific notes
+- optional dependency tradeoffs
+- troubleshooting for ``neuromaps`` caches and surface assets
+- editable installs for development
+- doc-build and test dependencies

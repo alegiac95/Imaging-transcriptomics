@@ -8,13 +8,13 @@
 
 ## What Changed In V2
 
-- Functional entry points: `run_corr()` and `run_pls()`
+- Functional entry points: `run_corr()`, `run_pls()`, and `run_gene_pca()`
 - Included atlases with `abagen`-derived expression data
 - Left-only or both-hemisphere expression data
 - Direct support for vectors, text tables, NIfTI files, and surface files
 - `README.txt` plus TSV tables and plot PNGs as the default outputs
 - Local SIMPLS-based PLS backend
-- A smaller v2-only public API centered on `RunConfig`, `run_corr()`, and `run_pls()`
+- A smaller v2-only public API centered on `RunConfig`, `run_corr()`, `run_pls()`, and `run_gene_pca()`
 
 ## Included Atlases
 
@@ -96,18 +96,32 @@ print(imt.atlas_table(packaged_only=True))
 print(imt.describe_atlas("dk"))
 ```
 
+Gene-list PCA:
+
+```python
+import imaging_transcriptomics as imt
+
+result = imt.run_gene_pca(
+    ["RELN", "GAD1", "SLC1A2", "SV2A"],
+    atlas="dk",
+    hemisphere="left",
+    n_components=2,
+    output_dir="out_gene_pca",
+)
+```
+
 ## CLI
 
 List atlases:
 
 ```bash
-imagingtranscriptomics atlases --packaged-only
+imt atlases --packaged-only
 ```
 
 Run correlation:
 
 ```bash
-imagingtranscriptomics corr \
+imt corr \
   --input /abs/path/scan.nii.gz \
   --atlas dk \
   --hemisphere left \
@@ -119,7 +133,7 @@ imagingtranscriptomics corr \
 Run PLS:
 
 ```bash
-imagingtranscriptomics pls \
+imt pls \
   --input /abs/path/scan.nii.gz \
   --atlas schaefer-100 \
   --hemisphere both \
@@ -127,6 +141,19 @@ imagingtranscriptomics pls \
   --ncomp 2 \
   --output /abs/path/out_dir
 ```
+
+Run gene-list PCA:
+
+```bash
+imt gene-pca \
+  --genes RELN,GAD1,SLC1A2,SV2A \
+  --atlas dk \
+  --hemisphere left \
+  --ncomp 2 \
+  --output /abs/path/out_dir
+```
+
+The longer command name `imagingtranscriptomics` still works as well.
 
 Available null methods are `auto`, `vasa`, `alexander_bloch`, `moran`, and `random`. The default `auto` mode tries `vasa` first for cortical data and falls back to random shuffling within each hemisphere if a surface-based method is not available locally.
 
@@ -147,7 +174,7 @@ Each run writes:
 - `README.txt`
 - `metadata.json`
 - `regional_values.tsv`
-- analysis tables such as `corr_genes.tsv`, `pls_summary.tsv`, `pls_component_<n>.tsv`
+- analysis tables such as `corr_genes.tsv`, `pls_summary.tsv`, `pls_component_<n>.tsv`, `gene_pca_scores.tsv`, and `gene_pca_loadings.tsv`
 - plot PNGs in `plots/`
 
 If GSEA is enabled, matching `gsea_*.tsv` tables are also written.

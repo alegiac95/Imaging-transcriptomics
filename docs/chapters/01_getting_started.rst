@@ -4,25 +4,59 @@
 Getting started
 ===============
 
-Once the tool is installed, a simple run looks like:
+This page is the fast-entry guide for new users.
+
+It should answer four questions quickly:
+
+1. what the toolbox does
+2. which command to run first
+3. what kinds of inputs are accepted
+4. where to look next in the documentation
+
+Quick start
+-----------
+
+Run a simple correlation analysis:
 
 .. code:: bash
 
-    imagingtranscriptomics pls --input /path/to/your-map.nii.gz --atlas dk --ncomp 1 --no-gsea
+    imt corr --input /path/to/your-map.nii.gz --atlas dk --output /path/to/out
 
-This command runs the local PLS backend on the included DK atlas and writes a small output folder next to the input:
+Run a simple PLS analysis:
+
+.. code:: bash
+
+    imt pls --input /path/to/your-map.nii.gz --atlas dk --ncomp 1 --no-gsea --output /path/to/out
+
+Run a simple gene-list PCA analysis:
+
+.. code:: bash
+
+    imt gene-pca --genes RELN,GAD1,SLC1A2,SV2A --atlas dk --ncomp 2 --output /path/to/out
+
+Accepted input families
+-----------------------
+
+- regional vectors aligned to an included atlas
+- volumetric NIfTI maps in ``MNI152``
+- supported surface files when ``neuromaps`` support is installed
+- gene lists for ``gene-pca``
+
+What to expect from an output folder
+------------------------------------
+
+Most workflows write:
 
 - ``README.txt``
 - ``metadata.json``
-- TSV result tables
-- PNG plots
+- one or more TSV tables
+- one or more PNG plots
 
-For a quick correlation workflow:
+Documentation map
+-----------------
 
-.. code:: bash
-
-    imagingtranscriptomics corr --input /path/to/your-map.nii.gz --atlas dk --null-method auto
-
-If your data are already reduced to atlas regions, you can pass a vector file instead of a NIfTI image. If your data are in a different standard space, install the ``maps`` extra and provide ``--space`` so ``neuromaps`` can resample them first.
-
-For more detail see the :ref:`usage <Usage>` page. The package can also be used directly from Python via :ref:`the library API <library>`.
+- :ref:`Installation <Installation>`: install options and extras
+- :ref:`Usage <Usage>`: CLI, API, inputs, and outputs
+- :ref:`Workflows <workflows>`: end-to-end guides for correlation, PLS, enrichment, and gene PCA
+- :ref:`Methods <methods>`: statistical choices and null models
+- :ref:`Reference <reference>`: command and output schemas

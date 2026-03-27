@@ -12,7 +12,7 @@
 #
 import os
 import sys
-sys.path.insert(0, os.path.abspath('../../imaging_transcriptomics/'))
+sys.path.insert(0, os.path.abspath(".."))
 
 
 # -- Project information -----------------------------------------------------
@@ -22,7 +22,7 @@ copyright = '2022, Alessio Giacomel, Daniel Martins'
 author = 'Alessio Giacomel, Daniel Martins'
 
 # The full version, including alpha/beta/rc tags
-release = '1.1.8'
+release = '2.0.0'
 
 
 # -- General configuration ---------------------------------------------------
@@ -30,7 +30,12 @@ release = '1.1.8'
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['sphinx.ext.autodoc']
+extensions = [
+    'sphinx.ext.autodoc',
+    'sphinx.ext.autosummary',
+    'sphinx.ext.napoleon',
+]
+autosummary_generate = True
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
