@@ -13,6 +13,8 @@ from .serialization import write_result_bundle
 
 
 def _dedupe_preserve_order(values: Iterable[str]) -> list[str]:
+    """Drop empty and duplicate gene symbols while preserving their order."""
+
     seen: set[str] = set()
     out: list[str] = []
     for value in values:
@@ -28,6 +30,8 @@ def _dedupe_preserve_order(values: Iterable[str]) -> list[str]:
 
 
 def _parse_gene_tokens(text: str) -> list[str]:
+    """Parse gene symbols from free text, one-per-line files, or CSV-like text."""
+
     tokens: list[str] = []
     for raw_line in text.splitlines():
         line = raw_line.strip()
@@ -39,6 +43,8 @@ def _parse_gene_tokens(text: str) -> list[str]:
 
 
 def load_gene_list(genes: str | Path | Iterable[str]) -> list[str]:
+    """Load a gene list from a path, iterable, or inline comma-separated string."""
+
     if isinstance(genes, (list, tuple, set, np.ndarray, pd.Series)):
         return _dedupe_preserve_order(str(item) for item in genes)
     path = Path(str(genes)).expanduser()
@@ -48,15 +54,46 @@ def load_gene_list(genes: str | Path | Iterable[str]) -> list[str]:
 
 
 def _standardize_columns(matrix: np.ndarray) -> np.ndarray:
-    centered = matrix - matrix.mean(axis=0, keepdims=True)
-    scale = matrix.std(axis=0, ddof=1, keepdims=True)
-    scale[~np.isfinite(scale) | (scale == 0)] = 1.0
-    return centered / scale
+    """Z-score each gene across regions before PCA."""
+
+    numeric = np.asarray(matrix, dtype=float)
+    finite_mask = np.isfinite(numeric)
+    safe = np.where(finite_mask, numeric, 0.0)
+    counts = finite_mask.sum(axis=0, keepdims=True)
+    means = np.divide(
+        safe.sum(axis=0, keepdims=True),
+        counts,
+        out=np.zeros((1, numeric.shape[1]), dtype=float),
+        where=counts > 0,
+    )
+    centered = np.where(finite_mask, numeric - means, 0.0)
+    centered_ss = np.sum(centered * centered, axis=0, keepdims=True)
+    scale = np.sqrt(
+        np.divide(
+            centered_ss,
+            np.maximum(counts - 1, 1),
+            out=np.zeros((1, numeric.shape[1]), dtype=float),
+            where=counts > 1,
+        )
+    )
+    scale[scale == 0] = 1.0
+    standardized = centered / scale
+    standardized[~np.isfinite(standardized)] = 0.0
+    return standardized
 
 
 def _fit_pca(matrix: np.ndarray, n_components: int) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Fit PCA with SVD and return scores, loadings, and explained variance ratio."""
+
     standardized = _standardize_columns(np.asarray(matrix, dtype=float))
-    u, singular_values, vt = np.linalg.svd(standardized, full_matrices=False)
+    try:
+        u, singular_values, vt = np.linalg.svd(standardized, full_matrices=False)
+    except np.linalg.LinAlgError as exc:
+        raise ConfigurationError(
+            "PCA failed to converge on the selected atlas expression matrix. "
+            "This usually means the selected genes contain too many invalid values. "
+            "Try a different gene list or inspect the atlas expression inputs."
+        ) from exc
     scores = u[:, :n_components] * singular_values[:n_components]
     loadings = vt[:n_components, :].T
     if standardized.shape[0] > 1:
@@ -73,6 +110,8 @@ def _fit_pca(matrix: np.ndarray, n_components: int) -> tuple[np.ndarray, np.ndar
 
 
 def _resolve_selected_genes(requested_genes: list[str], available_genes: np.ndarray) -> tuple[list[str], list[str]]:
+    """Split requested genes into matched atlas genes and missing symbols."""
+
     lookup: dict[str, str] = {}
     for gene in available_genes.astype(str).tolist():
         lookup.setdefault(gene.upper(), gene)
@@ -88,14 +127,20 @@ def _resolve_selected_genes(requested_genes: list[str], available_genes: np.ndar
 
 
 def _component_columns(prefix: str, n_components: int) -> list[str]:
+    """Create predictable column names such as PC1, PC2, and so on."""
+
     return [f"{prefix}{index}" for index in range(1, n_components + 1)]
 
 
 def _regional_scores_frame(labels: pd.DataFrame, scores: np.ndarray) -> pd.DataFrame:
+    """Build the regional score table for all retained principal components."""
+
     return labels.reset_index(drop=True).assign(**dict(zip(_component_columns("PC", scores.shape[1]), scores.T, strict=False)))
 
 
 def _gene_loadings_frame(matched_genes: list[str], loadings: np.ndarray) -> pd.DataFrame:
+    """Build the per-gene loading table for all retained components."""
+
     return pd.DataFrame(
         {
             "gene": matched_genes,
@@ -105,6 +150,8 @@ def _gene_loadings_frame(matched_genes: list[str], loadings: np.ndarray) -> pd.D
 
 
 def _variance_frame(explained_ratio: np.ndarray) -> pd.DataFrame:
+    """Build the explained-variance summary table for the PCA run."""
+
     cumulative = np.cumsum(explained_ratio)
     return pd.DataFrame(
         {
@@ -124,7 +171,30 @@ def run_gene_pca(
     n_components: int = 3,
     output_dir: str | Path | None = None,
 ) -> GenePCAResult:
-    """Run PCA on atlas expression after filtering to a selected gene list."""
+    """Run PCA on atlas expression after filtering to a selected gene list.
+
+    Parameters
+    ----------
+    genes
+        Gene symbols supplied as an iterable, a text file path, or an inline
+        comma-separated string.
+    atlas
+        Packaged atlas identifier to use for the regional expression matrix.
+    hemisphere
+        Hemisphere subset to select from the atlas expression data.
+    regions
+        Region subset to select from the atlas expression data.
+    n_components
+        Maximum number of principal components to retain.
+    output_dir
+        Optional output directory for TSV tables, metadata, and plots.
+
+    Returns
+    -------
+    GenePCAResult
+        Structured result containing regional scores, gene loadings, variance
+        explained, and the matched and missing gene lists.
+    """
 
     requested_genes = load_gene_list(genes)
     if not requested_genes:
