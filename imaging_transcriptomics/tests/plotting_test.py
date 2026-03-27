@@ -6,6 +6,7 @@ import pandas as pd
 from imaging_transcriptomics.models import (
     AnalysisMetadata,
     CorrelationResult,
+    GenePCAResult,
     PLSComponentResult,
     PLSResult,
 )
@@ -34,6 +35,9 @@ def _ora_tables() -> dict[str, pd.DataFrame]:
                 "selected_size": [30, 30],
                 "universe_size": [15000, 15000],
                 "enrichment_ratio": [4.0, 3.2],
+                "odds_ratio": [4.5, 3.4],
+                "odds_ratio_ci_low": [2.1, 1.7],
+                "odds_ratio_ci_high": [9.6, 6.8],
                 "p_value": [0.001, 0.01],
                 "fdr": [0.01, 0.04],
                 "overlap_genes": ["A;B", "C;D"],
@@ -47,6 +51,9 @@ def _ora_tables() -> dict[str, pd.DataFrame]:
                 "selected_size": [25],
                 "universe_size": [15000],
                 "enrichment_ratio": [3.0],
+                "odds_ratio": [3.2],
+                "odds_ratio_ci_low": [1.4],
+                "odds_ratio_ci_high": [7.1],
                 "p_value": [0.02],
                 "fdr": [0.05],
                 "overlap_genes": ["E;F"],
@@ -131,3 +138,46 @@ def test_save_result_plots_writes_pls_gsea_dotplot(tmp_path: Path):
     assert tmp_path.joinpath("plots", "ora_pls1_heatmap.png").exists()
     assert any(path.name == "gsea_pls1_dotplot.png" for path in paths)
     assert any(path.name == "ora_pls1_heatmap.png" for path in paths)
+
+
+def test_save_result_plots_writes_gene_pca_plots(tmp_path: Path):
+    result = GenePCAResult(
+        atlas_id="dk",
+        atlas_label="Desikan-Killiany (83 regions)",
+        hemisphere="left",
+        regions="all",
+        requested_genes=("A", "B", "C"),
+        regional_scores=pd.DataFrame(
+            {
+                "id": [1, 2, 3],
+                "label": ["a", "b", "c"],
+                "PC1": [0.3, -0.2, 0.1],
+                "PC2": [0.1, 0.0, -0.1],
+            }
+        ),
+        gene_loadings=pd.DataFrame(
+            {
+                "gene": ["A", "B", "C"],
+                "PC1": [0.8, -0.4, 0.2],
+                "PC2": [0.1, 0.5, -0.3],
+            }
+        ),
+        variance_table=pd.DataFrame(
+            {
+                "component": [1, 2],
+                "variance_explained": [0.6, 0.2],
+                "cumulative_variance": [0.6, 0.8],
+            }
+        ),
+        matched_genes=("A", "B", "C"),
+        missing_genes=(),
+    )
+
+    paths = save_result_plots(result, tmp_path)
+
+    assert tmp_path.joinpath("plots", "gene_pca_variance.png").exists()
+    assert tmp_path.joinpath("plots", "gene_pca_pc1_regions.png").exists()
+    assert tmp_path.joinpath("plots", "gene_pca_pc1_loadings.png").exists()
+    assert tmp_path.joinpath("plots", "gene_pca_pc2_regions.png").exists()
+    assert tmp_path.joinpath("plots", "gene_pca_pc2_loadings.png").exists()
+    assert any(path.name == "gene_pca_variance.png" for path in paths)

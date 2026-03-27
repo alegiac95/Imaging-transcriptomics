@@ -1,8 +1,6 @@
-import logging
 import warnings
 from pathlib import Path
-from scipy.stats import zscore, norm
-from statsmodels.stats.multitest import multipletests
+from scipy.stats import zscore
 import numpy as np
 from collections import OrderedDict
 import pandas as pd
@@ -18,9 +16,9 @@ from .gsea_utils import (
 from .genesets import get_geneset
 from .ora import ora_from_gene_table
 from .pls_backend import pls_regression
+from .stats_utils import bh_fdr, empirical_signed_pvalues, max_t_fwer_abs, minimum_bh_resolution, two_sided_z_pvalues
 
-logger = get_logger("genes")
-logger.setLevel(logging.DEBUG)
+logger = get_logger(__name__)
 
 
 def _correlate_pls_scores(scores: np.ndarray, values: np.ndarray) -> np.ndarray:
@@ -210,26 +208,17 @@ class PLSGenes:
         safe_std = np.where(self.boot.std == 0, np.finfo(float).eps, self.boot.std)
         zscores = self.orig.weights / safe_std
         indices = np.argsort(zscores, axis=1, kind='mergesort')[:, ::-1]
-        raw_pval = 2 * norm.sf(np.abs(zscores))
+        raw_pval = two_sided_z_pvalues(zscores)
         raw_pval_fwer = np.zeros((self.n_components, self.n_genes), dtype=float)
         self.boot.weights_sorted[:, :] = np.take_along_axis(self.orig.weights, indices, axis=1)
         self.boot.z_score[:, :] = np.take_along_axis(zscores, indices, axis=1)
         self.boot.genes[:, :] = np.take_along_axis(self.orig.genes, indices, axis=1)
         for component in range(self.n_components):
-            observed = self.orig.weights[component, :]
-            perm_max = np.max(self.boot.weights[component, :, :], axis=0)
-            perm_min = np.min(self.boot.weights[component, :, :], axis=0)
-            counts = np.where(
-                observed >= 0,
-                np.sum(perm_max.reshape(1, -1) >= observed.reshape(-1, 1), axis=1),
-                np.sum(perm_min.reshape(1, -1) <= observed.reshape(-1, 1), axis=1),
+            raw_pval_fwer[component, :] = max_t_fwer_abs(
+                self.orig.weights[component, :],
+                self.boot.weights[component, :, :],
             )
-            raw_pval_fwer[component, :] = (counts + 1) / (self.n_iter + 1)
-            _, corrected, _, _ = multipletests(
-                raw_pval[component, :],
-                method='fdr_bh',
-                is_sorted=False,
-            )
+            corrected = bh_fdr(raw_pval[component, :])
             self.boot.pval[component, :] = raw_pval[component, indices[component, :]]
             self.boot.pval_corr[component, :] = corrected[indices[component, :]]
             self.boot.pval_fwer[component, :] = raw_pval_fwer[component, indices[component, :]]
@@ -446,20 +435,10 @@ class CorrGenes:
         # in both the original and the bootstrapped list. IF one is ordered,
         # make sure the order of the other is the same.
         logger.info("Computing p values.")
-        pos_counts = np.sum(self.boot_corr >= self.corr.T, axis=1)
-        neg_counts = np.sum(self.boot_corr <= self.corr.T, axis=1)
-        counts = np.where(self.corr[0, :] >= 0, pos_counts, neg_counts)
-        self.pval[0, :] = (counts + 1) / (self._n_iter + 1)
-        perm_max = np.max(self.boot_corr, axis=0)
-        perm_min = np.min(self.boot_corr, axis=0)
-        max_counts = np.where(
-            self.corr[0, :] >= 0,
-            np.sum(perm_max >= self.corr.T, axis=1),
-            np.sum(perm_min <= self.corr.T, axis=1),
-        )
-        self.pval_fwer[0, :] = (max_counts + 1) / (self._n_iter + 1)
+        self.pval[0, :] = empirical_signed_pvalues(self.corr[0, :], self.boot_corr)
+        self.pval_fwer[0, :] = max_t_fwer_abs(self.corr[0, :], self.boot_corr)
         min_possible_p = 1.0 / (self._n_iter + 1)
-        min_possible_bh = min_possible_p * self.n_genes
+        min_possible_bh = minimum_bh_resolution(self.n_genes, self._n_iter)
         if min_possible_bh >= 1.0:
             warnings.warn(
                 "Correlation gene FDR uses Benjamini-Hochberg on permutation p-values, "
@@ -470,10 +449,7 @@ class CorrGenes:
                 RuntimeWarning,
                 stacklevel=2,
             )
-        _, p_corr, _, _ = multipletests(self.pval[0, :], method='fdr_bh',
-                                        is_sorted=False)
-
-        self.pval_corr[0, :] = p_corr
+        self.pval_corr[0, :] = bh_fdr(self.pval[0, :])
         return
 
     @property

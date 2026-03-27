@@ -6,4 +6,4 @@ dependencies:
   - python=3.11
   - pip
   - pip:
-      - -e .[dev,maps,gsea]
+      - -e .[dev,maps,gsea,plots]

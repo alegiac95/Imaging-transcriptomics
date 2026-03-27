@@ -10,7 +10,7 @@ import pandas as pd
 
 HemisphereMode = Literal["left", "both"]
 RegionScope = Literal["all", "cort", "cort+sub"]
-AnalysisMethod = Literal["corr", "pls"]
+AnalysisMethod = Literal["corr", "pls", "gene-pca"]
 NullMethod = Literal["auto", "vasa", "alexander_bloch", "moran", "random"]
 
 
@@ -157,4 +157,21 @@ class PLSResult:
     regional_values: pd.DataFrame
     components: tuple[PLSComponentResult, ...]
     cumulative_variance: np.ndarray
+    output_dir: Path | None = None
+
+
+@dataclass(frozen=True)
+class GenePCAResult:
+    """Returned by :func:`run_gene_pca`."""
+
+    atlas_id: str
+    atlas_label: str
+    hemisphere: HemisphereMode
+    regions: RegionScope
+    requested_genes: tuple[str, ...]
+    regional_scores: pd.DataFrame
+    gene_loadings: pd.DataFrame
+    variance_table: pd.DataFrame
+    matched_genes: tuple[str, ...]
+    missing_genes: tuple[str, ...]
     output_dir: Path | None = None

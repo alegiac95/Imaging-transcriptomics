@@ -1,0 +1,49 @@
+from __future__ import annotations
+
+import numpy as np
+
+
+def rank_vector(values: np.ndarray) -> np.ndarray:
+    order = np.argsort(values, kind="mergesort")
+    ranks = np.empty(values.shape[0], dtype=float)
+    ranks[order] = np.arange(values.shape[0], dtype=float)
+    return ranks
+
+
+def rank_columns(matrix: np.ndarray) -> np.ndarray:
+    order = np.argsort(matrix, axis=0, kind="mergesort")
+    ranks = np.empty(order.shape, dtype=float)
+    template = np.arange(matrix.shape[0], dtype=float)[:, None]
+    np.put_along_axis(ranks, order, template, axis=0)
+    return ranks
+
+
+def standardize_columns(matrix: np.ndarray) -> np.ndarray:
+    centered = matrix - matrix.mean(axis=0, keepdims=True)
+    scale = matrix.std(axis=0, ddof=1, keepdims=True)
+    scale[scale == 0] = 1.0
+    return centered / scale
+
+
+def standardize_vector(values: np.ndarray) -> np.ndarray:
+    centered = values - values.mean()
+    scale = values.std(ddof=1)
+    if scale == 0:
+        return centered
+    return centered / scale
+
+
+def ranked_gene_expression(gene_exp: np.ndarray) -> np.ndarray:
+    return standardize_columns(rank_columns(np.asarray(gene_exp, dtype=float)))
+
+
+def spearman_correlation_matrix(imaging_data: np.ndarray, ranked_genes: np.ndarray) -> np.ndarray:
+    ranked_img = standardize_vector(rank_vector(np.asarray(imaging_data, dtype=float).reshape(-1)))
+    denom = max(ranked_img.shape[0] - 1, 1)
+    return (ranked_genes.T @ ranked_img.reshape(-1, 1)) / denom
+
+
+def spearman_correlation_bootstrap(permuted_imaging: np.ndarray, ranked_genes: np.ndarray) -> np.ndarray:
+    ranked_perm = standardize_columns(rank_columns(np.asarray(permuted_imaging, dtype=float)))
+    denom = max(ranked_perm.shape[0] - 1, 1)
+    return (ranked_genes.T @ ranked_perm) / denom

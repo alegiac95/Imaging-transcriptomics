@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from .atlas_registry import normalize_atlas_id
+from .exceptions import ConfigurationError
 from .models import AnalysisMethod, HemisphereMode, RegionScope
 
 
@@ -67,36 +68,36 @@ def build_run_config(
     method = str(method).lower()
     if method not in VALID_METHODS:
         valid = ", ".join(sorted(VALID_METHODS))
-        raise ValueError(f"Unknown method '{method}'. Expected one of: {valid}.")
+        raise ConfigurationError(f"Unknown method '{method}'. Expected one of: {valid}.")
 
     atlas_id = normalize_atlas_id(atlas)
     if hemisphere not in VALID_HEMISPHERES:
-        raise ValueError("hemisphere must be either 'left' or 'both'.")
+        raise ConfigurationError("hemisphere must be either 'left' or 'both'.")
     if regions not in VALID_REGIONS:
-        raise ValueError("regions must be one of 'all', 'cort', or 'cort+sub'.")
+        raise ConfigurationError("regions must be one of 'all', 'cort', or 'cort+sub'.")
 
     n_permutations = int(n_permutations)
     if n_permutations < 1:
-        raise ValueError("n_permutations must be at least 1.")
+        raise ConfigurationError("n_permutations must be at least 1.")
     if null_method not in VALID_NULL_METHODS:
         valid = ", ".join(sorted(VALID_NULL_METHODS))
-        raise ValueError(f"Unknown null_method '{null_method}'. Expected one of: {valid}.")
+        raise ConfigurationError(f"Unknown null_method '{null_method}'. Expected one of: {valid}.")
     if ora_p_threshold is not None and not 0 < float(ora_p_threshold) <= 1:
-        raise ValueError("ora_p_threshold must be in the interval (0, 1].")
+        raise ConfigurationError("ora_p_threshold must be in the interval (0, 1].")
 
     seed = int(seed)
     n_jobs = int(n_jobs)
     if n_jobs < 1:
-        raise ValueError("n_jobs must be at least 1.")
+        raise ConfigurationError("n_jobs must be at least 1.")
     resolved_output = ensure_output_dir(output_dir)
 
     if method == "pls":
         if n_components is None and var is None:
-            raise ValueError("PLS runs require either n_components or var.")
+            raise ConfigurationError("PLS runs require either n_components or var.")
         if n_components is not None and int(n_components) < 1:
-            raise ValueError("n_components must be at least 1.")
+            raise ConfigurationError("n_components must be at least 1.")
         if var is not None and not 0 < float(var) <= 1:
-            raise ValueError("var must be in the interval (0, 1].")
+            raise ConfigurationError("var must be in the interval (0, 1].")
 
     return RunConfig(
         method=method,

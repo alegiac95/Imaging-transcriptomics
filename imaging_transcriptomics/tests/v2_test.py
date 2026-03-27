@@ -20,6 +20,7 @@ from imaging_transcriptomics import (
 )
 import imaging_transcriptomics.api as api
 from imaging_transcriptomics._compat import suppress_pkg_resources_deprecation
+from imaging_transcriptomics.atlas_registry import get_atlas
 from imaging_transcriptomics.corr import CorrAnalysis
 from imaging_transcriptomics.genes import PLSGenes
 from imaging_transcriptomics.gsea_utils import (
@@ -32,6 +33,7 @@ from imaging_transcriptomics.gsea_utils import (
 from imaging_transcriptomics.genesets import get_geneset
 import imaging_transcriptomics.nulls as spatial_nulls
 import imaging_transcriptomics.pls as pls_module
+from imaging_transcriptomics.surfaces import infer_surface_density
 
 
 def test_packaged_atlas_table_contains_ready_to_run_presets():
@@ -54,6 +56,14 @@ def test_select_atlas_data_supports_left_and_both_hemispheres():
     assert both.n_regions == 83
     assert set(left.labels["hemisphere"]) == {"L"}
     assert {"L", "R", "B"}.issubset(set(both.labels["hemisphere"]))
+
+
+def test_surface_density_is_inferred_from_packaged_parcellations():
+    assert infer_surface_density(get_atlas("dk"), "left") == "10k"
+    assert infer_surface_density(get_atlas("schaefer-100"), "left") == "10k"
+    assert infer_surface_density(get_atlas("schaefer-200"), "left") == "164k"
+    assert infer_surface_density(get_atlas("schaefer-400"), "left") == "164k"
+    assert infer_surface_density(get_atlas("glasser-360"), "left") == "32k"
 
 
 def test_extract_scan_data_accepts_vectors_for_both_hemispheres():

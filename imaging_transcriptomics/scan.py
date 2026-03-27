@@ -9,6 +9,7 @@ import pandas as pd
 from nibabel.processing import resample_from_to
 
 from ._compat import suppress_pkg_resources_deprecation
+from .exceptions import AtlasAssetError, InputAlignmentError, InputDataError
 from .gene_expression import select_atlas_data
 from .models import AtlasSelection, ExtractedScan, HemisphereMode, RegionScope
 from .surfaces import load_surface_parcellation
@@ -33,7 +34,7 @@ def _make_extracted_scan(
 ) -> ExtractedScan:
     vector = np.asarray(values, dtype=float).reshape(-1)
     if vector.shape[0] != selection.n_regions:
-        raise ValueError(
+        raise InputDataError(
             f"Expected {selection.n_regions} regional values for the selected atlas subset, got {vector.shape[0]}."
         )
     return ExtractedScan(
@@ -51,7 +52,7 @@ def _load_tabular_vector(path: Path) -> np.ndarray:
         if 1 in data.shape:
             data = data.reshape(-1)
         else:
-            raise ValueError(
+            raise InputDataError(
                 f"Expected a one-column vector in {path}, got array with shape {data.shape}."
             )
     return np.asarray(data, dtype=float).reshape(-1)
@@ -88,7 +89,7 @@ def extract_volume_values(
 ) -> np.ndarray:
     atlas_path = selection.atlas.volume_path(resolution)
     if atlas_path is None:
-        raise FileNotFoundError(
+        raise AtlasAssetError(
             f"Atlas '{selection.atlas.id}' does not have a packaged volumetric parcellation for this resolution."
         )
     atlas_data = nib.load(atlas_path).get_fdata()
@@ -107,7 +108,7 @@ def _grid_matches(image: nib.Nifti1Image, atlas_image: nib.Nifti1Image) -> bool:
 def _atlas_volume_image(selection: AtlasSelection, resolution: str) -> nib.Nifti1Image:
     atlas_path = selection.atlas.volume_path(resolution)
     if atlas_path is None:
-        raise FileNotFoundError(
+        raise AtlasAssetError(
             f"Atlas '{selection.atlas.id}' does not have a packaged volumetric parcellation for {resolution}."
         )
     return nib.load(atlas_path)
@@ -134,16 +135,16 @@ def _preferred_resolution(image: nib.Nifti1Image, selection: AtlasSelection) -> 
         return preferred
     fallback = "2mm" if preferred == "1mm" else "1mm"
     if selection.atlas.volume_path(fallback) is None:
-        raise FileNotFoundError(
+        raise AtlasAssetError(
             f"Atlas '{selection.atlas.id}' does not have a packaged volumetric parcellation for direct extraction."
         )
     return fallback
 
 
-def _native_space_error(image: nib.Nifti1Image, selection: AtlasSelection) -> ValueError:
+def _native_space_error(image: nib.Nifti1Image, selection: AtlasSelection) -> InputAlignmentError:
     shape = image.shape[:3]
     zooms = tuple(round(float(val), 3) for val in image.header.get_zooms()[:3])
-    return ValueError(
+    return InputAlignmentError(
         "Input NIfTI is not aligned to the packaged MNI atlas grids for "
         f"atlas '{selection.atlas.id}'. Got shape={shape}, zooms={zooms}. "
         "This command does not register native-space subject T1w images into MNI152. "
@@ -217,7 +218,7 @@ def _parcellate_with_neuromaps(
             resampling_target="parcellation",
         )
     else:  # pragma: no cover - depends on optional atlas assets
-        raise ValueError(
+        raise AtlasAssetError(
             f"Atlas '{atlas.id}' does not have the assets required for neuromaps parcellation."
         )
 
@@ -231,7 +232,7 @@ def _parcellate_with_neuromaps(
     ).reshape(-1)
     atlas_ids = selection.labels["id"].astype(int).to_numpy()
     if values.shape[0] < int(atlas_ids.max()):
-        raise ValueError(
+        raise InputDataError(
             f"Parcellated data returned {values.shape[0]} values, which is too short for atlas ids up to {int(atlas_ids.max())}."
         )
     return values[atlas_ids - 1]
@@ -301,7 +302,7 @@ def extract_scan_data(
             values = _parcellate_with_neuromaps(path.as_posix(), selection, source_space=source_space)
             resolved_space = source_space
         else:
-            raise ValueError(
+            raise InputDataError(
                 "Non-MNI volumetric data require neuromaps-based resampling. Pass source_space and install neuromaps."
             )
         return _make_extracted_scan(
@@ -312,8 +313,8 @@ def extract_scan_data(
             source_kind="volume",
         )
     if suffix in _GIFTI_SUFFIXES:
-        raise ValueError("Surface inputs require both left and right hemisphere files.")
-    raise ValueError(
+        raise InputDataError("Surface inputs require both left and right hemisphere files.")
+    raise InputDataError(
         f"Unsupported input type for '{data}'. Expected a vector, NIfTI, text table, or left/right GIFTI pair."
     )
 

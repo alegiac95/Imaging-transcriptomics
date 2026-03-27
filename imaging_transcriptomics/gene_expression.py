@@ -8,6 +8,7 @@ import pandas as pd
 from scipy.stats import zscore
 
 from .atlas_registry import get_atlas
+from .exceptions import AtlasAssetError, ConfigurationError
 from .models import AtlasSelection, AtlasSpec, HemisphereMode, RegionScope
 
 
@@ -18,7 +19,7 @@ VALID_REGION_SCOPES = {"all", "cort", "cort+sub"}
 def _packaged_atlas_spec(atlas: str) -> AtlasSpec:
     spec = get_atlas(atlas)
     if not spec.packaged or spec.expression_path is None or spec.labels_path is None:
-        raise FileNotFoundError(
+        raise AtlasAssetError(
             f"Atlas '{spec.id}' is defined but does not ship packaged expression assets in this branch."
         )
     return spec
@@ -77,12 +78,12 @@ def _filter_labels(
     elif hemisphere == "both":
         filtered = filtered.loc[filtered["hemisphere"].isin(["L", "R", "B"])]
     else:
-        raise ValueError("hemisphere must be either 'left' or 'both'.")
+        raise ConfigurationError("hemisphere must be either 'left' or 'both'.")
 
     if regions == "cort":
         filtered = filtered.loc[filtered["structure"] == "cortex"]
     elif regions not in VALID_REGION_SCOPES:
-        raise ValueError("regions must be 'all', 'cort', or 'cort+sub'.")
+        raise ConfigurationError("regions must be 'all', 'cort', or 'cort+sub'.")
     return filtered
 
 
@@ -134,7 +135,7 @@ def load_expression_frame(
 def load_gene_labels(atlas: str = "dk") -> np.ndarray:
     spec = _packaged_atlas_spec(atlas)
     if spec.gene_labels_path is None:
-        raise FileNotFoundError(f"Atlas '{spec.id}' does not define a packaged shared gene labels file.")
+        raise AtlasAssetError(f"Atlas '{spec.id}' does not define a packaged shared gene labels file.")
     return _read_gene_labels(spec.gene_labels_path).astype(object).reshape(-1, 1)
 
 
@@ -144,9 +145,9 @@ def select_atlas_data(
     regions: RegionScope = "all",
 ) -> AtlasSelection:
     if hemisphere not in VALID_HEMISPHERES:
-        raise ValueError("hemisphere must be either 'left' or 'both'.")
+        raise ConfigurationError("hemisphere must be either 'left' or 'both'.")
     if regions not in VALID_REGION_SCOPES:
-        raise ValueError("regions must be one of 'all', 'cort', or 'cort+sub'.")
+        raise ConfigurationError("regions must be one of 'all', 'cort', or 'cort+sub'.")
 
     spec = _packaged_atlas_spec(atlas)
     labels, expression = _select_expression_rows(

@@ -48,7 +48,7 @@ def test_pls_gene_compute_uses_two_sided_pvalues_and_unsorted_bh():
     sorted_z = np.array([10.0, 1.0, -10.0])
     expected_pval = 2 * norm.sf(np.abs(sorted_z))
     expected_fdr = multipletests(expected_pval, method="fdr_bh")[1]
-    expected_fwer = np.array([0.75, 1.0, 0.75])
+    expected_fwer = np.array([1.0, 1.0, 1.0])
 
     np.testing.assert_allclose(pls_genes.boot.z_score[0, :], sorted_z)
     np.testing.assert_allclose(pls_genes.boot.pval[0, :], expected_pval)
@@ -107,4 +107,4 @@ def test_corr_gene_compute_populates_max_t_fwer():
 
     corr_genes.compute_pval()
 
-    np.testing.assert_allclose(corr_genes.pval_fwer[0, :], np.array([0.5, 1.0, 0.5]))
+    np.testing.assert_allclose(corr_genes.pval_fwer[0, :], np.array([0.75, 1.0, 0.75]))

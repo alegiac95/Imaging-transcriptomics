@@ -4,7 +4,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from scipy.stats import hypergeom
+from scipy.stats import hypergeom, norm
 from statsmodels.stats.multitest import multipletests
 
 from .genesets import get_geneset
@@ -17,6 +17,9 @@ ORA_COLUMNS = [
     "selected_size",
     "universe_size",
     "enrichment_ratio",
+    "odds_ratio",
+    "odds_ratio_ci_low",
+    "odds_ratio_ci_high",
     "p_value",
     "fdr",
     "overlap_genes",
@@ -76,6 +79,54 @@ def _selected_genes(
     return mapping, set(mapping)
 
 
+def _odds_ratio(
+    overlap_size: int,
+    set_size: int,
+    selected_size: int,
+    universe_size: int,
+) -> float:
+    a = float(overlap_size)
+    b = float(selected_size - overlap_size)
+    c = float(set_size - overlap_size)
+    d = float(universe_size - selected_size - set_size + overlap_size)
+    denominator = b * c
+    numerator = a * d
+    if denominator == 0:
+        if numerator > 0:
+            return float("inf")
+        return float("nan")
+    return numerator / denominator
+
+
+def _odds_ratio_confidence_interval(
+    overlap_size: int,
+    set_size: int,
+    selected_size: int,
+    universe_size: int,
+    *,
+    confidence: float = 0.95,
+) -> tuple[float, float]:
+    a = float(overlap_size)
+    b = float(selected_size - overlap_size)
+    c = float(set_size - overlap_size)
+    d = float(universe_size - selected_size - set_size + overlap_size)
+    if min(a, b, c, d) < 0:
+        return float("nan"), float("nan")
+
+    # Haldane-Anscombe continuity correction for sparse tables.
+    if min(a, b, c, d) == 0:
+        a += 0.5
+        b += 0.5
+        c += 0.5
+        d += 0.5
+
+    z_value = float(norm.ppf(0.5 + confidence / 2.0))
+    log_or = np.log((a * d) / (b * c))
+    standard_error = np.sqrt((1.0 / a) + (1.0 / b) + (1.0 / c) + (1.0 / d))
+    interval = z_value * standard_error
+    return float(np.exp(log_or - interval)), float(np.exp(log_or + interval))
+
+
 def ora_from_gene_table(
     gene_table: pd.DataFrame,
     *,
@@ -125,6 +176,18 @@ def ora_from_gene_table(
                 continue
             expected = (set_size / universe_size) * selected_size
             enrichment_ratio = overlap_size / expected if expected else np.nan
+            odds_ratio = _odds_ratio(
+                overlap_size,
+                set_size,
+                selected_size,
+                universe_size,
+            )
+            odds_ratio_ci_low, odds_ratio_ci_high = _odds_ratio_confidence_interval(
+                overlap_size,
+                set_size,
+                selected_size,
+                universe_size,
+            )
             p_value = float(
                 hypergeom.sf(overlap_size - 1, universe_size, set_size, selected_size)
             )
@@ -137,6 +200,9 @@ def ora_from_gene_table(
                     "selected_size": selected_size,
                     "universe_size": universe_size,
                     "enrichment_ratio": enrichment_ratio,
+                    "odds_ratio": odds_ratio,
+                    "odds_ratio_ci_low": odds_ratio_ci_low,
+                    "odds_ratio_ci_high": odds_ratio_ci_high,
                     "p_value": p_value,
                     "overlap_genes": overlap_genes,
                 }

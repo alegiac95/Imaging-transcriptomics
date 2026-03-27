@@ -7,7 +7,8 @@ import numpy as np
 
 from ._compat import suppress_pkg_resources_deprecation
 from .config import DEFAULT_NULL_METHOD, DEFAULT_SEED, VALID_NULL_METHODS
-from .surfaces import load_surface_parcellation
+from .exceptions import AtlasAssetError, NullModelError
+from .surfaces import infer_surface_density, load_surface_parcellation, surface_geometry_paths
 
 
 NULL_METHODS = VALID_NULL_METHODS
@@ -84,7 +85,7 @@ def _normalize_null_maps(null_maps: np.ndarray, n_values: int, n_permutations: i
         return null_maps
     if null_maps.shape == (n_permutations, n_values):
         return null_maps.T
-    raise ValueError(
+    raise NullModelError(
         f"Null model '{method}' returned an unexpected shape {null_maps.shape}; "
         f"expected ({n_values}, {n_permutations})."
     )
@@ -99,18 +100,18 @@ def generate_surface_nulls(
     seed: int,
 ) -> np.ndarray:
     if method not in SURFACE_NULL_METHODS:
-        raise ValueError(f"Unsupported surface null method: {method}")
+        raise NullModelError(f"Unsupported surface null method: {method}")
     atlas = selection.atlas
     if atlas.surface_paths is None:
-        raise FileNotFoundError(
+        raise AtlasAssetError(
             f"Atlas '{atlas.id}' does not have surface parcellation files for cortical null models."
         )
     if atlas.surface_space is None or atlas.surface_density is None:
-        raise ValueError(
+        raise NullModelError(
             f"Atlas '{atlas.id}' is missing surface space/density metadata required for cortical null models."
         )
     if selection.hemisphere == "both" and atlas.surface_paths[1] is None:
-        raise FileNotFoundError(
+        raise AtlasAssetError(
             f"Atlas '{atlas.id}' does not have a right-hemisphere surface parcellation file for bilateral null models."
         )
 
@@ -121,14 +122,17 @@ def generate_surface_nulls(
         str(atlas.surface_paths[1]),
         selection.hemisphere,
     )
+    geometry = surface_geometry_paths(atlas, selection.hemisphere)
     kwargs = dict(
         data=np.asarray(cortical_values, dtype=float),
         atlas=atlas.surface_space,
-        density=atlas.surface_density,
+        density=infer_surface_density(atlas, selection.hemisphere),
         parcellation=parcellation,
         n_perm=n_permutations,
         seed=seed,
     )
+    if geometry is not None:
+        kwargs["surfaces"] = geometry
     if method == "vasa":
         generated = nulls.vasa(**kwargs)
     elif method == "alexander_bloch":
@@ -147,7 +151,7 @@ def permute_scan_values(
 ) -> tuple[np.ndarray, str]:
     if null_method not in NULL_METHODS:
         valid = ", ".join(sorted(NULL_METHODS))
-        raise ValueError(f"Unknown null method '{null_method}'. Expected one of: {valid}.")
+        raise NullModelError(f"Unknown null method '{null_method}'. Expected one of: {valid}.")
 
     values = _standardize_vector(extracted.values)
     labels = extracted.labels.reset_index(drop=True)
@@ -197,7 +201,7 @@ def permute_scan_values(
                     )
                     resolved_method = "random"
                 else:
-                    raise RuntimeError(
+                    raise NullModelError(
                         f"Unable to generate cortical nulls with method '{null_method}'."
                     ) from last_error
 

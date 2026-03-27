@@ -7,13 +7,25 @@ __version__ = "2.0.0"
 from .api import run_analysis, run_corr, run_pls
 from .atlas_registry import atlas_table, describe_atlas, get_atlas, list_atlases
 from .config import RunConfig, build_run_config
+from .exceptions import (
+    AtlasAssetError,
+    AtlasError,
+    ConfigurationError,
+    ImagingTranscriptomicsError,
+    InputAlignmentError,
+    InputDataError,
+    NullModelError,
+    PlottingUnavailableError,
+)
 from .gene_expression import load_expression_frame, load_gene_labels, select_atlas_data
+from .gene_pca import run_gene_pca
 from .models import (
     AnalysisMetadata,
     AtlasSelection,
     AtlasSpec,
     CorrelationResult,
     ExtractedScan,
+    GenePCAResult,
     PLSComponentResult,
     PLSResult,
 )
@@ -22,10 +34,19 @@ from .scan import extract_scan_data, regional_values_frame
 __all__ = [
     "__version__",
     "AnalysisMetadata",
+    "AtlasAssetError",
+    "AtlasError",
     "AtlasSelection",
     "AtlasSpec",
+    "ConfigurationError",
     "CorrelationResult",
     "ExtractedScan",
+    "GenePCAResult",
+    "ImagingTranscriptomicsError",
+    "InputAlignmentError",
+    "InputDataError",
+    "NullModelError",
+    "PlottingUnavailableError",
     "RunConfig",
     "PLSComponentResult",
     "PLSResult",
@@ -40,6 +61,7 @@ __all__ = [
     "regional_values_frame",
     "run_analysis",
     "run_corr",
+    "run_gene_pca",
     "run_pls",
     "select_atlas_data",
     "build_expression_assets",

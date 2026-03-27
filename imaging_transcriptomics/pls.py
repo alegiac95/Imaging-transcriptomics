@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
-import logging
 
 import numpy as np
 
@@ -9,8 +8,7 @@ from ._logging import get_logger
 from .genes import GeneResults
 from .pls_backend import PreparedPLS1, fit_prepared_pls1, pls_regression, prepare_pls1
 
-logger = get_logger("genes")
-logger.setLevel(logging.DEBUG)
+logger = get_logger(__name__)
 
 
 class PLSAnalysis:

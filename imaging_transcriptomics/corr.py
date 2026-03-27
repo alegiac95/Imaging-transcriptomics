@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import logging
 from collections import OrderedDict
 from pathlib import Path
 
@@ -8,6 +7,11 @@ import numpy as np
 import pandas as pd
 
 from ._logging import get_logger
+from .corr_stats import (
+    ranked_gene_expression,
+    spearman_correlation_bootstrap,
+    spearman_correlation_matrix,
+)
 from .genes import CorrGenes, GeneResults
 from .gsea_utils import (
     gsea_style_fdr,
@@ -20,54 +24,13 @@ from .gsea_utils import (
 from .genesets import get_geneset
 from .ora import ora_from_gene_table
 
-logger = get_logger("genes")
-logger.setLevel(logging.DEBUG)
+logger = get_logger(__name__)
 
-
-def _rank_vector(values: np.ndarray) -> np.ndarray:
-    order = np.argsort(values, kind="mergesort")
-    ranks = np.empty(values.shape[0], dtype=float)
-    ranks[order] = np.arange(values.shape[0], dtype=float)
-    return ranks
-
-
-def _rank_columns(matrix: np.ndarray) -> np.ndarray:
-    order = np.argsort(matrix, axis=0, kind="mergesort")
-    ranks = np.empty(order.shape, dtype=float)
-    template = np.arange(matrix.shape[0], dtype=float)[:, None]
-    np.put_along_axis(ranks, order, template, axis=0)
-    return ranks
-
-
-def _standardize_columns(matrix: np.ndarray) -> np.ndarray:
-    centered = matrix - matrix.mean(axis=0, keepdims=True)
-    scale = matrix.std(axis=0, ddof=1, keepdims=True)
-    scale[scale == 0] = 1.0
-    return centered / scale
-
-
-def _standardize_vector(values: np.ndarray) -> np.ndarray:
-    centered = values - values.mean()
-    scale = values.std(ddof=1)
-    if scale == 0:
-        return centered
-    return centered / scale
-
-
-def _ranked_gene_expression(gene_exp: np.ndarray) -> np.ndarray:
-    return _standardize_columns(_rank_columns(np.asarray(gene_exp, dtype=float)))
-
-
-def _spearman_correlation_matrix(imaging_data: np.ndarray, ranked_genes: np.ndarray) -> np.ndarray:
-    ranked_img = _standardize_vector(_rank_vector(np.asarray(imaging_data, dtype=float).reshape(-1)))
-    denom = max(ranked_img.shape[0] - 1, 1)
-    return (ranked_genes.T @ ranked_img.reshape(-1, 1)) / denom
-
-
-def _spearman_correlation_bootstrap(permuted_imaging: np.ndarray, ranked_genes: np.ndarray) -> np.ndarray:
-    ranked_perm = _standardize_columns(_rank_columns(np.asarray(permuted_imaging, dtype=float)))
-    denom = max(ranked_perm.shape[0] - 1, 1)
-    return (ranked_genes.T @ ranked_perm) / denom
+# Backward-compatible aliases for tests and internal callers that still import
+# the older private helper names from this module.
+_ranked_gene_expression = ranked_gene_expression
+_spearman_correlation_matrix = spearman_correlation_matrix
+_spearman_correlation_bootstrap = spearman_correlation_bootstrap
 
 
 class CorrAnalysis:
@@ -81,11 +44,11 @@ class CorrAnalysis:
 
         assert isinstance(self.gene_results.results, CorrGenes)
         logger.info("Calculating correlation on original data.")
-        ranked_genes = _ranked_gene_expression(gene_exp)
-        self.gene_results.results.corr[:, :] = _spearman_correlation_matrix(imaging_data, ranked_genes).T
+        ranked_genes = ranked_gene_expression(gene_exp)
+        self.gene_results.results.corr[:, :] = spearman_correlation_matrix(imaging_data, ranked_genes).T
 
         logger.info("Calculating correlation on permuted data.")
-        self.gene_results.results.boot_corr[:, :] = _spearman_correlation_bootstrap(permuted_imaging, ranked_genes)
+        self.gene_results.results.boot_corr[:, :] = spearman_correlation_bootstrap(permuted_imaging, ranked_genes)
         self.gene_results.results.genes = gene_labels
         self.gene_results.results.sort_genes()
         self.gene_results.results.compute_pval()

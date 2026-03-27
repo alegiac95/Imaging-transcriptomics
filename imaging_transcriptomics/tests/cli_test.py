@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from imaging_transcriptomics.script.imagingtranscriptomics import _resolve_run_gsea, build_parser
+from imaging_transcriptomics.cli import _resolve_run_gsea, build_parser
 
 
 class _Args:
@@ -29,7 +29,8 @@ def test_top_level_help_is_descriptive():
     help_text = build_parser().format_help()
     assert "built-in atlas handling" in help_text
     assert "Examples:" in help_text
-    assert "imagingtranscriptomics corr" in help_text
+    assert "imt corr" in help_text
+    assert "gene-pca" in help_text
 
 
 def test_corr_help_mentions_ora_only_default():
@@ -41,3 +42,12 @@ def test_corr_help_mentions_ora_only_default():
     assert "Force GSEA on." in help_text
     assert "want both analyses." in help_text
     assert "--no-gsea" in help_text
+
+
+def test_gene_pca_help_mentions_gene_list_and_normalization():
+    parser = build_parser()
+    gene_pca_parser = parser._subparsers._group_actions[0].choices["gene-pca"]
+    help_text = gene_pca_parser.format_help()
+    assert "normalize those genes across regions" in help_text
+    assert "--genes" in help_text
+    assert "--ncomp" in help_text
