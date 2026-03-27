@@ -27,10 +27,14 @@ ORA_COLUMNS = [
 
 
 def _empty_ora_frame() -> pd.DataFrame:
+    """Return an empty ORA result frame with the standard output columns."""
+
     return pd.DataFrame({column: pd.Series(dtype=object) for column in ORA_COLUMNS})
 
 
 def _parse_gmt(path: Path) -> dict[str, set[str]]:
+    """Parse a GMT file into uppercase gene-set membership tables."""
+
     genesets: dict[str, set[str]] = {}
     for raw_line in path.read_text().splitlines():
         line = raw_line.strip()
@@ -49,6 +53,8 @@ def _parse_gmt(path: Path) -> dict[str, set[str]]:
 
 
 def load_ora_genesets(gene_set: str) -> dict[str, set[str]]:
+    """Resolve and load a GMT geneset resource for ORA."""
+
     resolved = get_geneset(gene_set)
     path = Path(resolved)
     if not path.exists() or not path.is_file() or path.suffix != ".gmt":
@@ -67,6 +73,8 @@ def _selected_genes(
     p_threshold: float,
     direction: str,
 ) -> tuple[dict[str, str], set[str]]:
+    """Select significant genes for one ORA direction and preserve display names."""
+
     selected = gene_table.loc[gene_table[p_value_column] <= p_threshold].copy()
     if direction == "up":
         selected = selected.loc[selected[score_column] > 0]
@@ -85,6 +93,8 @@ def _odds_ratio(
     selected_size: int,
     universe_size: int,
 ) -> float:
+    """Compute the contingency-table odds ratio for one ORA term."""
+
     a = float(overlap_size)
     b = float(selected_size - overlap_size)
     c = float(set_size - overlap_size)
@@ -106,6 +116,8 @@ def _odds_ratio_confidence_interval(
     *,
     confidence: float = 0.95,
 ) -> tuple[float, float]:
+    """Compute a log-odds confidence interval with sparse-table correction."""
+
     a = float(overlap_size)
     b = float(selected_size - overlap_size)
     c = float(set_size - overlap_size)
@@ -135,6 +147,8 @@ def ora_from_gene_table(
     p_value_column: str = "p_value",
     p_threshold: float = 0.05,
 ) -> dict[str, pd.DataFrame]:
+    """Run ORA on significant positive and negative gene sets from one table."""
+
     if not 0 < float(p_threshold) <= 1:
         raise ValueError("ORA p-threshold must be in the interval (0, 1].")
     required = {"gene", score_column, p_value_column}

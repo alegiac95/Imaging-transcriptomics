@@ -27,9 +27,9 @@ Correlation outputs
 
    - ``gene``
    - ``score``
-   - ``p_value``
+   - ``p``
    - ``fdr``
-   - ``fwer_maxT``
+   - ``maxT``
 
 ``gsea_corr_results.tsv``
    Correlation GSEA results with enrichment scores, normalized enrichment
@@ -51,9 +51,9 @@ PLS outputs
    - ``gene``
    - ``weight``
    - ``zscore``
-   - ``p_value``
+   - ``p``
    - ``fdr``
-   - ``fwer_maxT``
+   - ``maxT``
 
 ``gsea_pls<n>_results.tsv``
    GSEA results for one PLS component.

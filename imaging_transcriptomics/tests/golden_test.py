@@ -82,7 +82,7 @@ def _hash_corr_result(result: imt.CorrelationResult) -> str:
     top = result.gene_table.head(20)
     digest = sha256()
     digest.update(top["gene"].astype(str).str.cat(sep="\n").encode())
-    numeric = np.round(top[["score", "p_value", "fdr"]].to_numpy(dtype=np.float64), 6).astype(np.float32)
+    numeric = np.round(top[["score", "p", "fdr"]].to_numpy(dtype=np.float64), 6).astype(np.float32)
     digest.update(numeric.tobytes())
     return digest.hexdigest()[:16]
 

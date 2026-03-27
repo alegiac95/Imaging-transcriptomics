@@ -21,6 +21,8 @@ _GIFTI_SUFFIXES = {".gii", ".gii.gz", ".shape.gii", ".func.gii"}
 
 
 def _suffix(path: Path) -> str:
+    """Return a suffix string that preserves compound extensions like .nii.gz."""
+
     return "".join(path.suffixes) if path.suffix == ".gz" else path.suffix
 
 
@@ -32,6 +34,8 @@ def _make_extracted_scan(
     source_space: str | None,
     source_kind: str,
 ) -> ExtractedScan:
+    """Validate a regional vector and wrap it in the extracted-scan record."""
+
     vector = np.asarray(values, dtype=float).reshape(-1)
     if vector.shape[0] != selection.n_regions:
         raise InputDataError(
@@ -47,6 +51,8 @@ def _make_extracted_scan(
 
 
 def _load_tabular_vector(path: Path) -> np.ndarray:
+    """Read a one-column text or CSV file as a regional vector."""
+
     data = np.loadtxt(path, delimiter="," if path.suffix == ".csv" else None)
     if data.ndim > 1:
         if 1 in data.shape:
@@ -59,6 +65,8 @@ def _load_tabular_vector(path: Path) -> np.ndarray:
 
 
 def _region_means(image_data: np.ndarray, atlas_data: np.ndarray, atlas_ids: np.ndarray) -> np.ndarray:
+    """Compute parcel means from a volumetric image and integer atlas labels."""
+
     atlas_flat = np.asarray(atlas_data, dtype=np.int32).reshape(-1)
     image_flat = np.asarray(image_data, dtype=float).reshape(-1)
     mask = np.isfinite(image_flat) & (atlas_flat > 0)
@@ -87,6 +95,8 @@ def extract_volume_values(
     *,
     resolution: str,
 ) -> np.ndarray:
+    """Extract regional means from volumetric data on a packaged atlas grid."""
+
     atlas_path = selection.atlas.volume_path(resolution)
     if atlas_path is None:
         raise AtlasAssetError(
@@ -98,6 +108,8 @@ def extract_volume_values(
 
 
 def _grid_matches(image: nib.Nifti1Image, atlas_image: nib.Nifti1Image) -> bool:
+    """Return True when a NIfTI image already matches an atlas grid."""
+
     return image.shape[:3] == atlas_image.shape[:3] and np.allclose(
         image.affine,
         atlas_image.affine,
@@ -106,6 +118,8 @@ def _grid_matches(image: nib.Nifti1Image, atlas_image: nib.Nifti1Image) -> bool:
 
 
 def _atlas_volume_image(selection: AtlasSelection, resolution: str) -> nib.Nifti1Image:
+    """Load a packaged volumetric atlas image for a requested resolution."""
+
     atlas_path = selection.atlas.volume_path(resolution)
     if atlas_path is None:
         raise AtlasAssetError(
@@ -118,6 +132,8 @@ def _matching_atlas_grid(
     image: nib.Nifti1Image,
     selection: AtlasSelection,
 ) -> tuple[str, nib.Nifti1Image] | None:
+    """Return the packaged atlas grid matching the input image, if any."""
+
     for resolution in ("1mm", "2mm"):
         atlas_path = selection.atlas.volume_path(resolution)
         if atlas_path is None:
@@ -129,6 +145,8 @@ def _matching_atlas_grid(
 
 
 def _preferred_resolution(image: nib.Nifti1Image, selection: AtlasSelection) -> str:
+    """Pick the closest packaged atlas resolution for direct resampling."""
+
     zoom_mean = float(np.mean(np.abs(image.header.get_zooms()[:3])))
     preferred = "1mm" if zoom_mean <= 1.5 else "2mm"
     if selection.atlas.volume_path(preferred) is not None:
@@ -142,6 +160,8 @@ def _preferred_resolution(image: nib.Nifti1Image, selection: AtlasSelection) -> 
 
 
 def _native_space_error(image: nib.Nifti1Image, selection: AtlasSelection) -> InputAlignmentError:
+    """Create a detailed error for native-space images passed as atlas maps."""
+
     shape = image.shape[:3]
     zooms = tuple(round(float(val), 3) for val in image.header.get_zooms()[:3])
     return InputAlignmentError(
@@ -158,6 +178,8 @@ def _extract_with_atlas_image(
     atlas_image: nib.Nifti1Image,
     selection: AtlasSelection,
 ) -> np.ndarray:
+    """Extract parcel means using a preloaded atlas image."""
+
     atlas_ids = selection.labels["id"].astype(int).to_numpy()
     return _region_means(image_data, atlas_image.get_fdata(), atlas_ids)
 
@@ -168,6 +190,8 @@ def _parcellate_nifti_direct(
     *,
     allow_resample: bool,
 ) -> np.ndarray:
+    """Parcellate a volumetric image directly on a packaged MNI atlas grid."""
+
     image = nib.load(scan_path)
     matched = _matching_atlas_grid(image, selection)
     if matched is not None:
@@ -184,6 +208,8 @@ def _parcellate_nifti_direct(
 
 
 def _import_neuromaps():
+    """Import neuromaps lazily so it stays an optional dependency."""
+
     try:
         with suppress_pkg_resources_deprecation():
             from neuromaps.parcellate import Parcellater
@@ -202,6 +228,8 @@ def _parcellate_with_neuromaps(
     source_space: str,
     hemi: str | None = None,
 ) -> np.ndarray:
+    """Parcellate data after neuromaps resampling between standard spaces."""
+
     Parcellater = _import_neuromaps()
     atlas = selection.atlas
     if atlas.volume_1mm_path is not None and source_space == "MNI152" and not isinstance(data, tuple):
@@ -239,6 +267,8 @@ def _parcellate_with_neuromaps(
 
 
 def _surface_inputs(data, input_rh) -> tuple[str, str] | None:
+    """Normalize left/right surface inputs into a two-path tuple."""
+
     if isinstance(data, (list, tuple)) and len(data) == 2:
         return str(Path(data[0])), str(Path(data[1]))
     if input_rh is not None:
@@ -255,6 +285,36 @@ def extract_scan_data(
     input_rh=None,
     prefer_neuromaps: bool = True,
 ) -> ExtractedScan:
+    """Extract atlas-aligned regional values from a supported imaging input.
+
+    Parameters
+    ----------
+    data
+        Input imaging data. Accepted forms are a NumPy vector, a text file
+        containing one regional value per row, a NIfTI file, or a left/right
+        surface pair.
+    atlas
+        Atlas identifier registered in the packaged atlas registry.
+    hemisphere
+        Hemisphere subset to select from the atlas expression data.
+    regions
+        Region subset to select from the atlas expression data.
+    source_space
+        Declared standard space of the input image. When omitted for NIfTI
+        inputs, the code expects the image to already match a packaged MNI grid.
+    input_rh
+        Optional right-hemisphere surface file when ``data`` points to the left
+        hemisphere file.
+    prefer_neuromaps
+        Whether to use ``neuromaps`` for supported cross-space resampling.
+
+    Returns
+    -------
+    ExtractedScan
+        Regional values together with the atlas selection and basic source
+        metadata.
+    """
+
     selection = select_atlas_data(atlas=atlas, hemisphere=hemisphere, regions=regions)
 
     if isinstance(data, np.ndarray):
@@ -320,4 +380,6 @@ def extract_scan_data(
 
 
 def regional_values_frame(extracted: ExtractedScan) -> pd.DataFrame:
+    """Return regional values merged with atlas label metadata."""
+
     return extracted.labels.assign(value=extracted.values)

@@ -19,6 +19,8 @@ from .serialization import run_to_tables as _run_to_tables, write_result_bundle
 
 
 def _standardize_vector(values: np.ndarray) -> np.ndarray:
+    """Center and scale a one-dimensional vector with sample standard deviation."""
+
     vector = np.asarray(values, dtype=float).reshape(-1)
     centered = vector - vector.mean()
     scale = vector.std(ddof=1)
@@ -28,6 +30,8 @@ def _standardize_vector(values: np.ndarray) -> np.ndarray:
 
 
 def _prepare_analysis_inputs(data, config: RunConfig, *, input_rh=None):
+    """Extract imaging values and atlas expression data for a configured run."""
+
     extracted = extract_scan_data(
         data,
         atlas=config.atlas,
@@ -45,6 +49,8 @@ def _prepare_analysis_inputs(data, config: RunConfig, *, input_rh=None):
 
 
 def _metadata(extracted, config: RunConfig, *, null_method: str, n_components: int | None = None) -> AnalysisMetadata:
+    """Build the result metadata payload shared across output formats."""
+
     return AnalysisMetadata(
         method=config.method,
         atlas_id=extracted.selection.atlas.id,
@@ -63,13 +69,15 @@ def _metadata(extracted, config: RunConfig, *, null_method: str, n_components: i
 
 
 def _corr_gene_table(analysis) -> pd.DataFrame:
+    """Convert correlation gene results into the public table format."""
+
     return pd.DataFrame(
         {
             "gene": analysis.gene_results.results.genes[:, 0],
             "score": analysis.gene_results.results.corr[0, :],
-            "p_value": analysis.gene_results.results.pval[0, :],
+            "p": analysis.gene_results.results.pval[0, :],
             "fdr": analysis.gene_results.results.pval_corr[0, :],
-            "fwer_maxT": analysis.gene_results.results.pval_fwer[0, :],
+            "maxT": analysis.gene_results.results.pval_fwer[0, :],
         }
     )
 
@@ -79,6 +87,8 @@ def _pls_components(
     gsea_tables: list[pd.DataFrame | None],
     ora_tables: list[dict[str, pd.DataFrame] | None],
 ) -> tuple[PLSComponentResult, ...]:
+    """Pack per-component PLS outputs into typed result records."""
+
     return tuple(
         PLSComponentResult(
             index=index + 1,
@@ -89,9 +99,9 @@ def _pls_components(
                     "gene": analysis.gene_results.results.boot.genes[index, :],
                     "weight": analysis.gene_results.results.boot.weights_sorted[index, :],
                     "zscore": analysis.gene_results.results.boot.z_score[index, :],
-                    "p_value": analysis.gene_results.results.boot.pval[index, :],
+                    "p": analysis.gene_results.results.boot.pval[index, :],
                     "fdr": analysis.gene_results.results.boot.pval_corr[index, :],
-                    "fwer_maxT": analysis.gene_results.results.boot.pval_fwer[index, :],
+                    "maxT": analysis.gene_results.results.boot.pval_fwer[index, :],
                 }
             ),
             gsea_table=gsea_tables[index],
@@ -102,12 +112,16 @@ def _pls_components(
 
 
 def run_analysis(data, config: RunConfig, *, input_rh=None) -> CorrelationResult | PLSResult:
+    """Run either correlation or PLS analysis from a validated configuration."""
+
     if config.method == "corr":
         return _run_corr_configured(data, config, input_rh=input_rh)
     return _run_pls_configured(data, config, input_rh=input_rh)
 
 
 def _run_corr_configured(data, config: RunConfig, *, input_rh=None) -> CorrelationResult:
+    """Execute a configured spatial correlation analysis."""
+
     from .corr import CorrAnalysis
 
     extracted, gene_exp, gene_labels, imaging = _prepare_analysis_inputs(data, config, input_rh=input_rh)
@@ -156,6 +170,8 @@ def _run_corr_configured(data, config: RunConfig, *, input_rh=None) -> Correlati
 
 
 def _run_pls_configured(data, config: RunConfig, *, input_rh=None) -> PLSResult:
+    """Execute a configured PLS analysis."""
+
     from .pls import PLSAnalysis
 
     extracted, gene_exp, gene_labels, imaging = _prepare_analysis_inputs(data, config, input_rh=input_rh)
@@ -250,6 +266,56 @@ def run_corr(
     seed: int = 1234,
     n_jobs: int = 1,
 ) -> CorrelationResult:
+    """Run spatial correlation between an imaging map and atlas gene expression.
+
+    Parameters
+    ----------
+    data
+        Imaging input. This can be a regional vector, a text file containing one
+        regional value per row, a volumetric NIfTI map, or a left/right surface
+        pair that can be resampled with ``neuromaps``.
+    atlas
+        Atlas identifier registered in the packaged atlas registry.
+    hemisphere
+        Hemisphere subset to analyse. Use ``"left"`` for the historical
+        left-only workflow or ``"both"`` for mirrored bilateral expression.
+    regions
+        Atlas region subset. Accepted values are ``"all"``, ``"cort"``, and
+        ``"cort+sub"``.
+    source_space
+        Declared space of the input image when it is not already on the packaged
+        MNI atlas grid.
+    input_rh
+        Optional right-hemisphere surface file when ``data`` points to the left
+        hemisphere file.
+    n_permutations
+        Number of spatial null permutations used for gene-wise statistics.
+    null_method
+        Spatial null model to use. ``"auto"`` chooses a supported method based
+        on the atlas and available dependencies.
+    output_dir
+        Optional output directory for TSV, metadata, and plot files.
+    run_gsea
+        Whether to run preranked GSEA after gene-wise statistics are computed.
+    gene_set
+        Packaged geneset name, Enrichr library name, or GMT path used by GSEA
+        and ORA.
+    ora_p_threshold
+        If provided, run ORA on genes whose raw permutation p-value is at or
+        below this threshold, split into positive and negative gene lists.
+    seed
+        Random seed for the spatial null generation.
+    n_jobs
+        Reserved for API symmetry with PLS. Correlation currently uses a
+        vectorized permutation path.
+
+    Returns
+    -------
+    CorrelationResult
+        Structured result object containing metadata, regional values, gene
+        statistics, and optional enrichment outputs.
+    """
+
     config = build_run_config(
         "corr",
         atlas=atlas,
@@ -287,6 +353,56 @@ def run_pls(
     seed: int = 1234,
     n_jobs: int = 1,
 ) -> PLSResult:
+    """Run PLS between an imaging map and atlas gene expression.
+
+    Parameters
+    ----------
+    data
+        Imaging input in the same formats accepted by :func:`run_corr`.
+    atlas
+        Atlas identifier registered in the packaged atlas registry.
+    hemisphere
+        Hemisphere subset to analyse.
+    regions
+        Atlas region subset. Accepted values are ``"all"``, ``"cort"``, and
+        ``"cort+sub"``.
+    source_space
+        Declared space of the input image when resampling is required.
+    input_rh
+        Optional right-hemisphere surface file when ``data`` points to the left
+        hemisphere file.
+    n_components
+        Number of PLS components to retain. Supply this or ``var``.
+    var
+        Alternative stopping rule based on cumulative explained variance.
+    n_permutations
+        Number of spatial null permutations used for component and gene-wise
+        inference.
+    null_method
+        Spatial null model to use. ``"auto"`` chooses a supported method based
+        on the atlas and available dependencies.
+    output_dir
+        Optional output directory for TSV, metadata, and plot files.
+    run_gsea
+        Whether to run preranked GSEA on the component gene rankings.
+    gene_set
+        Packaged geneset name, Enrichr library name, or GMT path used by GSEA
+        and ORA.
+    ora_p_threshold
+        If provided, run ORA on genes whose raw p-value is at or below this
+        threshold, split into positive and negative component loadings.
+    seed
+        Random seed for the spatial null generation.
+    n_jobs
+        Number of worker processes used for PLS permutation fitting.
+
+    Returns
+    -------
+    PLSResult
+        Structured result object containing metadata, regional values, per-
+        component statistics, and optional enrichment outputs.
+    """
+
     config = build_run_config(
         "pls",
         atlas=atlas,

@@ -34,9 +34,15 @@ _spearman_correlation_bootstrap = spearman_correlation_bootstrap
 
 
 class CorrAnalysis:
-    """Store correlation analysis results and optional GSEA output."""
+    """Run spatial correlation analysis and hold its downstream outputs.
+
+    The object keeps the gene-wise correlation statistics together with any
+    optional enrichment results produced from the ranked gene table.
+    """
 
     def __init__(self, n_iterations=1000, n_genes=None):
+        """Create an empty correlation analysis container."""
+
         self.gene_results = GeneResults("corr", n_iter=n_iterations, n_genes=n_genes)
 
     def bootstrap_correlation(self, imaging_data, permuted_imaging, gene_exp, gene_labels):
@@ -55,7 +61,12 @@ class CorrAnalysis:
         return
 
     def gsea(self, gene_set="lake", outdir=None, gene_limit=1500, n_perm=1_000):  # pragma: no cover
-        """Perform GSEA on the correlation ranking."""
+        """Run preranked GSEA on the correlation-based gene ranking.
+
+        The observed enrichment score is taken from the ranked correlation
+        vector, while NES, nominal p-values, and q-values are recalculated from
+        the external permutation nulls stored in ``boot_corr``.
+        """
 
         assert isinstance(self.gene_results.results, CorrGenes)
         logger.info("Performing GSEA.")
@@ -113,7 +124,7 @@ class CorrAnalysis:
             out_df.to_csv(outdir / "gsea_corr_results.tsv", index=False, sep="\t")
 
     def ora(self, gene_set="lake", outdir=None, p_threshold=0.05):
-        """Perform ORA on positively and negatively associated genes."""
+        """Run ORA on positive and negative correlation tails separately."""
 
         assert isinstance(self.gene_results.results, CorrGenes)
         logger.info("Performing ORA.")

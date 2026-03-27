@@ -40,6 +40,8 @@ class RunConfig:
 
 
 def ensure_output_dir(output_dir: str | Path | None) -> Path | None:
+    """Create an output directory if requested and return it as a Path."""
+
     if output_dir is None:
         return None
     path = Path(output_dir)
@@ -65,6 +67,13 @@ def build_run_config(
     seed: int = DEFAULT_SEED,
     n_jobs: int = DEFAULT_N_JOBS,
 ) -> RunConfig:
+    """Validate common analysis options and return a normalized run config.
+
+    This helper is shared by the Python API and the CLI so both entry points use
+    the same validation rules for atlas choice, region scope, permutation count,
+    null model, enrichment settings, and PLS-specific options.
+    """
+
     method = str(method).lower()
     if method not in VALID_METHODS:
         valid = ", ".join(sorted(VALID_METHODS))

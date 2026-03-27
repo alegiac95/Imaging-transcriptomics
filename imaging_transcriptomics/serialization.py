@@ -77,7 +77,7 @@ def _write_analysis_bundle(result: CorrelationResult | PLSResult, output_dir: Pa
             "component": [component.index for component in result.components],
             "variance_explained": [component.explained_variance for component in result.components],
             "cumulative_variance": np.asarray(result.cumulative_variance[: len(result.components)], dtype=float),
-            "permutation_p_value": [component.p_value for component in result.components],
+            "p": [component.p_value for component in result.components],
         }
     ).to_csv(output_dir / "pls_summary.tsv", sep="\t", index=False)
     for component in result.components:

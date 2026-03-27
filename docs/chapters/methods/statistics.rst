@@ -21,9 +21,9 @@ The current implementation:
 The gene table written by ``run_corr()`` contains:
 
 - ``score``: the observed gene-wise correlation
-- ``p_value``: nominal permutation p-value from the gene-specific null
+- ``p``: nominal permutation p-value from the gene-specific null
 - ``fdr``: Benjamini-Hochberg correction across all genes
-- ``fwer_maxT``: maxT family-wise correction from the permutation maxima
+- ``maxT``: maxT family-wise correction from the permutation maxima
 
 PLS workflow
 ------------
@@ -44,9 +44,9 @@ Each component table contains:
 
 - ``weight``: gene weight on that component
 - ``zscore``: weight divided by the bootstrap standard deviation
-- ``p_value``: two-sided z-based gene p-value
+- ``p``: two-sided z-based gene p-value
 - ``fdr``: Benjamini-Hochberg correction across genes in that component
-- ``fwer_maxT``: maxT family-wise correction from the component-wise maximum
+- ``maxT``: maxT family-wise correction from the component-wise maximum
   absolute null weight per permutation
 
 Gene-level correction
@@ -57,11 +57,11 @@ level:
 
 - ``fdr`` controls the false discovery rate across genes with
   Benjamini-Hochberg
-- ``fwer_maxT`` controls family-wise error using a permutation-based maxT
+- ``maxT`` controls family-wise error using a permutation-based maxT
   statistic
 
 These columns answer different questions. It is therefore normal for a gene to
-have a small nominal ``p_value`` but a much larger ``fwer_maxT``.
+have a small nominal ``p`` but a much larger ``maxT``.
 
 Permutation resolution
 ----------------------

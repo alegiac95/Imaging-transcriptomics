@@ -22,6 +22,8 @@ logger = get_logger(__name__)
 
 
 def _correlate_pls_scores(scores: np.ndarray, values: np.ndarray) -> np.ndarray:
+    """Correlate each PLS score vector with the input regional imaging values."""
+
     stacked = np.hstack((np.asarray(scores, dtype=float), np.asarray(values, dtype=float).reshape(-1, 1)))
     return np.corrcoef(stacked, rowvar=False)[0, 1:]
 
@@ -32,6 +34,8 @@ def _rowwise_corrsign(
     reference_centered: np.ndarray,
     reference_ss: np.ndarray,
 ) -> np.ndarray:
+    """Return sign flips that align candidate rows to reference rows by correlation."""
+
     centered = candidate - candidate.mean(axis=1, keepdims=True)
     denom = np.sqrt(reference_ss * np.sum(centered * centered, axis=1))
     corr = np.divide(
@@ -45,6 +49,8 @@ def _rowwise_corrsign(
 
 # --------- GENE ANALYSIS --------- #
 class GeneResults:
+    """Expose a uniform view over correlation and PLS gene result containers."""
+
     def __init__(self, method, **kwargs):
         """Initialize the results of the analysis. Depending on the method
         used, the results will have underlying result classes, which account
@@ -116,6 +122,8 @@ class GeneResults:
 
 # --------- PLS GENES --------- #
 class PLSGenes:
+    """Store original and permutation-based gene statistics for PLS results."""
+
     def __init__(self, n_components, n_iter=1000, n_genes=None):
         """ Initialize the results of the PLS analysis. The result will
         include both the permuted and the original results. The class
@@ -133,7 +141,7 @@ class PLSGenes:
         self._orig_ss = None
 
     def prepare_from_fit(self, fit_result, scan_data, gene_labels):
-        """Prepare original gene weights from a fitted PLS result."""
+        """Align, sort, and z-score original PLS gene weights per component."""
 
         weights = np.asarray(fit_result.get("x_weights"), dtype=float).copy()
         scores = np.asarray(fit_result.get("x_scores"), dtype=float).copy()
@@ -165,18 +173,7 @@ class PLSGenes:
 
     def boot_genes(self, imaging_data, permuted_imaging,
                    scan_data, gene_exp, gene_labels):
-        """Bootstrapping on the PLS components.
-
-        :param imaging_data: imaging data. Allows the user to specify the
-        data to use (e.g., with only cortical regions this can be only the
-        cortical vector, other wise the whole data).
-        :param permuted_imaging: imaging data permuted. Allows the user to
-        specify the data to use (e.g., with only cortical regions this can be
-        only the cortical vector, other wise the whole data).
-        :param scan_data: Original scam data, not zscored.
-        :param gene_exp: gene expression data.
-        :param gene_labels: gene labels.
-        """
+        """Legacy helper to refit PLS for every permutation and store gene weights."""
         logger.info("Performing bootstrapping of the genes.")
 
         _res = pls_regression(gene_exp, imaging_data.reshape(
@@ -197,11 +194,12 @@ class PLSGenes:
         return
 
     def compute(self):
-        """ Compute the p-values of the z-scored weights.
-        The compute function calculates the zscores based on the original
-        weights, orders the weights in descending order and then calculates
-        the p-values and corrects for multiple comparisons using the
-        Benjamini-Hochberg method.
+        """Compute sorted PLS gene statistics from original and permuted weights.
+
+        This step estimates a bootstrap standard deviation per gene and
+        component, derives z-scores from the original weights, computes
+        two-sided z-based nominal p-values, then adds BH FDR and maxT-style
+        FWER correction before sorting the tables in descending weight order.
         """
         logger.info("Calculating statistics.")
         self.boot.std[:, :] = self.boot.weights.std(axis=2, ddof=1)
@@ -225,7 +223,12 @@ class PLSGenes:
         return
 
     def gsea(self, gene_set="lake", outdir=None, gene_limit=1500, n_iter=1000):
-        """Perform a GSEA analysis on the z-scored weights."""
+        """Run preranked GSEA on the PLS gene ranking for each component.
+
+        Observed ES values come from the original component z-scores, while NES,
+        nominal p-values, and q-values are recalculated from the external null
+        built from permuted component weights.
+        """
         assert isinstance(self.orig, OrigPLS)
         assert isinstance(self.boot, BootPLS)
         logger.info("Performing GSEA.")
@@ -291,7 +294,7 @@ class PLSGenes:
                     sep="\t")
 
     def ora(self, gene_set="lake", outdir=None, p_threshold=0.05):
-        """Perform ORA on positively and negatively weighted genes per component."""
+        """Run ORA on positive and negative component gene tails separately."""
 
         assert isinstance(self.orig, OrigPLS)
         assert isinstance(self.boot, BootPLS)
@@ -327,6 +330,8 @@ class PLSGenes:
 
 # --------- ORIG PLS --------- #
 class OrigPLS:
+    """Hold original per-component PLS gene rankings and summary statistics."""
+
     def __init__(self, n_components, n_genes):
         """ Initialize the original results of the PLS analysis. The class
         contains the fields corresponding to the number of components used,
@@ -345,6 +350,8 @@ class OrigPLS:
 
 # --------- BOOT PLS --------- #
 class BootPLS:
+    """Hold permutation-derived PLS gene weights and correction outputs."""
+
     def __init__(self, n_components, n_genes, n_iter=1000):
         """Initialise a class to store the results of the bootstrapping of
         the genes.
@@ -394,29 +401,15 @@ class BootPLS:
 
     @property
     def z_score(self):
-        """The z-scored weights.
-        """
+        """Return the sorted per-gene z-scores for each PLS component."""
         return self._z_score
 
 
 # --------- CORRELATION  GENES  --------- #
 class CorrGenes:
-    """Class that stores the gene results of the correlation analysis. It
-    has the following fields:
-
-    * boot_corr: the bootstrapped results of the correlation analysis.
-    * corr: the original results of the correlation analysis.
-    * boot_corr: the bootstrapped results of the correlation analysis.
-    * genes: the gene list used for the analysis.
-    * pval: the p-value of the correlation.
-    * pval_corr: the p-value of the correlation corrected for multiple
-    comparisons using the Benjamini-Hochberg method.
-    """
+    """Store gene-wise statistics for the correlation workflow."""
     def __init__(self, n_iter=1000, n_genes=None):
-        """Initialise the class.
-
-        :param int n_iter: number of iterations used for the bootstrapping,
-        """
+        """Create storage for observed and permuted correlation statistics."""
         self.n_genes = int(n_genes) if n_genes is not None else 15633
         self._n_iter = n_iter
         self.boot_corr = np.zeros((self.n_genes, self._n_iter))
@@ -428,9 +421,7 @@ class CorrGenes:
         self._index = None
 
     def compute_pval(self):
-        """Compute the p-values, and its fdr correction, of the correlation,
-        from the list of bootstrapped correlations.
-        """
+        """Compute gene-wise nominal, BH-corrected, and maxT-corrected p-values."""
         # This calculation assumes that the order of the genes is the same
         # in both the original and the bootstrapped list. IF one is ordered,
         # make sure the order of the other is the same.
@@ -454,16 +445,11 @@ class CorrGenes:
 
     @property
     def is_sorted(self):
-        """Check if the list of genes is sorted.
-
-        :return: True if the list of genes is sorted, False otherwise.
-        """
+        """Whether the gene table has already been sorted by observed score."""
         return self._index is not None
 
     def sort_genes(self):
-        """Order the genes in the list of genes. Both the order of the
-        order of the bootstrapped genes are ordered.
-        """
+        """Sort observed and permuted gene statistics by descending correlation."""
         logger.info("Sorting genes in descending order.")
         self._index = np.argsort(self.corr[0, :], kind='mergesort')[::-1]
         self.corr[0, :] = self.corr[0, self._index]

@@ -42,12 +42,16 @@ def make_prerank_table(genes, scores) -> pd.DataFrame:
 
 
 class _SuppressDuplicatePrerankWarnings(logging.Filter):
+    """Drop the noisy GSEApy warning about duplicated preranked scores."""
+
     def filter(self, record: logging.LogRecord) -> bool:
         return "Duplicated values found in preranked stats" not in record.getMessage()
 
 
 @contextmanager
 def _suppress_gseapy_duplicate_prerank_warnings():
+    """Temporarily patch GSEApy logger setup to filter duplicate-score warnings."""
+
     try:
         import gseapy.base as gseapy_base
         import gseapy.utils as gseapy_utils
@@ -81,6 +85,8 @@ def run_prerank(gseapy, rnk, gene_set, **kwargs):
 
 
 def _validate_es_inputs(es, esnull) -> tuple[np.ndarray, np.ndarray]:
+    """Validate observed and null enrichment score arrays and coerce shapes."""
+
     es_array = np.asarray(es, dtype=float).reshape(-1)
     esnull_array = np.asarray(esnull, dtype=float)
     if esnull_array.ndim != 2:
@@ -91,6 +97,8 @@ def _validate_es_inputs(es, esnull) -> tuple[np.ndarray, np.ndarray]:
 
 
 def _same_sign_null_means(es_array: np.ndarray, esnull_array: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """Return per-term positive and negative null ES means."""
+
     pos_mask = esnull_array >= 0
     neg_mask = esnull_array < 0
 
@@ -138,7 +146,7 @@ def normalize_enrichment_scores(es, esnull) -> np.ndarray:
 
 
 def normalize_enrichment_nulls(es, esnull) -> np.ndarray:
-    """Normalize null ES values using the observed-term same-sign means, matching GSEApy."""
+    """Normalize null ES values using same-sign means, matching GSEApy logic."""
 
     es_array, esnull_array = _validate_es_inputs(es, esnull)
     pos_mean, neg_mean = _same_sign_null_means(es_array, esnull_array)
@@ -161,7 +169,7 @@ def normalize_enrichment_nulls(es, esnull) -> np.ndarray:
 
 
 def nominal_pvalues_from_nulls(es, esnull) -> np.ndarray:
-    """Return one-sided nominal p-values from external null ES values."""
+    """Return sign-aware nominal p-values from external enrichment nulls."""
 
     es_array, esnull_array = _validate_es_inputs(es, esnull)
     pvals = np.zeros(es_array.shape, dtype=float)

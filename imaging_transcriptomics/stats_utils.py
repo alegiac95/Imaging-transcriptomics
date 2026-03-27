@@ -18,7 +18,12 @@ def two_sided_z_pvalues(z_scores: np.ndarray) -> np.ndarray:
 
 
 def empirical_signed_pvalues(observed: np.ndarray, null_values: np.ndarray) -> np.ndarray:
-    """Return nominal p-values using sign-aware permutation comparisons."""
+    """Return one-sided empirical p-values that respect the observed sign.
+
+    Positive observed statistics are compared to the upper tail of their null
+    distribution, while negative observed statistics are compared to the lower
+    tail. A +1 correction is applied to numerator and denominator.
+    """
 
     obs = np.asarray(observed, dtype=float).reshape(-1)
     nulls = np.asarray(null_values, dtype=float)
@@ -31,7 +36,7 @@ def empirical_signed_pvalues(observed: np.ndarray, null_values: np.ndarray) -> n
 
 
 def max_t_fwer_abs(observed: np.ndarray, null_values: np.ndarray) -> np.ndarray:
-    """Return maxT family-wise corrected p-values using absolute test statistics."""
+    """Return maxT-style FWER p-values using per-permutation absolute maxima."""
 
     obs = np.abs(np.asarray(observed, dtype=float).reshape(-1))
     nulls = np.asarray(null_values, dtype=float)
