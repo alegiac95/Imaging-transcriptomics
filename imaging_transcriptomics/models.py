@@ -10,8 +10,13 @@ import pandas as pd
 
 HemisphereMode = Literal["left", "both"]
 RegionScope = Literal["all", "cort", "cort+sub"]
-AnalysisMethod = Literal["corr", "pls", "gene-pca"]
+AnalysisMethod = Literal["corr", "pls", "gene-pca", "gedar"]
 NullMethod = Literal["auto", "vasa", "alexander_bloch", "moran", "random"]
+SourceKind = Literal["vector", "surface", "volume"]
+RankMode = Literal["ascending", "descending"]
+GEDARDirection = Literal["combined", "up", "down", "split"]
+ExpressionNormalization = Literal["zscore", "none"]
+WeightNormalization = Literal["none", "zscore", "unit"]
 
 
 @dataclass(frozen=True)
@@ -95,7 +100,7 @@ class ExtractedScan:
     selection: AtlasSelection
     source: str
     source_space: str | None = None
-    source_kind: str = "vector"
+    source_kind: SourceKind = "vector"
 
     @property
     def labels(self) -> pd.DataFrame:
@@ -116,11 +121,12 @@ class AnalysisMetadata:
     hemisphere: HemisphereMode
     regions: RegionScope
     source: str
-    source_kind: str
+    source_kind: SourceKind
     source_space: str | None
     n_permutations: int
-    null_method: str = "auto"
+    null_method: NullMethod = "auto"
     geneset: str | None = None
+    geneset_organism: str | None = None
     ora_p_threshold: float | None = None
     n_components: int | None = None
 
@@ -173,5 +179,34 @@ class GenePCAResult:
     gene_loadings: pd.DataFrame
     variance_table: pd.DataFrame
     matched_genes: tuple[str, ...]
+    brain_filtered_genes: tuple[str, ...]
     missing_genes: tuple[str, ...]
+    output_dir: Path | None = None
+
+
+@dataclass(frozen=True)
+class GEDARResult:
+    """Returned by :func:`run_gedar`."""
+
+    atlas_id: str
+    atlas_label: str
+    hemisphere: HemisphereMode
+    regions: RegionScope
+    requested_genes: tuple[str, ...]
+    regional_scores: pd.DataFrame
+    gene_table: pd.DataFrame
+    excluded_table: pd.DataFrame
+    matched_genes: tuple[str, ...]
+    missing_genes: tuple[str, ...]
+    weights_source: str
+    gene_column: str
+    weight_column: str
+    rank_column: str | None
+    rank_mode: RankMode
+    direction: GEDARDirection
+    normalize_expression: ExpressionNormalization
+    normalize_weights: WeightNormalization
+    top_percent: float | None
+    top_n: int | None
+    p_threshold: float | None
     output_dir: Path | None = None
