@@ -30,7 +30,9 @@ def test_top_level_help_is_descriptive():
     assert "built-in atlas handling" in help_text
     assert "Examples:" in help_text
     assert "imt corr" in help_text
+    assert "imt genesets" in help_text
     assert "gene-pca" in help_text
+    assert "gedar" in help_text
 
 
 def test_corr_help_mentions_ora_only_default():
@@ -42,6 +44,7 @@ def test_corr_help_mentions_ora_only_default():
     assert "Force GSEA on." in help_text
     assert "want both analyses." in help_text
     assert "--no-gsea" in help_text
+    assert "--geneset-organism" in help_text
 
 
 def test_gene_pca_help_mentions_gene_list_and_normalization():
@@ -51,3 +54,22 @@ def test_gene_pca_help_mentions_gene_list_and_normalization():
     assert "normalize those genes across regions" in help_text
     assert "--genes" in help_text
     assert "--ncomp" in help_text
+
+
+def test_gedar_help_mentions_weighted_projection():
+    parser = build_parser()
+    gedar_parser = parser._subparsers._group_actions[0].choices["gedar"]
+    help_text = gedar_parser.format_help()
+    assert "weighted gene table" in help_text
+    assert "--weights" in help_text
+    assert "--weight-column" in help_text
+    assert "--normalize-expression" in help_text
+
+
+def test_genesets_help_mentions_packaged_and_enrichr_sources():
+    parser = build_parser()
+    geneset_parser = parser._subparsers._group_actions[0].choices["genesets"]
+    help_text = geneset_parser.format_help()
+    assert "Packaged entries are always available" in help_text
+    assert "--packaged-only" in help_text
+    assert "--organism" in help_text

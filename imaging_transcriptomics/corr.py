@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections import OrderedDict
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 import numpy as np
@@ -21,7 +22,7 @@ from .gsea_utils import (
     normalize_enrichment_scores,
     run_prerank,
 )
-from .genesets import get_geneset
+from .genesets import resolve_geneset_resource
 from .ora import ora_from_gene_table
 
 logger = get_logger(__name__)
@@ -33,6 +34,33 @@ _spearman_correlation_matrix = spearman_correlation_matrix
 _spearman_correlation_bootstrap = spearman_correlation_bootstrap
 
 
+def _progress_step(total: int) -> int:
+    """Choose a coarse logging interval for long permutation loops."""
+
+    return max(1, total // 10)
+
+
+def _log_permutation_progress(completed: int, total: int, *, step: int) -> None:
+    """Emit periodic progress updates for long correlation permutation loops."""
+
+    if total < 1:
+        return
+    if completed == total or completed % step == 0:
+        logger.info("Processed %d/%d correlation permutations.", completed, total)
+
+
+def _corr_chunk_bounds(total: int, n_genes: int, n_jobs: int, target_bytes: int = 64 * 1024 * 1024) -> list[tuple[int, int]]:
+    """Split correlation permutations into memory-friendly chunks."""
+
+    bytes_per_perm = max(1, int(n_genes) * np.dtype(float).itemsize)
+    chunk_size = max(1, target_bytes // bytes_per_perm)
+    chunk_size = min(total, chunk_size)
+    return [
+        (start, min(total, start + chunk_size))
+        for start in range(0, total, chunk_size)
+    ]
+
+
 class CorrAnalysis:
     """Run spatial correlation analysis and hold its downstream outputs.
 
@@ -40,27 +68,69 @@ class CorrAnalysis:
     optional enrichment results produced from the ranked gene table.
     """
 
-    def __init__(self, n_iterations=1000, n_genes=None):
+    def __init__(self, n_iterations=1000, n_genes=None, *, store_boot_corr: bool = True, n_jobs: int = 1):
         """Create an empty correlation analysis container."""
 
-        self.gene_results = GeneResults("corr", n_iter=n_iterations, n_genes=n_genes)
+        self.n_jobs = max(1, int(n_jobs))
+        self.gene_results = GeneResults(
+            "corr",
+            n_iter=n_iterations,
+            n_genes=n_genes,
+            store_boot_corr=store_boot_corr,
+        )
 
     def bootstrap_correlation(self, imaging_data, permuted_imaging, gene_exp, gene_labels):
         """Run the original and bootstrapped correlation analyses."""
 
         assert isinstance(self.gene_results.results, CorrGenes)
+        total_permutations = int(permuted_imaging.shape[1])
+        progress_step = _progress_step(total_permutations)
         logger.info("Calculating correlation on original data.")
         ranked_genes = ranked_gene_expression(gene_exp)
         self.gene_results.results.corr[:, :] = spearman_correlation_matrix(imaging_data, ranked_genes).T
-
-        logger.info("Calculating correlation on permuted data.")
-        self.gene_results.results.boot_corr[:, :] = spearman_correlation_bootstrap(permuted_imaging, ranked_genes)
         self.gene_results.results.genes = gene_labels
-        self.gene_results.results.sort_genes()
+
+        logger.info(
+            "Calculating correlation on permuted data (%d permutations, %d job%s).",
+            total_permutations,
+            self.n_jobs,
+            "" if self.n_jobs == 1 else "s",
+        )
+        bounds = _corr_chunk_bounds(total_permutations, self.gene_results.results.n_genes, self.n_jobs)
+        if self.n_jobs == 1 or len(bounds) == 1:
+            completed = 0
+            for start, end in bounds:
+                boot_chunk = spearman_correlation_bootstrap(permuted_imaging[:, start:end], ranked_genes)
+                self.gene_results.results.accumulate_boot_corr(boot_chunk, start=start)
+                completed += end - start
+                _log_permutation_progress(completed, total_permutations, step=progress_step)
+        else:
+            max_workers = min(self.n_jobs, len(bounds))
+
+            def _corr_chunk(bounds_: tuple[int, int]):
+                start, end = bounds_
+                return start, end, spearman_correlation_bootstrap(permuted_imaging[:, start:end], ranked_genes)
+
+            with ThreadPoolExecutor(max_workers=max_workers) as executor:
+                futures = [executor.submit(_corr_chunk, bound) for bound in bounds]
+                completed = 0
+                for future in as_completed(futures):
+                    start, end, boot_chunk = future.result()
+                    self.gene_results.results.accumulate_boot_corr(boot_chunk, start=start)
+                    completed += end - start
+                    _log_permutation_progress(completed, total_permutations, step=progress_step)
         self.gene_results.results.compute_pval()
+        self.gene_results.results.sort_genes()
         return
 
-    def gsea(self, gene_set="lake", outdir=None, gene_limit=1500, n_perm=1_000):  # pragma: no cover
+    def gsea(
+        self,
+        gene_set="lake",
+        outdir=None,
+        gene_limit=1500,
+        n_perm=1_000,
+        geneset_organism: str = "Human",
+    ):  # pragma: no cover
         """Run preranked GSEA on the correlation-based gene ranking.
 
         The observed enrichment score is taken from the ranked correlation
@@ -69,13 +139,15 @@ class CorrAnalysis:
         """
 
         assert isinstance(self.gene_results.results, CorrGenes)
+        if self.gene_results.results.boot_corr is None:
+            raise RuntimeError("Correlation GSEA requires stored permutation nulls. Re-run with GSEA enabled.")
         logger.info("Performing GSEA.")
         try:
             import gseapy
         except ImportError as exc:  # pragma: no cover - optional dependency
             raise ImportError("gseapy is required to run GSEA analyses.") from exc
 
-        gene_set = get_geneset(gene_set)
+        gene_set = resolve_geneset_resource(gene_set, organism=geneset_organism)
         gene_list = list(self.gene_results.results.genes[:, 0].tolist())
         rnk = make_prerank_table(gene_list, self.gene_results.results.corr[0, :])
         gsea_results = run_prerank(
@@ -123,7 +195,7 @@ class CorrAnalysis:
             assert outdir.exists()
             out_df.to_csv(outdir / "gsea_corr_results.tsv", index=False, sep="\t")
 
-    def ora(self, gene_set="lake", outdir=None, p_threshold=0.05):
+    def ora(self, gene_set="lake", outdir=None, p_threshold=0.05, geneset_organism: str = "Human"):
         """Run ORA on positive and negative correlation tails separately."""
 
         assert isinstance(self.gene_results.results, CorrGenes)
@@ -138,6 +210,7 @@ class CorrAnalysis:
         ora_tables = ora_from_gene_table(
             gene_table,
             gene_set=gene_set,
+            geneset_organism=geneset_organism,
             score_column="score",
             p_threshold=p_threshold,
         )

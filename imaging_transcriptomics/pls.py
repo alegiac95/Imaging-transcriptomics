@@ -40,7 +40,17 @@ def _chunk_bounds(total: int, n_jobs: int) -> list[tuple[int, int]]:
 class PLSAnalysis:
     """Perform PLS regression for the imaging transcriptomics workflows."""
 
-    def __init__(self, imaging_data, gene_exp, n_components: int, var: float, n_iter: int = 1000, n_jobs: int = 1):
+    def __init__(
+        self,
+        imaging_data,
+        gene_exp,
+        n_components: int,
+        var: float,
+        n_iter: int = 1000,
+        n_jobs: int = 1,
+        *,
+        store_gene_nulls: bool = True,
+    ):
         """Fit the initial PLS model and prepare storage for permutation results."""
 
         self._prepared_gene_exp = prepare_pls1(gene_exp)
@@ -59,6 +69,7 @@ class PLSAnalysis:
             n_components=self.n_components,
             n_iter=n_iter,
             n_genes=np.asarray(gene_exp).shape[1],
+            store_weights=store_gene_nulls,
         )
 
     @staticmethod

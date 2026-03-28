@@ -53,3 +53,32 @@ def test_ora_from_gene_table_splits_up_and_down_and_uses_p_threshold(tmp_path: P
     assert float(down.iloc[0]["odds_ratio"]) == 4.0
     assert float(down.iloc[0]["odds_ratio_ci_low"]) < float(down.iloc[0]["odds_ratio"])
     assert float(down.iloc[0]["odds_ratio_ci_high"]) > float(down.iloc[0]["odds_ratio"])
+
+
+def test_ora_from_gene_table_accepts_remote_library_dict(monkeypatch):
+    gene_table = pd.DataFrame(
+        {
+            "gene": ["A", "B", "C", "D"],
+            "score": [1.0, 0.9, -1.0, -0.8],
+            "p_value": [0.01, 0.02, 0.01, 0.02],
+        }
+    )
+
+    monkeypatch.setattr(
+        "imaging_transcriptomics.ora.load_ora_genesets",
+        lambda gene_set, organism="Human": {
+            "RemoteUp": {"A", "B"},
+            "RemoteDown": {"C", "D"},
+        },
+    )
+
+    tables = ora_from_gene_table(
+        gene_table,
+        gene_set="FakeRemoteLibrary",
+        geneset_organism="Mouse",
+        score_column="score",
+        p_threshold=0.05,
+    )
+
+    assert tables["up"].iloc[0]["Term"] == "RemoteUp"
+    assert tables["down"].iloc[0]["Term"] == "RemoteDown"

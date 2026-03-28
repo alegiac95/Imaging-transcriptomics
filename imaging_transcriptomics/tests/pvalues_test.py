@@ -5,10 +5,6 @@ from pathlib import Path
 
 import numpy as np
 import pytest
-from scipy.stats import norm
-from statsmodels.stats.multitest import multipletests
-
-
 PACKAGE_ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -33,7 +29,7 @@ def _make_small_pls_genes(n_iter):
     return pls_genes
 
 
-def test_pls_gene_compute_uses_two_sided_pvalues_and_unsorted_bh():
+def test_pls_gene_compute_uses_empirical_signed_pvalues_and_bh():
     pls_genes = _make_small_pls_genes(n_iter=3)
     pls_genes.orig.genes[0, :] = np.array(["A", "B", "C"], dtype=object)
     pls_genes.orig.weights[0, :] = np.array([10.0, -10.0, 1.0])
@@ -46,8 +42,8 @@ def test_pls_gene_compute_uses_two_sided_pvalues_and_unsorted_bh():
     pls_genes.compute()
 
     sorted_z = np.array([10.0, 1.0, -10.0])
-    expected_pval = 2 * norm.sf(np.abs(sorted_z))
-    expected_fdr = multipletests(expected_pval, method="fdr_bh")[1]
+    expected_pval = np.array([0.75, 0.75, 0.75])
+    expected_fdr = np.array([0.75, 0.75, 0.75])
     expected_fwer = np.array([1.0, 1.0, 1.0])
 
     np.testing.assert_allclose(pls_genes.boot.z_score[0, :], sorted_z)
