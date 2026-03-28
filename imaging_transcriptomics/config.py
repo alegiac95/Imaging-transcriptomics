@@ -5,13 +5,15 @@ from pathlib import Path
 
 from .atlas_registry import normalize_atlas_id
 from .exceptions import ConfigurationError
-from .models import AnalysisMethod, HemisphereMode, RegionScope
+from .models import AnalysisMethod, HemisphereMode, NullMethod, RegionScope
+from .validation import ensure_choice, ensure_positive_int, ensure_probability
 
 
 DEFAULT_PERMUTATIONS = 1000
 DEFAULT_NULL_METHOD = "auto"
 DEFAULT_SEED = 1234
 DEFAULT_N_JOBS = 1
+DEFAULT_GENESET_ORGANISM = "Human"
 VALID_HEMISPHERES = {"left", "both"}
 VALID_REGIONS = {"all", "cort", "cort+sub"}
 VALID_METHODS = {"corr", "pls"}
@@ -28,10 +30,11 @@ class RunConfig:
     regions: RegionScope = "all"
     source_space: str | None = None
     n_permutations: int = DEFAULT_PERMUTATIONS
-    null_method: str = DEFAULT_NULL_METHOD
+    null_method: NullMethod = DEFAULT_NULL_METHOD
     output_dir: Path | None = None
     run_gsea: bool = False
     gene_set: str = "lake"
+    geneset_organism: str = DEFAULT_GENESET_ORGANISM
     ora_p_threshold: float | None = None
     n_components: int | None = None
     var: float | None = None
@@ -61,6 +64,7 @@ def build_run_config(
     output_dir: str | Path | None = None,
     run_gsea: bool = False,
     gene_set: str = "lake",
+    geneset_organism: str = DEFAULT_GENESET_ORGANISM,
     ora_p_threshold: float | None = None,
     n_components: int | None = None,
     var: float | None = None,
@@ -74,39 +78,25 @@ def build_run_config(
     null model, enrichment settings, and PLS-specific options.
     """
 
-    method = str(method).lower()
-    if method not in VALID_METHODS:
-        valid = ", ".join(sorted(VALID_METHODS))
-        raise ConfigurationError(f"Unknown method '{method}'. Expected one of: {valid}.")
-
+    method = ensure_choice(method, VALID_METHODS, name="method")
     atlas_id = normalize_atlas_id(atlas)
-    if hemisphere not in VALID_HEMISPHERES:
-        raise ConfigurationError("hemisphere must be either 'left' or 'both'.")
-    if regions not in VALID_REGIONS:
-        raise ConfigurationError("regions must be one of 'all', 'cort', or 'cort+sub'.")
-
-    n_permutations = int(n_permutations)
-    if n_permutations < 1:
-        raise ConfigurationError("n_permutations must be at least 1.")
-    if null_method not in VALID_NULL_METHODS:
-        valid = ", ".join(sorted(VALID_NULL_METHODS))
-        raise ConfigurationError(f"Unknown null_method '{null_method}'. Expected one of: {valid}.")
-    if ora_p_threshold is not None and not 0 < float(ora_p_threshold) <= 1:
-        raise ConfigurationError("ora_p_threshold must be in the interval (0, 1].")
+    hemisphere = ensure_choice(hemisphere, VALID_HEMISPHERES, name="hemisphere")
+    regions = ensure_choice(regions, VALID_REGIONS, name="regions")
+    n_permutations = ensure_positive_int(n_permutations, name="n_permutations")
+    null_method = ensure_choice(null_method, VALID_NULL_METHODS, name="null_method")
+    ora_p_threshold = None if ora_p_threshold is None else ensure_probability(ora_p_threshold, name="ora_p_threshold")
 
     seed = int(seed)
-    n_jobs = int(n_jobs)
-    if n_jobs < 1:
-        raise ConfigurationError("n_jobs must be at least 1.")
+    n_jobs = ensure_positive_int(n_jobs, name="n_jobs")
     resolved_output = ensure_output_dir(output_dir)
 
     if method == "pls":
         if n_components is None and var is None:
             raise ConfigurationError("PLS runs require either n_components or var.")
-        if n_components is not None and int(n_components) < 1:
-            raise ConfigurationError("n_components must be at least 1.")
-        if var is not None and not 0 < float(var) <= 1:
-            raise ConfigurationError("var must be in the interval (0, 1].")
+        if n_components is not None:
+            n_components = ensure_positive_int(n_components, name="n_components")
+        if var is not None:
+            var = ensure_probability(var, name="var")
 
     return RunConfig(
         method=method,
@@ -119,9 +109,10 @@ def build_run_config(
         output_dir=resolved_output,
         run_gsea=bool(run_gsea),
         gene_set=gene_set,
-        ora_p_threshold=None if ora_p_threshold is None else float(ora_p_threshold),
-        n_components=None if n_components is None else int(n_components),
-        var=None if var is None else float(var),
+        geneset_organism=str(geneset_organism),
+        ora_p_threshold=ora_p_threshold,
+        n_components=n_components,
+        var=var,
         seed=seed,
         n_jobs=n_jobs,
     )

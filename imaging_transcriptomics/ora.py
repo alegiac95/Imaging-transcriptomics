@@ -7,7 +7,8 @@ import pandas as pd
 from scipy.stats import hypergeom, norm
 from statsmodels.stats.multitest import multipletests
 
-from .genesets import get_geneset
+from .genesets import resolve_geneset_resource
+from .validation import ensure_probability
 
 
 ORA_COLUMNS = [
@@ -52,15 +53,25 @@ def _parse_gmt(path: Path) -> dict[str, set[str]]:
     return genesets
 
 
-def load_ora_genesets(gene_set: str) -> dict[str, set[str]]:
-    """Resolve and load a GMT geneset resource for ORA."""
+def load_ora_genesets(gene_set: str, organism: str = "Human") -> dict[str, set[str]]:
+    """Resolve and load a GMT or Enrichr geneset resource for ORA."""
 
-    resolved = get_geneset(gene_set)
+    resolved = resolve_geneset_resource(gene_set, organism=organism)
+    if isinstance(resolved, dict):
+        genesets = {
+            term: {gene.strip().upper() for gene in genes if str(gene).strip()}
+            for term, genes in resolved.items()
+        }
+        genesets = {term: genes for term, genes in genesets.items() if genes}
+        if not genesets:
+            raise ValueError(f"No valid gene sets were found in the remote library {gene_set!r}.")
+        return genesets
+
     path = Path(resolved)
     if not path.exists() or not path.is_file() or path.suffix != ".gmt":
         raise ValueError(
-            "ORA currently supports packaged gene sets or local .gmt files. "
-            f"Received {gene_set!r}, which resolved to {resolved!r}."
+            "ORA currently supports packaged gene sets, Enrichr library names, "
+            f"or local .gmt files. Received {gene_set!r}, which resolved to {resolved!r}."
         )
     return _parse_gmt(path)
 
@@ -143,20 +154,20 @@ def ora_from_gene_table(
     gene_table: pd.DataFrame,
     *,
     gene_set: str,
+    geneset_organism: str = "Human",
     score_column: str,
     p_value_column: str = "p_value",
     p_threshold: float = 0.05,
 ) -> dict[str, pd.DataFrame]:
     """Run ORA on significant positive and negative gene sets from one table."""
 
-    if not 0 < float(p_threshold) <= 1:
-        raise ValueError("ORA p-threshold must be in the interval (0, 1].")
+    p_threshold = ensure_probability(p_threshold, name="ORA p-threshold")
     required = {"gene", score_column, p_value_column}
     missing = sorted(required - set(gene_table.columns))
     if missing:
         raise ValueError(f"Gene table is missing required columns: {', '.join(missing)}")
 
-    genesets = load_ora_genesets(gene_set)
+    genesets = load_ora_genesets(gene_set, organism=geneset_organism)
     working = gene_table.copy()
     working["gene"] = working["gene"].astype(str)
     working["gene_upper"] = working["gene"].str.upper()
