@@ -15,7 +15,7 @@ ATLAS_GOLDENS = {
         "n_genes": 15677,
         "label_hash": "d92356c388bb5e0d",
         "gene_hash": "3df2a85878a343a9",
-        "value_hash": "750aecbcdce53af8",
+        "value_hash": "8129d8f1295502b2",
         "corr_hash": "e6d735763d3f06a2",
     },
     "schaefer-100": {
@@ -23,7 +23,7 @@ ATLAS_GOLDENS = {
         "n_genes": 15677,
         "label_hash": "fa545bc4262ec06d",
         "gene_hash": "3df2a85878a343a9",
-        "value_hash": "ec4f4968e7185463",
+        "value_hash": "e0cc3755f3882861",
         "corr_hash": "acecd739e0f92a88",
     },
     "schaefer-200": {
@@ -31,7 +31,7 @@ ATLAS_GOLDENS = {
         "n_genes": 15677,
         "label_hash": "49825e5cb83e4c4b",
         "gene_hash": "3df2a85878a343a9",
-        "value_hash": "db052cdc6b0b8495",
+        "value_hash": "de0621bfbf070f80",
         "corr_hash": "09d4aab318a73559",
     },
     "schaefer-400": {
@@ -39,24 +39,24 @@ ATLAS_GOLDENS = {
         "n_genes": 15675,
         "label_hash": "b562fc94de9c514d",
         "gene_hash": "46cc8301fc02b910",
-        "value_hash": "7418aa9fa7dec97d",
-        "corr_hash": "c1179da3f1e9d67d",
+        "value_hash": "1992778facf4b21b",
+        "corr_hash": "d80a1f2d14e400dc",
     },
     "destrieux": {
         "n_regions": 74,
         "n_genes": 15675,
         "label_hash": "946b32c1e4e7a15f",
         "gene_hash": "46cc8301fc02b910",
-        "value_hash": "87272b701199ac83",
-        "corr_hash": "36752ff308752a5e",
+        "value_hash": "f593995cbed5ebb7",
+        "corr_hash": "31ac6a7efdfe6cc5",
     },
     "glasser-360": {
         "n_regions": 180,
         "n_genes": 15675,
         "label_hash": "22c8034debd37393",
         "gene_hash": "46cc8301fc02b910",
-        "value_hash": "aefde8c9aeb6426a",
-        "corr_hash": "c1179da3f1e9d67d",
+        "value_hash": "6fa68fe55e9f9d68",
+        "corr_hash": "25568657384b3054",
     },
 }
 

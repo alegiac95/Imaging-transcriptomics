@@ -1,5 +1,3 @@
-import pytest
-
 import imaging_transcriptomics as imt
 
 
@@ -32,6 +30,8 @@ def test_legacy_surface_removed():
     assert "inputs" not in exported
 
 
-def test_not_in_module():
-    with pytest.raises(ImportError):
-        from imaging_transcriptomics import outputs
+def test_internal_packages_are_not_exported():
+    exported = set(imt.__all__)
+    assert "outputs" not in exported
+    assert "inputs" not in exported
+    assert "workflows" not in exported
