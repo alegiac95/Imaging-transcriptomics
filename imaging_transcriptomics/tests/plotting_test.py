@@ -10,7 +10,16 @@ from imaging_transcriptomics.models import (
     PLSComponentResult,
     PLSResult,
 )
-from imaging_transcriptomics.plotting import save_result_plots
+from imaging_transcriptomics.plotting import (
+    _ora_heatmap_frame,
+    _load_surface_parcellation,
+    _surface_value_frames,
+    _vertex_values_for_hemisphere,
+    plot_cortical_surface_map,
+    save_result_plots,
+)
+from imaging_transcriptomics import select_atlas_data
+from imaging_transcriptomics.atlas_registry import get_atlas
 
 
 def _gsea_table() -> pd.DataFrame:
@@ -75,7 +84,7 @@ def test_save_result_plots_writes_corr_gsea_dotplot(tmp_path: Path):
             source_space=None,
             n_permutations=8,
         ),
-        regional_values=pd.DataFrame({"label": ["a", "b", "c"], "value": [0.1, -0.2, 0.3]}),
+        regional_values=pd.DataFrame({"id": [1, 2, 3], "label": ["a", "b", "c"], "value": [0.1, -0.2, 0.3]}),
         gene_table=pd.DataFrame(
             {
                 "gene": ["A", "B", "C"],
@@ -91,8 +100,10 @@ def test_save_result_plots_writes_corr_gsea_dotplot(tmp_path: Path):
 
     paths = save_result_plots(result, tmp_path)
 
+    assert tmp_path.joinpath("plots", "regional_values_brain.png").exists()
     assert tmp_path.joinpath("plots", "gsea_corr_dotplot.png").exists()
     assert tmp_path.joinpath("plots", "ora_corr_heatmap.png").exists()
+    assert any(path.name == "regional_values_brain.png" for path in paths)
     assert any(path.name == "gsea_corr_dotplot.png" for path in paths)
     assert any(path.name == "ora_corr_heatmap.png" for path in paths)
 
@@ -127,15 +138,17 @@ def test_save_result_plots_writes_pls_gsea_dotplot(tmp_path: Path):
             n_permutations=8,
             n_components=1,
         ),
-        regional_values=pd.DataFrame({"label": ["a", "b", "c"], "value": [0.1, -0.2, 0.3]}),
+        regional_values=pd.DataFrame({"id": [1, 2, 3], "label": ["a", "b", "c"], "value": [0.1, -0.2, 0.3]}),
         components=(component,),
         cumulative_variance=np.array([0.2]),
     )
 
     paths = save_result_plots(result, tmp_path)
 
+    assert tmp_path.joinpath("plots", "regional_values_brain.png").exists()
     assert tmp_path.joinpath("plots", "gsea_pls1_dotplot.png").exists()
     assert tmp_path.joinpath("plots", "ora_pls1_heatmap.png").exists()
+    assert any(path.name == "regional_values_brain.png" for path in paths)
     assert any(path.name == "gsea_pls1_dotplot.png" for path in paths)
     assert any(path.name == "ora_pls1_heatmap.png" for path in paths)
 
@@ -170,14 +183,86 @@ def test_save_result_plots_writes_gene_pca_plots(tmp_path: Path):
             }
         ),
         matched_genes=("A", "B", "C"),
+        brain_filtered_genes=(),
         missing_genes=(),
     )
 
     paths = save_result_plots(result, tmp_path)
 
     assert tmp_path.joinpath("plots", "gene_pca_variance.png").exists()
+    assert tmp_path.joinpath("plots", "gene_pca_pc1_brain.png").exists()
     assert tmp_path.joinpath("plots", "gene_pca_pc1_regions.png").exists()
     assert tmp_path.joinpath("plots", "gene_pca_pc1_loadings.png").exists()
+    assert tmp_path.joinpath("plots", "gene_pca_pc2_brain.png").exists()
     assert tmp_path.joinpath("plots", "gene_pca_pc2_regions.png").exists()
     assert tmp_path.joinpath("plots", "gene_pca_pc2_loadings.png").exists()
     assert any(path.name == "gene_pca_variance.png" for path in paths)
+    assert any(path.name == "gene_pca_pc1_brain.png" for path in paths)
+
+
+def test_plot_cortical_surface_map_writes_glasser_surface_plot(tmp_path: Path):
+    selection = select_atlas_data(atlas="glasser-360", hemisphere="left", regions="all")
+    regional = selection.labels.assign(value=np.linspace(-1.0, 1.0, selection.n_regions))
+
+    path = plot_cortical_surface_map(
+        regional,
+        atlas_id="glasser-360",
+        value_column="value",
+        title="Glasser cortical map",
+        output_path=tmp_path / "glasser_cortex.png",
+    )
+
+    assert path is not None
+    assert path.exists()
+
+
+def test_ora_heatmap_frame_limits_large_term_sets_to_top_25():
+    terms = [f"Term {index}" for index in range(40)]
+    frame = pd.DataFrame(
+        {
+            "Term": terms,
+            "odds_ratio": np.linspace(2.0, 5.0, 40),
+            "fdr": np.linspace(0.2, 0.9, 40),
+        }
+    )
+
+    heatmap = _ora_heatmap_frame({"up": frame, "down": pd.DataFrame()})
+
+    assert heatmap is not None
+    term_order, matrix, annotations = heatmap
+    assert len(term_order) == 25
+    assert matrix.shape == (2, 25)
+    assert annotations.shape == (2, 25)
+
+
+def test_ora_heatmap_frame_prefers_significant_terms_only_when_present():
+    frame = pd.DataFrame(
+        {
+            "Term": ["sig_a", "sig_b", "nonsig_a", "nonsig_b"],
+            "odds_ratio": [4.0, 3.5, 2.0, 1.8],
+            "fdr": [0.001, 0.04, 0.2, 0.7],
+        }
+    )
+
+    heatmap = _ora_heatmap_frame({"up": frame, "down": pd.DataFrame()})
+
+    assert heatmap is not None
+    term_order, _, _ = heatmap
+    assert term_order == ["sig_a", "sig_b"]
+
+
+def test_surface_value_mapping_handles_bilateral_dk_surface_ids():
+    selection = select_atlas_data(atlas="dk", hemisphere="both", regions="all")
+    regional = selection.labels.assign(value=np.linspace(-1.0, 1.0, selection.n_regions))
+    frames = _surface_value_frames(regional)
+    atlas = get_atlas("dk")
+
+    label_array, code_to_name = _load_surface_parcellation(str(atlas.surface_paths[1]))
+    vertex_values = _vertex_values_for_hemisphere(
+        frames["right"],
+        value_column="value",
+        label_array=label_array,
+        code_to_name=code_to_name,
+    )
+
+    assert np.isfinite(vertex_values).any()

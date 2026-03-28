@@ -58,6 +58,14 @@ def test_select_atlas_data_supports_left_and_both_hemispheres():
     assert {"L", "R", "B"}.issubset(set(both.labels["hemisphere"]))
 
 
+def test_select_atlas_data_keeps_glasser_expression_finite():
+    selection = select_atlas_data(atlas="glasser-360", hemisphere="both", regions="all")
+    matrix = selection.expression.iloc[:, 2:].to_numpy(dtype=float)
+
+    assert matrix.shape[0] == 360
+    assert np.isfinite(matrix).all()
+
+
 def test_surface_density_is_inferred_from_packaged_parcellations():
     assert infer_surface_density(get_atlas("dk"), "left") == "10k"
     assert infer_surface_density(get_atlas("schaefer-100"), "left") == "10k"
@@ -96,14 +104,15 @@ def test_run_corr_writes_readme_tables_and_plots(tmp_path, monkeypatch):
 
     assert result.gene_table.shape[0] == select_atlas_data(atlas="dk", hemisphere="left", regions="all").gene_labels.shape[0]
     assert result.metadata.null_method == "moran"
-    assert list(result.gene_table.columns) == ["gene", "score", "p_value", "fdr", "fwer_maxT"]
+    assert list(result.gene_table.columns) == ["gene", "score", "p", "fdr", "maxT"]
     assert (tmp_path / "README.txt").exists()
     assert (tmp_path / "metadata.json").exists()
     assert (tmp_path / "regional_values.tsv").exists()
     assert (tmp_path / "corr_genes.tsv").exists()
     assert (tmp_path / "ora_corr_up.tsv").exists()
     assert (tmp_path / "ora_corr_down.tsv").exists()
-    assert (tmp_path / "plots" / "regional_values.png").exists()
+    assert (tmp_path / "plots" / "regional_values_brain.png").exists()
+    assert (tmp_path / "plots" / "regional_values_cortex.png").exists()
     assert (tmp_path / "plots" / "corr_top_genes.png").exists()
     assert (tmp_path / "plots" / "corr_distribution.png").exists()
     assert (tmp_path / "plots" / "ora_corr_heatmap.png").exists()
@@ -193,7 +202,8 @@ def test_run_pls_reuses_original_and_permuted_fits_once(monkeypatch):
         zvalues = values / std if std else values
         return np.tile(zvalues.reshape(-1, 1), (1, n_permutations)), null_method
 
-    def fake_fit(gene_exp, imaging_data, n_components: int):
+    def fake_fit(gene_exp, imaging_data, n_components: int, **kwargs):
+        del kwargs
         fit_calls.append(int(n_components))
         n_samples = np.asarray(imaging_data, dtype=float).shape[0]
         n_genes = gene_exp.X.shape[1] if hasattr(gene_exp, "X") else np.asarray(gene_exp, dtype=float).shape[1]
@@ -222,7 +232,7 @@ def test_run_pls_reuses_original_and_permuted_fits_once(monkeypatch):
 
     assert result.metadata.method == "pls"
     assert len(result.components) == 1
-    assert list(result.components[0].gene_table.columns) == ["gene", "weight", "zscore", "p_value", "fdr", "fwer_maxT"]
+    assert list(result.components[0].gene_table.columns) == ["gene", "weight", "zscore", "p", "fdr", "maxT"]
     assert fit_calls.count(1) == 4
     assert len(fit_calls) == 5
 
@@ -261,6 +271,32 @@ def test_extract_scan_data_resamples_explicit_mni_volume(tmp_path: Path):
     assert extracted.values.shape == (41,)
     assert np.isfinite(extracted.values).all()
     assert np.allclose(extracted.values, 1.0, atol=1e-3)
+
+
+def test_extract_scan_data_accepts_multidot_nifti_filename(tmp_path: Path):
+    affine = np.array(
+        [
+            [-3.0, 0.0, 0.0, 90.0],
+            [0.0, 3.0, 0.0, -126.0],
+            [0.0, 0.0, 3.0, -72.0],
+            [0.0, 0.0, 0.0, 1.0],
+        ],
+        dtype=float,
+    )
+    image = nib.Nifti1Image(np.ones((61, 73, 61), dtype=np.float32), affine)
+    path = tmp_path / "5-HTT.mean.bmax.mrtm2.nopvc.MNI152.sm5.nii.gz"
+    nib.save(image, path)
+
+    extracted = extract_scan_data(
+        path,
+        atlas="dk",
+        hemisphere="left",
+        regions="all",
+        source_space="MNI152",
+    )
+
+    assert extracted.values.shape == (41,)
+    assert np.isfinite(extracted.values).all()
 
 
 def test_corr_gsea_writes_results_with_outdir(tmp_path: Path, monkeypatch):
