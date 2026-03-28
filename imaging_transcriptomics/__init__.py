@@ -18,6 +18,7 @@ from .exceptions import (
     PlottingUnavailableError,
 )
 from .gene_expression import load_expression_frame, load_gene_labels, select_atlas_data
+from .gedar import run_gedar
 from .gene_pca import run_gene_pca
 from .models import (
     AnalysisMetadata,
@@ -25,6 +26,7 @@ from .models import (
     AtlasSpec,
     CorrelationResult,
     ExtractedScan,
+    GEDARResult,
     GenePCAResult,
     PLSComponentResult,
     PLSResult,
@@ -40,6 +42,7 @@ __all__ = [
     "AtlasSpec",
     "ConfigurationError",
     "CorrelationResult",
+    "GEDARResult",
     "ExtractedScan",
     "GenePCAResult",
     "ImagingTranscriptomicsError",
@@ -61,6 +64,7 @@ __all__ = [
     "regional_values_frame",
     "run_analysis",
     "run_corr",
+    "run_gedar",
     "run_gene_pca",
     "run_pls",
     "select_atlas_data",

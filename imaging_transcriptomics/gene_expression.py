@@ -13,6 +13,8 @@ from .models import AtlasSelection, AtlasSpec, HemisphereMode, RegionScope
 
 VALID_HEMISPHERES = {"left", "both"}
 VALID_REGION_SCOPES = {"all", "cort", "cort+sub"}
+DATA_DIR = Path(__file__).resolve().parent / "data"
+AHPA_BRAIN_GENES_PATH = DATA_DIR / "filters" / "AHPA_mrna_brain.tsv"
 
 
 def _packaged_atlas_spec(atlas: str) -> AtlasSpec:
@@ -78,6 +80,30 @@ def _read_gene_labels_cached(path: str) -> np.ndarray:
     """Read gene labels once per packaged file path."""
 
     return np.load(path, allow_pickle=False).astype(str, copy=False)
+
+
+def load_brain_gene_symbols() -> tuple[str, ...]:
+    """Load the packaged AHPA brain gene filter as uppercase gene symbols."""
+
+    return _load_brain_gene_symbols_cached(str(AHPA_BRAIN_GENES_PATH))
+
+
+@lru_cache(maxsize=1)
+def _load_brain_gene_symbols_cached(path: str) -> tuple[str, ...]:
+    """Read the packaged AHPA brain gene list once per process."""
+
+    table = pd.read_csv(path, sep="\t")
+    if "Gene" not in table.columns:
+        raise AtlasAssetError("The packaged AHPA brain gene file is missing the required 'Gene' column.")
+    genes = (
+        table["Gene"]
+        .astype("string")
+        .dropna()
+        .str.strip()
+        .str.upper()
+    )
+    genes = genes.loc[genes != ""].drop_duplicates()
+    return tuple(genes.tolist())
 
 
 def _filter_labels(
@@ -205,11 +231,12 @@ def select_atlas_data(
     atlas: str = "dk",
     hemisphere: HemisphereMode = "left",
     regions: RegionScope = "all",
+    zscore_expression: bool = True,
 ) -> AtlasSelection:
     """Load the packaged labels and expression data for one atlas subset.
 
     This is the main atlas-loading helper used by the analysis workflows. It
-    returns both the filtered region metadata and the z-scored expression matrix
+    returns both the filtered region metadata and the selected expression matrix
     wrapped in an :class:`~imaging_transcriptomics.models.AtlasSelection`.
     """
 
@@ -223,7 +250,7 @@ def select_atlas_data(
         spec,
         hemisphere=hemisphere,
         regions=regions,
-        zscore_expression=True,
+        zscore_expression=zscore_expression,
     )
     return AtlasSelection(
         atlas=spec,
