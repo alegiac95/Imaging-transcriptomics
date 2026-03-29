@@ -21,4 +21,5 @@ Each workflow page should explain:
    workflows/correlation
    workflows/pls
    workflows/gene_pca
+   workflows/gedar
    workflows/enrichment
