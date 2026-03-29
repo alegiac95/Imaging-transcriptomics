@@ -49,7 +49,7 @@ For every gene in the atlas expression matrix, the workflow:
 1. rank-transforms the imaging vector across regions
 2. rank-transforms the gene expression values across regions
 3. standardizes both ranked vectors
-4. computes a Spearman-like correlation
+4. computes a rank-based correlation
 
 The observed statistic for gene ``g`` is:
 
@@ -59,9 +59,10 @@ The observed statistic for gene ``g`` is:
 
 where :math:`n` is the number of atlas rows in the selected subset.
 
-This is very close to Spearman correlation, but ties are resolved by stable
-ordering instead of average ranks. That detail improves speed and
-reproducibility for large gene matrices.
+This is equivalent to Spearman rank correlation when there are no ties. When
+ties are present, the implementation resolves them by stable ordering instead
+of average ranks, which keeps the computation fast and deterministic for large
+gene matrices.
 
 Null model and p-values
 -----------------------

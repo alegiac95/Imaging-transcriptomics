@@ -31,7 +31,7 @@ in the atlas expression matrix.
 Observed statistic
 ~~~~~~~~~~~~~~~~~~
 
-The current implementation computes a Spearman-like correlation by ranking the
+The current implementation computes a rank-based correlation by ranking the
 imaging vector and each gene across regions, standardizing those ranks, and
 then taking a dot product:
 
@@ -48,11 +48,12 @@ where:
 Two implementation details matter:
 
 - ranks are produced with a stable sort, so exact ties are broken by order
-  rather than by average rank
+  rather than by average rank as in textbook Spearman correlation
 - standardization uses the sample standard deviation with ``ddof=1``
 
-This makes the workflow very close to Spearman correlation while keeping the
-computation fully vectorized across genes.
+This makes the workflow equivalent to Spearman rank correlation when there are
+no ties, and a deterministic tie-broken variant when ties are present, while
+keeping the computation fully vectorized across genes.
 
 Null distribution
 ~~~~~~~~~~~~~~~~~
