@@ -12,14 +12,14 @@ Notation
 
 Throughout this page:
 
-- ``n`` is the number of selected atlas regions
-- ``p`` is the number of genes in the selected atlas expression matrix
-- ``B`` is the number of imaging permutations
-- ``x`` is the observed regional imaging vector with shape ``n x 1``
-- ``X`` is the atlas expression matrix with shape ``n x p``
-- ``x^(b)`` is the ``b``\ th permuted imaging vector
+- :math:`n` is the number of selected atlas regions
+- :math:`p` is the number of genes in the selected atlas expression matrix
+- :math:`B` is the number of imaging permutations
+- :math:`x` is the observed regional imaging vector with shape :math:`n \times 1`
+- :math:`X` is the atlas expression matrix with shape :math:`n \times p`
+- :math:`x^{(b)}` is the :math:`b`\ th permuted imaging vector
 
-The package always works on the selected atlas subset, so ``n`` changes with
+The package always works on the selected atlas subset, so :math:`n` changes with
 the chosen atlas, hemisphere, and region scope.
 
 Correlation workflow
@@ -41,9 +41,9 @@ then taking a dot product:
 
 where:
 
-- ``g`` is one gene-expression column from ``X``
-- ``tilde{x}`` is the standardized rank vector of the imaging values
-- ``tilde{g}`` is the standardized rank vector of one gene
+- :math:`g` is one gene-expression column from :math:`X`
+- :math:`\tilde{x}` is the standardized rank vector of the imaging values
+- :math:`\tilde{g}` is the standardized rank vector of one gene
 
 Two implementation details matter:
 
@@ -131,12 +131,12 @@ response and the atlas expression matrix is the predictor matrix.
 Model
 ~~~~~
 
-Let ``X`` be the ``n x p`` atlas expression matrix and ``y`` the imaging
+Let :math:`X` be the :math:`n \times p` atlas expression matrix and :math:`y` the imaging
 vector. The toolbox uses a local PLS-1 backend derived from the SIMPLS
 algorithm.
 
-For each component ``k`` it finds a weight vector ``w_k`` and component score
-vector ``t_k`` such that:
+For each component :math:`k` it finds a weight vector :math:`w_k` and component score
+vector :math:`t_k` such that:
 
 .. math::
 
@@ -172,14 +172,14 @@ PLS significance is evaluated by fitting the same number of components to each
 permuted imaging vector. For each permutation the workflow recomputes the
 cumulative explained variance curve and compares it with the observed one.
 
-For component ``k``:
+For component :math:`k`:
 
 .. math::
 
    p_k =
    \frac{1 + \sum_{b=1}^{B} I(R_{k,\mathrm{perm}}^{(b)} \ge R_{k,\mathrm{obs}})}{B + 1}
 
-where ``R_k`` is the cumulative variance explained through component ``k``.
+where :math:`R_k` is the cumulative variance explained through component :math:`k`.
 
 This means the component p-value is attached to the cumulative model up to that
 component, not only to the marginal increment of the single component.

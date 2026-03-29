@@ -4,6 +4,11 @@ GEDAR workflow
 
 This page is the user guide for ``imt gedar`` and ``run_gedar()``.
 
+.. image:: ../images/gene_pattern_workflow.svg
+   :alt: Schematic of gene-centered workflows from filtering and atlas matching through GEDAR and gene PCA outputs.
+   :width: 100%
+   :align: center
+
 What the workflow does
 ----------------------
 
@@ -60,8 +65,8 @@ Score definition
 
 Let:
 
-- ``x_{r,g}`` be atlas expression for region ``r`` and gene ``g``
-- ``w_g`` be the retained gene weight
+- :math:`x_{r,g}` be atlas expression for region :math:`r` and gene :math:`g`
+- :math:`w_g` be the retained gene weight
 
 In ``combined`` mode the GEDAR score is the weighted average:
 

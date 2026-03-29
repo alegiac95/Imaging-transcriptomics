@@ -4,6 +4,11 @@ PLS workflow
 
 This page is the user guide for ``imt pls`` and ``run_pls()``.
 
+.. image:: ../images/imaging_map_workflow.svg
+   :alt: Schematic of the imaging-map workflow from atlas extraction through null generation and enrichment.
+   :width: 100%
+   :align: center
+
 What the workflow answers
 -------------------------
 
@@ -34,13 +39,13 @@ You also need either:
 Core model
 ----------
 
-Let ``X`` be the atlas expression matrix and ``y`` the imaging vector. The
+Let :math:`X` be the atlas expression matrix and :math:`y` the imaging vector. The
 toolbox uses a local PLS-1 implementation based on SIMPLS.
 
-For each component ``k`` the model produces:
+For each component :math:`k` the model produces:
 
-- a gene weight vector ``w_k``
-- a regional score vector ``t_k = X w_k``
+- a gene weight vector :math:`w_k`
+- a regional score vector :math:`t_k = X w_k`
 - a per-component explained response variance
 
 The key practical point is that PLS models the imaging vector against the full
@@ -87,7 +92,7 @@ variance. The reported component ``p`` in ``pls_summary.tsv`` is:
    p_k =
    \frac{1 + \sum_{b=1}^{B} I(R_{k,\mathrm{perm}}^{(b)} \ge R_{k,\mathrm{obs}})}{B + 1}
 
-where ``R_k`` is the cumulative explained variance through component ``k``.
+where :math:`R_k` is the cumulative explained variance through component :math:`k`.
 
 So the p-value for component 2 is really about the first two components taken
 together, not only about the incremental variance unique to the second

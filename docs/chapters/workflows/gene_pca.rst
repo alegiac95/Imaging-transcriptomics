@@ -4,6 +4,11 @@ Gene-list PCA workflow
 
 This page is the user guide for ``imt gene-pca`` and ``run_gene_pca()``.
 
+.. image:: ../images/gene_pattern_workflow.svg
+   :alt: Schematic of gene-centered workflows from filtering and atlas matching through GEDAR and gene PCA outputs.
+   :width: 100%
+   :align: center
+
 What the workflow does
 ----------------------
 
@@ -50,18 +55,18 @@ clear error.
 Standardization and PCA
 -----------------------
 
-Let ``X`` be the selected ``regions x genes`` expression matrix after
+Let :math:`X` be the selected :math:`\mathrm{regions} \times \mathrm{genes}` expression matrix after
 filtering. The workflow standardizes each gene across regions and then runs PCA
 on that matrix.
 
-So if ``X_j`` is one retained gene column:
+So if :math:`X_j` is one retained gene column:
 
 .. math::
 
    Z_j = \frac{X_j - \bar{X}_j}{s_j}
 
-where ``s_j`` is the sample standard deviation across regions. PCA is then run
-on the standardized matrix ``Z``.
+where :math:`s_j` is the sample standard deviation across regions. PCA is then run
+on the standardized matrix :math:`Z`.
 
 This means the principal components reflect covariance structure across genes
 after putting the genes on a comparable scale.

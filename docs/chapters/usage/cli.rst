@@ -1,6 +1,6 @@
-=====================
+======================
 Command-line interface
-=====================
+======================
 
 The command-line interface is the quickest way to run the packaged workflows.
 The recommended executable is ``imt``. The longer legacy name

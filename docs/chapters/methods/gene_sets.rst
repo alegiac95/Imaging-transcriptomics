@@ -62,9 +62,9 @@ classic GSEA and GSEApy:
 
 where:
 
-- ``ES_t`` is the observed enrichment score for term ``t``
-- ``ES_{t,\mathrm{null}}^{+}`` are positive null enrichment scores for the same term
-- ``ES_{t,\mathrm{null}}^{-}`` are negative null enrichment scores for the same term
+- :math:`ES_t` is the observed enrichment score for term :math:`t`
+- :math:`ES_{t,\mathrm{null}}^{+}` are positive null enrichment scores for the same term
+- :math:`ES_{t,\mathrm{null}}^{-}` are negative null enrichment scores for the same term
 
 The sign-specific mean prevents positive and negative terms from being
 normalized against incompatible null tails.

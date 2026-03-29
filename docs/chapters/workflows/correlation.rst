@@ -4,6 +4,11 @@ Correlation workflow
 
 This page is the user guide for ``imt corr`` and ``run_corr()``.
 
+.. image:: ../images/imaging_map_workflow.svg
+   :alt: Schematic of the imaging-map workflow from atlas extraction through null generation and enrichment.
+   :width: 100%
+   :align: center
+
 What the workflow answers
 -------------------------
 
@@ -52,7 +57,7 @@ The observed statistic for gene ``g`` is:
 
    r_g = \frac{\tilde{x}^{\mathsf T} \tilde{g}}{n - 1}
 
-where ``n`` is the number of atlas rows in the selected subset.
+where :math:`n` is the number of atlas rows in the selected subset.
 
 This is very close to Spearman correlation, but ties are resolved by stable
 ordering instead of average ranks. That detail improves speed and

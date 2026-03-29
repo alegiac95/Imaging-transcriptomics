@@ -33,6 +33,7 @@ release = '2.0.0'
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
+    'sphinx.ext.mathjax',
     'sphinx.ext.napoleon',
 ]
 autosummary_generate = True
