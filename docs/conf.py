@@ -18,7 +18,7 @@ sys.path.insert(0, os.path.abspath(".."))
 # -- Project information -----------------------------------------------------
 
 project = 'imaging-transcriptomics'
-copyright = '2022, Alessio Giacomel, Daniel Martins'
+copyright = '2026, Alessio Giacomel, Daniel Martins'
 author = 'Alessio Giacomel, Daniel Martins'
 
 # The full version, including alpha/beta/rc tags

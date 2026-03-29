@@ -1,32 +1,60 @@
-Imaging Transcriptomics 2.0
-===========================
+Imaging Transcriptomics
+=======================
 
-This documentation is structured as a complete user and developer guide for the
-v2 toolbox.
+This documentation is organized around what most users actually need to do:
+install the toolbox, choose a workflow, understand the inputs and outputs, and
+interpret the resulting statistics.
 
-It is intentionally organized as a full skeleton so each major part of the
-package has a clear home:
+Recommended path for new users:
 
-- getting started and installation
-- CLI and Python API usage
-- workflow-specific guides
-- atlases, inputs, outputs, and enrichment analyses
-- methods and statistical choices
-- development, testing, and reference material
+1. read :doc:`the quickstart <chapters/01_getting_started>`
+2. choose a workflow in :doc:`the workflow hub <chapters/05_what_to_do>`
+3. use the workflow-specific guide together with the methods pages when you
+   need more detail
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Contents
+   :maxdepth: 1
+   :caption: Start here
 
    chapters/01_getting_started
    chapters/03_installation
-   chapters/04_usage
    chapters/05_what_to_do
-   chapters/02_theory
-   chapters/06_contributing
-   chapters/09_reference
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Using the toolbox
+
+   chapters/usage/cli
+   chapters/usage/python_api
+   chapters/usage/inputs
+   chapters/usage/outputs
+   chapters/atlases/included_atlases
+   chapters/atlases/building_atlases
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Methods
+
+   chapters/methods/statistics
+   chapters/methods/null_models
+   chapters/methods/gene_sets
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Reference and help
+
+   chapters/reference/public_api
+   chapters/reference/cli_reference
+   chapters/reference/file_formats
    chapters/08_faq
    chapters/07_contact_us
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Development
+
+   chapters/development/testing
+   chapters/development/contributing
 
 
 Indices and tables

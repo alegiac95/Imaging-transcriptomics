@@ -1,8 +1,8 @@
 .. _Gettingstarted:
 
-===============
-Getting started
-===============
+==========
+Quickstart
+==========
 
 This page is the fast-entry guide for new users.
 
@@ -15,6 +15,13 @@ It should answer four questions quickly:
 
 Quick start
 -----------
+
+If you only want the shortest route through the docs:
+
+1. install the package
+2. choose one workflow
+3. run a small example
+4. use the workflow guide to interpret the outputs
 
 Run a simple correlation analysis:
 
@@ -55,8 +62,9 @@ Most workflows write:
 Documentation map
 -----------------
 
-- :ref:`Installation <Installation>`: install options and extras
-- :ref:`Usage <Usage>`: CLI, API, inputs, and outputs
-- :ref:`Workflows <workflows>`: end-to-end guides for correlation, PLS, enrichment, and gene PCA
-- :ref:`Methods <methods>`: statistical choices and null models
-- :ref:`Reference <reference>`: command and output schemas
+- :doc:`Installation </chapters/03_installation>`: install options and extras
+- :doc:`Workflow hub </chapters/05_what_to_do>`: choose between correlation, PLS, GEDAR, gene PCA, and enrichment
+- :doc:`CLI guide </chapters/usage/cli>` and :doc:`Python API guide </chapters/usage/python_api>`: how to run analyses
+- :doc:`Inputs </chapters/usage/inputs>` and :doc:`Outputs </chapters/usage/outputs>`: accepted data and generated files
+- :doc:`Methods </chapters/methods/statistics>`: statistical definitions, null models, and enrichment calculations
+- :doc:`Reference </chapters/reference/file_formats>`: output schemas and command details
