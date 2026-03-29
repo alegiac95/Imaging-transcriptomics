@@ -13,10 +13,13 @@ workflows, and one shared enrichment layer.
 
    .. raw:: html
 
-      <div style="margin: 1.5rem 0 2rem 0;">
-        <object data="../_static/workflow_hub.svg" type="image/svg+xml" style="width: 100%; max-width: 1100px;">
-          <img src="../_static/workflow_hub.svg" alt="Workflow hub" style="width: 100%; max-width: 1100px;" />
-        </object>
+      <div style="margin: 1.5rem 0 2rem 0; max-width: 1100px;">
+
+   .. raw:: html
+      :file: ../_static/workflow_hub.svg
+
+   .. raw:: html
+
       </div>
 
 .. only:: not html

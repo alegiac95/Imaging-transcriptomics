@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="420" viewBox="0 0 1100 420" role="img" aria-labelledby="title desc">
+<svg xmlns="http://www.w3.org/2000/svg" width="100%" viewBox="0 0 1100 420" role="img" aria-labelledby="title desc" style="display: block; height: auto; max-width: 1100px;">
   <title id="title">Interactive workflow hub</title>
   <desc id="desc">Clickable overview of the main workflows in imaging-transcriptomics.</desc>
   <defs>
@@ -16,7 +16,7 @@
   <text x="550" y="42" text-anchor="middle" class="heading">Choose a workflow</text>
   <text x="550" y="68" text-anchor="middle" class="sub">Click a box to open the detailed guide for that workflow.</text>
 
-  <a href="../chapters/workflows/correlation.html">
+  <a href="workflows/correlation.html" target="_top">
     <rect x="60" y="110" width="290" height="105" class="box" fill="#dbeafe" />
     <text x="205" y="140" text-anchor="middle" class="title">Correlation</text>
     <text x="205" y="164" text-anchor="middle" class="text">Gene-wise association between</text>
@@ -24,7 +24,7 @@
     <text x="205" y="200" text-anchor="middle" class="text">Fast first-pass workflow</text>
   </a>
 
-  <a href="../chapters/workflows/pls.html">
+  <a href="workflows/pls.html" target="_top">
     <rect x="405" y="110" width="290" height="105" class="box" fill="#ede9fe" />
     <text x="550" y="140" text-anchor="middle" class="title">PLS</text>
     <text x="550" y="164" text-anchor="middle" class="text">Multivariate components linking</text>
@@ -32,7 +32,7 @@
     <text x="550" y="200" text-anchor="middle" class="text">Best for distributed signals</text>
   </a>
 
-  <a href="../chapters/workflows/enrichment.html">
+  <a href="workflows/enrichment.html" target="_top">
     <rect x="750" y="110" width="290" height="105" class="box" fill="#fce7f3" />
     <text x="895" y="140" text-anchor="middle" class="title">Enrichment</text>
     <text x="895" y="164" text-anchor="middle" class="text">GSEA and ORA on correlation</text>
@@ -40,7 +40,7 @@
     <text x="895" y="200" text-anchor="middle" class="text">Pathways, NES, odds ratios</text>
   </a>
 
-  <a href="../chapters/workflows/gene_pca.html">
+  <a href="workflows/gene_pca.html" target="_top">
     <rect x="195" y="260" width="290" height="105" class="box" fill="#fee2e2" />
     <text x="340" y="290" text-anchor="middle" class="title">Gene PCA</text>
     <text x="340" y="314" text-anchor="middle" class="text">Reduce a selected gene list to</text>
@@ -48,7 +48,7 @@
     <text x="340" y="350" text-anchor="middle" class="text">Descriptive gene-pattern workflow</text>
   </a>
 
-  <a href="../chapters/workflows/gedar.html">
+  <a href="workflows/gedar.html" target="_top">
     <rect x="615" y="260" width="290" height="105" class="box" fill="#dcfce7" />
     <text x="760" y="290" text-anchor="middle" class="title">GEDAR</text>
     <text x="760" y="314" text-anchor="middle" class="text">Project a weighted gene table onto</text>
