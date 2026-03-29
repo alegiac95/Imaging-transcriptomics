@@ -72,7 +72,7 @@ In ``combined`` mode the GEDAR score is the weighted average:
 
 .. math::
 
-   s_r = \frac{\sum_g x_{r,g} w_g}{\sum_g w_g}
+   GEDAR_r = \frac{\sum_g x_{r,g} w_g}{\sum_g w_g}
 
 In directional modes:
 
