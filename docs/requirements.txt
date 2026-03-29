@@ -1,1 +1,1 @@
-sphinx_celery
+sphinx>=7.2,<9

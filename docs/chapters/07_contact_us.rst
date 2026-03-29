@@ -10,7 +10,7 @@ Support
 For software issues, unexpected behavior, or reproducible bugs, open an issue
 on GitHub:
 
-- [Repository issues](https://github.com/alegiac95/Imaging-transcriptomics/issues)
+- Repository issues: https://github.com/alegiac95/Imaging-transcriptomics/issues
 
 For method interpretation, it is often best to consult the workflow and methods
 documentation first, then the cited papers below.
