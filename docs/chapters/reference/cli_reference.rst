@@ -5,13 +5,15 @@ CLI reference
 This page summarizes the supported commands and the options users most often
 need to reach for.
 
-Commands to document
---------------------
+Supported commands
+------------------
 
 - ``imt atlases``
+- ``imt genesets``
 - ``imt corr``
 - ``imt pls``
 - ``imt gene-pca``
+- ``imt gedar``
 
 Synopsis
 --------
@@ -19,9 +21,11 @@ Synopsis
 .. code-block:: text
 
    imt atlases [--packaged-only]
+   imt genesets [--packaged-only] [--organism NAME]
    imt corr --input PATH [shared options]
    imt pls --input PATH (--ncomp N | --var FRACTION) [shared options]
    imt gene-pca --genes VALUE [gene-pca options]
+   imt gedar --weights PATH [gedar options]
 
 Shared analysis options
 -----------------------
@@ -56,6 +60,19 @@ Gene-PCA-specific options
 - ``--atlas`` / ``--hemisphere`` / ``--regions``: same atlas-selection
   semantics as the other workflows
 - ``--ncomp``: maximum number of PCA components to retain
+
+GEDAR-specific options
+----------------------
+
+- ``--weights``: CSV or TSV table containing gene weights
+- ``--gene-column``: column containing gene symbols
+- ``--weight-column``: column containing the weights used in the GEDAR average
+- ``--rank-column``: optional ranking column used for thresholding or top-gene selection
+- ``--rank-mode``: ``ascending`` or ``descending``
+- ``--top-percent`` / ``--top-n`` / ``--p-threshold``: gene-selection rules
+- ``--direction``: ``combined``, ``up``, ``down``, or ``split``
+- ``--normalize-expression``: ``zscore`` or ``none``
+- ``--normalize-weights``: ``none``, ``zscore``, or ``unit``
 
 Behavior notes
 --------------

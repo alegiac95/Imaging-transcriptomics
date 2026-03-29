@@ -10,9 +10,11 @@ Commands
 --------
 
 - ``imt atlases``: inspect atlas presets
+- ``imt genesets``: inspect packaged and remote geneset resources
 - ``imt corr``: run correlation analysis
 - ``imt pls``: run PLS analysis
 - ``imt gene-pca``: run PCA on atlas expression restricted to a gene list
+- ``imt gedar``: run weighted regional GEDAR scoring from a gene-weight table
 
 Common patterns
 ---------------
@@ -150,6 +152,37 @@ Pass a comma-separated list directly:
      --atlas schaefer-100 \
      --hemisphere both \
      --ncomp 3 \
+     --output /absolute/path/to/out_dir
+
+GEDAR workflow
+--------------
+
+Run GEDAR on a TWAS-style weight table:
+
+.. code-block:: bash
+
+   imt gedar \
+     --weights /absolute/path/to/twas.tsv \
+     --atlas dk \
+     --gene-column gene_name \
+     --weight-column z_mean \
+     --rank-column pvalue \
+     --top-percent 5 \
+     --direction combined \
+     --output /absolute/path/to/out_dir
+
+Return separate up and down GEDAR scores:
+
+.. code-block:: bash
+
+   imt gedar \
+     --weights /absolute/path/to/twas.tsv \
+     --atlas dk \
+     --gene-column gene_name \
+     --weight-column z_mean \
+     --rank-column pvalue \
+     --top-percent 5 \
+     --direction split \
      --output /absolute/path/to/out_dir
 
 GSEA and ORA behavior

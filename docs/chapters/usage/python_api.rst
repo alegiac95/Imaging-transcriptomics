@@ -11,6 +11,7 @@ High-level functions
 - ``run_corr()``
 - ``run_pls()``
 - ``run_gene_pca()``
+- ``run_gedar()``
 - ``run_analysis()``
 
 Typical usage
@@ -69,6 +70,24 @@ Gene PCA:
 
    result.variance_table
 
+GEDAR:
+
+.. code-block:: python
+
+   import imaging_transcriptomics as imt
+
+   result = imt.run_gedar(
+       "/absolute/path/to/twas.tsv",
+       atlas="dk",
+       gene_column="gene_name",
+       weight_column="z_mean",
+       rank_column="pvalue",
+       top_percent=5,
+       direction="combined",
+   )
+
+   result.regional_scores.head()
+
 Supporting helpers
 ------------------
 
@@ -98,13 +117,14 @@ This is most useful when you want one code path that can dispatch to
    )
    result = imt.run_analysis("/absolute/path/to/map.nii.gz", config)
 
-Result objects to document
---------------------------
+Result objects
+--------------
 
 - ``CorrelationResult``
 - ``PLSResult``
 - ``PLSComponentResult``
 - ``GenePCAResult``
+- ``GEDARResult``
 
 Result structure
 ----------------
@@ -116,7 +136,9 @@ Result structure
   ``cumulative_variance``
 - ``GenePCAResult`` stores the filtered PCA outputs:
   ``regional_scores``, ``gene_loadings``, ``variance_table``,
-  ``matched_genes``, and ``missing_genes``
+  ``matched_genes``, ``brain_filtered_genes``, and ``missing_genes``
+- ``GEDARResult`` stores ``regional_scores``, ``gene_table``,
+  ``excluded_table``, ``matched_genes``, and ``missing_genes``
 
 Stability guidance
 ------------------

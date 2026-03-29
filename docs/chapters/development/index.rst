@@ -2,12 +2,20 @@
 Developer overview
 ====================
 
-This page should give contributors a short map of the development docs.
+This section is the short map for people working on the repository itself.
 
-Topics to cover
----------------
+Topics covered here
+-------------------
 
-- local environment setup
-- test suites and targeted checks
-- docs maintenance
-- packaging and release tasks
+- contribution expectations
+- test and validation commands
+- packaging and release-oriented hygiene
+
+Recommended reading order
+-------------------------
+
+1. ``development/contributing``
+2. ``development/testing``
+
+For public behavior and output schemas, the user-guide and reference sections
+are still the best source of truth.

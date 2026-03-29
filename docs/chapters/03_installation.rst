@@ -4,51 +4,74 @@
 Installation
 ============
 
-This page should become the canonical install guide for all supported setups.
+This page is the canonical install guide for the refactored ``2.0`` toolbox.
 
-Core requirements
------------------
+Requirements
+------------
 
-- Python ``3.10+``
-- optional extras for GSEA and map resampling
-- a writable environment for ``neuromaps`` caches if surface nulls are used
+Core requirements:
 
-Recommended install paths
--------------------------
-
-Minimal install:
-
-.. code:: bash
-
-    pip install imaging-transcriptomics
-
-Repository checkout:
-
-.. code:: bash
-
-    pip install -e .
+- Python ``3.10`` or newer
+- a working scientific Python stack
+- a writable environment if you plan to use editable installs
 
 Optional extras:
 
-.. code:: bash
+- ``gsea`` for GSEA support
+- ``maps`` for ``neuromaps``-based resampling and surface nulls
+- ``dev`` for tests and development tools
 
-    pip install -e .[gsea]
-    pip install -e .[maps]
-    pip install -e .[dev]
+Recommended repository install
+------------------------------
 
-Conda environment
------------------
+Clone the repository and switch to the active branch:
 
-.. code:: bash
+.. code-block:: bash
 
-    conda env create -f environment-v2.yml
-    conda activate imaging-transcriptomics-v2
+   git clone https://github.com/alegiac95/Imaging-transcriptomics.git
+   cd Imaging-transcriptomics
+   git checkout refactor-v2.0.0
 
-What this page should later document in more detail
----------------------------------------------------
+Create the packaged conda environment:
 
-- platform-specific notes
-- optional dependency tradeoffs
-- troubleshooting for ``neuromaps`` caches and surface assets
-- editable installs for development
-- doc-build and test dependencies
+.. code-block:: bash
+
+   conda env create -f environment-v2.yml
+   conda activate imaging-transcriptomics-v2
+
+Install the package:
+
+.. code-block:: bash
+
+   pip install -e .
+
+Optional extras
+---------------
+
+.. code-block:: bash
+
+   pip install -e .[gsea]
+   pip install -e .[maps]
+   pip install -e .[dev]
+
+Quick validation
+----------------
+
+After installation, these are good first checks:
+
+.. code-block:: bash
+
+   imt --help
+   imt atlases --packaged-only
+   pytest -q
+
+Platform notes
+--------------
+
+- surface-based null models require the ``maps`` extra and a writable
+  ``neuromaps`` cache
+- cloud-synced folders such as Dropbox or iCloud may trigger macOS permission
+  issues when used directly as inputs; copying files to a regular local folder
+  is often the simplest fix
+- native-space anatomical images are not automatically registered; use derived
+  maps in ``MNI152`` or regional vectors
