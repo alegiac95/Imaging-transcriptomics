@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="240" viewBox="0 0 1100 240" role="img" aria-labelledby="title desc">
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="290" viewBox="0 0 1100 290" role="img" aria-labelledby="title desc">
   <title id="title">Gene-centered workflow overview</title>
   <desc id="desc">Schematic showing gene list or weighted table input, brain-gene filtering, atlas matching, and downstream gene PCA or GEDAR outputs.</desc>
   <defs>
@@ -6,7 +6,7 @@
       .title { font: 700 16px Arial, sans-serif; fill: #1f2937; }
       .label { font: 13px Arial, sans-serif; fill: #1f2937; }
       .small { font: 12px Arial, sans-serif; fill: #4b5563; }
-      .box { stroke: #334155; stroke-width: 2; rx: 14; ry: 14; }
+      .box { stroke: #334155; stroke-width: 2; rx: 16; ry: 16; }
       .arrow { stroke: #475569; stroke-width: 3; fill: none; marker-end: url(#arrowhead); }
     </style>
     <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
@@ -14,40 +14,43 @@
     </marker>
   </defs>
 
-  <rect x="40" y="80" width="190" height="80" class="box" fill="#dbeafe" />
-  <text x="135" y="108" text-anchor="middle" class="title">Gene input</text>
-  <text x="135" y="132" text-anchor="middle" class="label">Gene list or weighted table</text>
-  <text x="135" y="150" text-anchor="middle" class="small">Symbols, weights, ranks</text>
+  <rect x="30" y="105" width="185" height="90" class="box" fill="#dbeafe" />
+  <text x="123" y="133" text-anchor="middle" class="title">Gene input</text>
+  <text x="123" y="156" text-anchor="middle" class="label">Gene list or</text>
+  <text x="123" y="174" text-anchor="middle" class="label">weighted table</text>
+  <text x="123" y="192" text-anchor="middle" class="small">Symbols, weights, and ranks</text>
 
-  <rect x="270" y="80" width="190" height="80" class="box" fill="#dcfce7" />
-  <text x="365" y="108" text-anchor="middle" class="title">Filtering</text>
-  <text x="365" y="132" text-anchor="middle" class="label">Brain-gene filter and cleanup</text>
-  <text x="365" y="150" text-anchor="middle" class="small">Duplicates and invalid rows removed</text>
+  <rect x="245" y="105" width="210" height="90" class="box" fill="#dcfce7" />
+  <text x="350" y="133" text-anchor="middle" class="title">Filtering</text>
+  <text x="350" y="156" text-anchor="middle" class="label">Brain-gene filter, cleanup,</text>
+  <text x="350" y="174" text-anchor="middle" class="label">and deduplication</text>
+  <text x="350" y="192" text-anchor="middle" class="small">Invalid rows removed</text>
 
-  <rect x="500" y="80" width="190" height="80" class="box" fill="#fef3c7" />
-  <text x="595" y="108" text-anchor="middle" class="title">Atlas matching</text>
-  <text x="595" y="132" text-anchor="middle" class="label">Regional expression matrix</text>
-  <text x="595" y="150" text-anchor="middle" class="small">Selected atlas subset applied</text>
+  <rect x="485" y="105" width="205" height="90" class="box" fill="#fef3c7" />
+  <text x="588" y="133" text-anchor="middle" class="title">Atlas matching</text>
+  <text x="588" y="156" text-anchor="middle" class="label">Regional expression matrix</text>
+  <text x="588" y="174" text-anchor="middle" class="small">Selected atlas subset</text>
+  <text x="588" y="190" text-anchor="middle" class="small">and gene set applied</text>
 
-  <rect x="730" y="40" width="160" height="80" class="box" fill="#fee2e2" />
+  <rect x="725" y="40" width="170" height="95" class="box" fill="#fee2e2" />
   <text x="810" y="68" text-anchor="middle" class="title">Gene PCA</text>
   <text x="810" y="92" text-anchor="middle" class="label">Principal components</text>
   <text x="810" y="110" text-anchor="middle" class="small">Regional gene patterns</text>
 
-  <rect x="730" y="130" width="160" height="80" class="box" fill="#ede9fe" />
-  <text x="810" y="158" text-anchor="middle" class="title">GEDAR</text>
-  <text x="810" y="182" text-anchor="middle" class="label">Weighted regional score</text>
-  <text x="810" y="200" text-anchor="middle" class="small">Combined or directional</text>
+  <rect x="725" y="155" width="170" height="95" class="box" fill="#ede9fe" />
+  <text x="810" y="183" text-anchor="middle" class="title">GEDAR</text>
+  <text x="810" y="207" text-anchor="middle" class="label">Weighted regional</text>
+  <text x="810" y="225" text-anchor="middle" class="label">transcriptomic score</text>
 
-  <rect x="930" y="80" width="140" height="80" class="box" fill="#fce7f3" />
-  <text x="1000" y="108" text-anchor="middle" class="title">Outputs</text>
-  <text x="1000" y="132" text-anchor="middle" class="label">Tables and plots</text>
-  <text x="1000" y="150" text-anchor="middle" class="small">Regional patterns to compare</text>
+  <rect x="930" y="105" width="145" height="90" class="box" fill="#fce7f3" />
+  <text x="1002" y="133" text-anchor="middle" class="title">Outputs</text>
+  <text x="1002" y="156" text-anchor="middle" class="label">Tables, plots,</text>
+  <text x="1002" y="174" text-anchor="middle" class="label">and score maps</text>
 
-  <path d="M230 120 L270 120" class="arrow" />
-  <path d="M460 120 L500 120" class="arrow" />
-  <path d="M690 120 L730 80" class="arrow" />
-  <path d="M690 120 L730 170" class="arrow" />
-  <path d="M890 80 L930 100" class="arrow" />
-  <path d="M890 170 L930 140" class="arrow" />
+  <path d="M215 150 L245 150" class="arrow" />
+  <path d="M455 150 L485 150" class="arrow" />
+  <path d="M690 150 L725 90" class="arrow" />
+  <path d="M690 150 L725 200" class="arrow" />
+  <path d="M895 90 L930 125" class="arrow" />
+  <path d="M895 200 L930 175" class="arrow" />
 </svg>
