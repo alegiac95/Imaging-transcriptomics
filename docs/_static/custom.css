@@ -1,0 +1,14 @@
+.sidebar-brand {
+    padding-top: 0.75rem;
+}
+
+.sidebar-logo-container {
+    width: 100%;
+}
+
+.sidebar-logo {
+    display: block;
+    width: min(230px, 100%);
+    height: auto;
+    margin: 0 auto;
+}
