@@ -149,33 +149,35 @@ body[data-theme="dark"] {
 }
 
 .sidebar-brand {
-  padding-top: 0.55rem;
+  padding-top: 0.35rem;
 }
 
 .sidebar-logo-container {
   width: fit-content;
-  max-width: min(210px, 100%);
+  max-width: min(150px, 100%);
   margin: 0 auto;
-  padding: 0.45rem 0.55rem;
-  border-radius: 0.9rem;
-  transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  padding: 0.18rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(215, 227, 240, 0.55);
+  background: transparent;
+  box-shadow: none;
+  transition: border-color 0.2s ease;
 }
 
 .sidebar-logo {
   display: block;
-  width: min(180px, 100%);
+  width: min(138px, 100%);
   height: auto;
   margin: 0 auto;
 }
 
 body[data-theme="dark"] .sidebar-logo-container {
-  background: rgba(247, 250, 253, 0.98);
-  border: 1px solid rgba(215, 227, 240, 0.75);
-  box-shadow: 0 6px 18px rgba(11, 18, 32, 0.18);
+  background: transparent;
+  border: 1px solid rgba(159, 176, 199, 0.35);
 }
 
 body[data-theme="dark"] .sidebar-logo {
-  width: min(168px, 100%);
+  width: min(132px, 100%);
   filter: none;
 }
 
