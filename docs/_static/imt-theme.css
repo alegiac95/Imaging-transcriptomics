@@ -149,19 +149,21 @@ body[data-theme="dark"] {
 }
 
 .sidebar-brand {
-  padding-top: 0.75rem;
+  padding-top: 0.55rem;
 }
 
 .sidebar-logo-container {
-  width: 100%;
-  padding: 0.55rem 0.75rem;
-  border-radius: 1rem;
-  transition: background-color 0.2s ease, border-color 0.2s ease;
+  width: fit-content;
+  max-width: min(210px, 100%);
+  margin: 0 auto;
+  padding: 0.45rem 0.55rem;
+  border-radius: 0.9rem;
+  transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .sidebar-logo {
   display: block;
-  width: min(230px, 100%);
+  width: min(180px, 100%);
   height: auto;
   margin: 0 auto;
 }
@@ -169,9 +171,11 @@ body[data-theme="dark"] {
 body[data-theme="dark"] .sidebar-logo-container {
   background: rgba(247, 250, 253, 0.98);
   border: 1px solid rgba(215, 227, 240, 0.75);
+  box-shadow: 0 6px 18px rgba(11, 18, 32, 0.18);
 }
 
 body[data-theme="dark"] .sidebar-logo {
+  width: min(168px, 100%);
   filter: none;
 }
 
