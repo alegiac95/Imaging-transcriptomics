@@ -1,10 +1,9 @@
 .. image:: _static/imaging_transcriptomics_toolbox_logo.svg
    :alt: Imaging Transcriptomics Toolbox logo
    :align: center
-   :width: 360px
+   :width: 500px
 
-The Imaging Transcriptomics Toolbox
-===================================
+
 
 This documentation is organized around what most users actually need to do:
 install the toolbox, choose a workflow, understand the inputs and outputs, and
