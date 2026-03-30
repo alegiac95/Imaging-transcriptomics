@@ -54,8 +54,8 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 #
 html_theme = 'furo'
 html_theme_options = {
-    "light_logo": "imaging_transcriptomics_toolbox_logo.svg",
-    "dark_logo": "imaging_transcriptomics_toolbox_logo.svg",
+    "light_logo": "imt_sidebar_logo.png",
+    "dark_logo": "imt_sidebar_logo.png",
     "sidebar_hide_name": True,
 }
 

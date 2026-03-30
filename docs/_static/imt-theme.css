@@ -154,10 +154,10 @@ body[data-theme="dark"] {
 
 .sidebar-logo-container {
   width: fit-content;
-  max-width: min(150px, 100%);
+  max-width: min(98px, 100%);
   margin: 0 auto;
-  padding: 0.18rem;
-  border-radius: 0.75rem;
+  padding: 0.12rem;
+  border-radius: 1rem;
   border: 1px solid rgba(215, 227, 240, 0.55);
   background: transparent;
   box-shadow: none;
@@ -166,7 +166,7 @@ body[data-theme="dark"] {
 
 .sidebar-logo {
   display: block;
-  width: min(138px, 100%);
+  width: min(82px, 100%);
   height: auto;
   margin: 0 auto;
 }
@@ -177,7 +177,7 @@ body[data-theme="dark"] .sidebar-logo-container {
 }
 
 body[data-theme="dark"] .sidebar-logo {
-  width: min(132px, 100%);
+  width: min(80px, 100%);
   filter: none;
 }
 
