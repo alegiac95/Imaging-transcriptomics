@@ -1,0 +1,256 @@
+/* IMT Furo theme override
+   Palette derived from the IMT logo, normalized for documentation use.
+   Main intent:
+   - blue-led, professional structure
+   - restrained scientific accents
+   - compatible with Furo light and dark modes
+*/
+
+:root {
+  /* Core surfaces */
+  --color-foreground-primary: #1F2937;
+  --color-foreground-secondary: #5B6472;
+  --color-foreground-muted: #6B7280;
+  --color-background-primary: #F7FAFD;
+  --color-background-secondary: #FFFFFF;
+  --color-background-hover: #EEF4FA;
+  --color-background-border: #D7E3F0;
+  --color-background-item: #FFFFFF;
+  --color-background-item--hover: #EEF4FA;
+  --color-background-item--active: #E6F0FB;
+  --color-background-dropdown: #FFFFFF;
+  --color-background-code: #F1F6FB;
+  --color-background-hover--transparent: rgba(21, 101, 192, 0.08);
+
+  /* Brand and links */
+  --color-brand-primary: #1565C0;
+  --color-brand-content: #1565C0;
+  --color-api-name: #0E2F5A;
+  --color-api-pre-name: #5B6472;
+  --color-link: #1565C0;
+  --color-link-hover: #0F4EA3;
+  --color-link-underline: rgba(21, 101, 192, 0.35);
+
+  /* Sidebar */
+  --color-sidebar-background: #EEF4FA;
+  --color-sidebar-background-border: #D7E3F0;
+  --color-sidebar-link-text: #1F2937;
+  --color-sidebar-link-text--top-level: #0E2F5A;
+  --color-sidebar-item-background--hover: rgba(21, 101, 192, 0.08);
+  --color-sidebar-item-expander-background--hover: rgba(21, 101, 192, 0.08);
+  --color-sidebar-link-text--active: #1565C0;
+  --color-sidebar-caption-text: #5B6472;
+  --color-sidebar-search-background: #FFFFFF;
+  --color-sidebar-search-background--focus: #FFFFFF;
+  --color-sidebar-search-text: #1F2937;
+  --color-sidebar-search-border: #D7E3F0;
+
+  /* Admonitions / semantic accents */
+  --color-admonition-title--note: #19B5E8;
+  --color-admonition-title-background--note: rgba(25, 181, 232, 0.14);
+  --color-admonition-title--tip: #38A169;
+  --color-admonition-title-background--tip: rgba(56, 161, 105, 0.14);
+  --color-admonition-title--warning: #D69E2E;
+  --color-admonition-title-background--warning: rgba(214, 158, 46, 0.16);
+  --color-admonition-title--important: #1565C0;
+  --color-admonition-title-background--important: rgba(21, 101, 192, 0.14);
+
+  /* Code */
+  --color-code-background: #F1F6FB;
+  --color-code-foreground: #1F2937;
+
+  /* Borders and shadows */
+  --color-card-border: #D7E3F0;
+  --color-card-background: #FFFFFF;
+  --color-card-marginals-background: #EEF4FA;
+  --color-inline-code-border: #D7E3F0;
+  --color-highlighted-background: #FFF6DD;
+  --color-highlight-on-target: #EAF4FF;
+
+  /* Announcement / footer / touches */
+  --color-announcement-background: #0E2F5A;
+  --color-announcement-text: #F7FAFD;
+
+  /* Typography-ish controls */
+  --font-stack: Inter, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-stack--monospace: "JetBrains Mono", "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  --font-size--small: 0.875rem;
+  --font-size--small--2: 0.8125rem;
+  --font-size--normal: 1rem;
+  --font-size--large: 1.0625rem;
+  --font-size--x-large: 1.25rem;
+  --font-size--xx-large: 1.75rem;
+
+  /* Layout feel */
+  --sidebar-item-spacing-vertical: 0.3rem;
+  --sidebar-item-spacing-horizontal: 0.75rem;
+  --content-padding: 2rem;
+  --toc-spacing-vertical: 0.3rem;
+}
+
+html[data-theme="dark"],
+body[data-theme="dark"] {
+  --color-foreground-primary: #E8EEF7;
+  --color-foreground-secondary: #9FB0C7;
+  --color-foreground-muted: #7E8EA7;
+  --color-background-primary: #0B1220;
+  --color-background-secondary: #111A2B;
+  --color-background-hover: #162338;
+  --color-background-border: #24344D;
+  --color-background-item: #111A2B;
+  --color-background-item--hover: #162338;
+  --color-background-item--active: #1A2A43;
+  --color-background-dropdown: #111A2B;
+  --color-background-code: #0E1727;
+  --color-background-hover--transparent: rgba(78, 161, 255, 0.12);
+
+  --color-brand-primary: #4EA1FF;
+  --color-brand-content: #72B4FF;
+  --color-api-name: #C9D8F0;
+  --color-api-pre-name: #9FB0C7;
+  --color-link: #72B4FF;
+  --color-link-hover: #A2D0FF;
+  --color-link-underline: rgba(114, 180, 255, 0.4);
+
+  --color-sidebar-background: #111A2B;
+  --color-sidebar-background-border: #24344D;
+  --color-sidebar-link-text: #E8EEF7;
+  --color-sidebar-link-text--top-level: #C9D8F0;
+  --color-sidebar-item-background--hover: rgba(78, 161, 255, 0.12);
+  --color-sidebar-item-expander-background--hover: rgba(78, 161, 255, 0.12);
+  --color-sidebar-link-text--active: #72B4FF;
+  --color-sidebar-caption-text: #9FB0C7;
+  --color-sidebar-search-background: #0E1727;
+  --color-sidebar-search-background--focus: #162338;
+  --color-sidebar-search-text: #E8EEF7;
+  --color-sidebar-search-border: #24344D;
+
+  --color-admonition-title--note: #45D3FF;
+  --color-admonition-title-background--note: rgba(69, 211, 255, 0.14);
+  --color-admonition-title--tip: #58C98B;
+  --color-admonition-title-background--tip: rgba(88, 201, 139, 0.14);
+  --color-admonition-title--warning: #F0B84B;
+  --color-admonition-title-background--warning: rgba(240, 184, 75, 0.16);
+  --color-admonition-title--important: #4EA1FF;
+  --color-admonition-title-background--important: rgba(78, 161, 255, 0.14);
+
+  --color-code-background: #0E1727;
+  --color-code-foreground: #E8EEF7;
+
+  --color-card-border: #24344D;
+  --color-card-background: #111A2B;
+  --color-card-marginals-background: #162338;
+  --color-inline-code-border: #24344D;
+  --color-highlighted-background: #3A2C07;
+  --color-highlight-on-target: #1A2A43;
+
+  --color-announcement-background: #1565C0;
+  --color-announcement-text: #F7FAFD;
+}
+
+/* General refinements */
+body {
+  font-family: var(--font-stack);
+}
+
+a {
+  text-decoration-color: var(--color-link-underline);
+  text-underline-offset: 0.15em;
+}
+
+a:hover {
+  text-decoration-thickness: 2px;
+}
+
+.sidebar-brand-text {
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.sidebar-tree .caption,
+.toctree-wrapper .caption {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 0.78rem;
+}
+
+.sidebar-search-container input {
+  border-radius: 0.7rem;
+}
+
+article img,
+article .figure img {
+  border-radius: 0.7rem;
+}
+
+.highlight,
+.literal-block-wrapper,
+div[class^="highlight"] {
+  border: 1px solid var(--color-background-border);
+  border-radius: 0.9rem;
+  overflow: hidden;
+}
+
+code.literal {
+  border: 1px solid var(--color-inline-code-border);
+  border-radius: 0.45rem;
+  padding: 0.12rem 0.35rem;
+}
+
+.admonition {
+  border-radius: 0.9rem;
+  border-width: 1px;
+}
+
+.sd-card,
+div.admonition,
+table.docutils,
+table.field-list,
+dl.py {
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+}
+
+html[data-theme="dark"] .sd-card,
+html[data-theme="dark"] div.admonition,
+html[data-theme="dark"] table.docutils,
+html[data-theme="dark"] dl.py,
+body[data-theme="dark"] .sd-card,
+body[data-theme="dark"] div.admonition,
+body[data-theme="dark"] table.docutils,
+body[data-theme="dark"] dl.py {
+  box-shadow: none;
+}
+
+.prev-next-footer a {
+  border-radius: 0.85rem;
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
+/* Optional accent utilities for custom HTML blocks in docs */
+.imt-accent-cyan {
+  color: #19B5E8;
+}
+.imt-accent-green {
+  color: #38A169;
+}
+.imt-accent-gold {
+  color: #D69E2E;
+}
+html[data-theme="dark"] .imt-accent-cyan,
+body[data-theme="dark"] .imt-accent-cyan {
+  color: #45D3FF;
+}
+html[data-theme="dark"] .imt-accent-green,
+body[data-theme="dark"] .imt-accent-green {
+  color: #58C98B;
+}
+html[data-theme="dark"] .imt-accent-gold,
+body[data-theme="dark"] .imt-accent-gold {
+  color: #F0B84B;
+}
