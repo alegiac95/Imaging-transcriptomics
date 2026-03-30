@@ -1,7 +1,7 @@
 .. image:: _static/imaging_transcriptomics_toolbox_logo.svg
    :alt: Imaging Transcriptomics Toolbox logo
    :align: center
-   :width: 500px
+   :width: 580px
 
 
 
