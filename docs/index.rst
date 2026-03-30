@@ -1,7 +1,9 @@
-.. image:: _static/imaging_transcriptomics_toolbox_logo.svg
-   :alt: Imaging Transcriptomics Toolbox logo
-   :align: center
-   :width: 580px
+.. raw:: html
+
+   <div class="imt-index-brand">
+     <img src="_static/imaging_transcriptomics_toolbox_logo.svg" alt="Imaging Transcriptomics Toolbox logo" class="only-light">
+     <img src="_static/imaging_transcriptomics_toolbox_logo_dark.png" alt="Imaging Transcriptomics Toolbox logo" class="only-dark">
+   </div>
 
 
 
