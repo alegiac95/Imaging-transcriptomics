@@ -35,8 +35,11 @@ extensions = [
     'sphinx.ext.autosummary',
     'sphinx.ext.mathjax',
     'sphinx.ext.napoleon',
+    'sphinx_copybutton',
 ]
 autosummary_generate = True
+copybutton_prompt_text = r'>>> |\.\.\. |\$ '
+copybutton_prompt_is_regexp = True
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
