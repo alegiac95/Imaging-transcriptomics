@@ -6,7 +6,7 @@
    - compatible with Furo light and dark modes
 */
 
-:root {
+body {
   /* Core surfaces */
   --color-foreground-primary: #1F2937;
   --color-foreground-secondary: #5B6472;
@@ -146,6 +146,33 @@ body[data-theme="dark"] {
 
   --color-announcement-background: #1565C0;
   --color-announcement-text: #F7FAFD;
+}
+
+.sidebar-brand {
+  padding-top: 0.75rem;
+}
+
+.sidebar-logo-container {
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  border-radius: 1rem;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.sidebar-logo {
+  display: block;
+  width: min(230px, 100%);
+  height: auto;
+  margin: 0 auto;
+}
+
+body[data-theme="dark"] .sidebar-logo-container {
+  background: rgba(247, 250, 253, 0.98);
+  border: 1px solid rgba(215, 227, 240, 0.75);
+}
+
+body[data-theme="dark"] .sidebar-logo {
+  filter: none;
 }
 
 /* General refinements */
