@@ -58,6 +58,7 @@ html_theme_options = {
     "dark_logo": "imt_sidebar_logo.png",
     "sidebar_hide_name": True,
 }
+html_favicon = "_static/favicon.ico"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
