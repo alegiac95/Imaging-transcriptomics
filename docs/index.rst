@@ -121,12 +121,14 @@ interpret the resulting statistics.
        <p class="imt-section-kicker">Reference</p>
        <h2>Keep the key papers close when you write up or compare results</h2>
        <p>
-         Use the reference section to find the core toolbox citations and the
-         dedicated GEDAR paper, so the methodological background stays easy to
-         trace back to the original publications.
+         Use the reference section to find the core toolbox citations, the
+         dedicated GEDAR paper, and broader reading material on imaging
+         transcriptomics and companion resources.
        </p>
        <p class="imt-section-links">
-         <a href="chapters/reference/citations.html">Citations</a>
+         <a href="chapters/reference/citations.html">Reference</a>
+         <span>•</span>
+         <a href="chapters/reference/further_reading.html">Further reading</a>
        </p>
      </div>
    </section>
@@ -137,6 +139,7 @@ interpret the resulting statistics.
    :caption: Reference
 
    chapters/reference/citations
+   chapters/reference/further_reading
 
 .. raw:: html
 

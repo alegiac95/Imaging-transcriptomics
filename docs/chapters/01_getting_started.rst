@@ -68,4 +68,4 @@ Documentation map
 - :doc:`Inputs </chapters/usage/inputs>` and :doc:`Outputs </chapters/usage/outputs>`: accepted data and generated files
 - :doc:`Methods </chapters/methods/statistics>`: statistical definitions, null models, and enrichment calculations
 - :doc:`FAQ </chapters/08_faq>` and :doc:`Contact Us </chapters/07_contact_us>`: troubleshooting and support
-- :doc:`Citations </chapters/reference/citations>`: papers to cite for the toolbox and GEDAR
+- :doc:`Reference </chapters/reference/citations>` and :doc:`Further reading </chapters/reference/further_reading>`: papers to cite and broader imaging transcriptomics resources
