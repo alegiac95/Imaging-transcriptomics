@@ -7,11 +7,10 @@
 
 
 The Imaging Transcriptomics Toolbox helps researchers integrate neuroimaging data with transcriptomic information from the Allen Human Brain Atlas. 
-Built to be practical, accessible, and extensible, it provides a streamlined framework for exploring the molecular basis of brain imaging findings and developing reproducible imaging transcriptomics workflows.
+Built to be practical, accessible, and extensible, it provides a streamlined framework for exploring the molecular basis of brain imaging findings 
+and developing reproducible imaging transcriptomics workflows.
 
-This documentation is organized around what most users actually need to do:
-install the toolbox, choose a workflow, understand the inputs and outputs, and
-interpret the resulting statistics.
+
 
 .. raw:: html
 

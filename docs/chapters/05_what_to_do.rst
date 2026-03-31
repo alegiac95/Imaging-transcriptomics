@@ -4,10 +4,11 @@
 Workflows
 =========
 
-This section is the home for end-to-end task guides.
+In this section you can decide which of the available workflows best suits 
+your research question and how to run it.
 
-At a glance, the toolbox has two imaging-map workflows, two gene-centered
-workflows, and one shared enrichment layer.
+Once you decide which workflow you want to use, simply click on the respective 
+icon on the figure below.
 
 .. only:: html
 
@@ -38,10 +39,11 @@ Each workflow page should explain:
 - the most common pitfalls
 
 .. toctree::
+   :hidden:
    :maxdepth: 1
 
    workflows/correlation
    workflows/pls
-   workflows/gene_pca
    workflows/gedar
+   workflows/gene_pca
    workflows/enrichment
