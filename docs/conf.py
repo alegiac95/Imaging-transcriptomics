@@ -36,6 +36,7 @@ extensions = [
     'sphinx.ext.mathjax',
     'sphinx.ext.napoleon',
     'sphinx_copybutton',
+    'sphinx_design',
 ]
 autosummary_generate = True
 copybutton_prompt_text = r'>>> |\.\.\. |\$ '

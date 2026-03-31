@@ -2,16 +2,85 @@
 Included atlases
 ================
 
-The package ships six atlas presets with packaged expression assets derived
-from ``abagen``. All atlas selection happens through the registry, so the same
-IDs work in the CLI and Python API.
+The toolbox ships six atlas presets with packaged ``abagen`` expression assets.
+The same atlas IDs work in the command-line interface, the Python API, and the
+docs examples.
 
-Current presets
----------------
+Atlas gallery
+-------------
+
+The previews below show the cortical surface coverage of each packaged atlas as
+single left-lateral surface renders. They are intended to help you compare
+parcel scale and cortical coverage quickly, not to encode biology.
+
+.. grid:: 1 1 2 2
+   :gutter: 2
+
+   .. grid-item-card:: ``dk``
+      :img-top: ../images/atlases/dk_gallery.png
+
+      Desikan-Killiany with ``83`` bilateral regions (``41`` left-only),
+      including cortex and subcortex. Best when you want a low-resolution,
+      legacy-compatible default with whole-brain coverage.
+
+      - Coverage: cortex + subcortex
+      - Spaces: ``MNI152``, ``fsaverage``
+
+   .. grid-item-card:: ``schaefer-100``
+      :img-top: ../images/atlases/schaefer-100_gallery.png
+
+      Coarse Schaefer parcellation with ``100`` bilateral cortical parcels.
+      Good for cortex-only workflows when you want a compact, easy-to-interpret
+      regional map.
+
+      - Coverage: cortex
+      - Spaces: ``MNI152``, ``fsaverage``
+
+   .. grid-item-card:: ``schaefer-200``
+      :img-top: ../images/atlases/schaefer-200_gallery.png
+
+      Mid-resolution Schaefer preset with ``200`` bilateral cortical parcels.
+      A good default when you want more regional detail without moving to the
+      finest cortical scales.
+
+      - Coverage: cortex
+      - Spaces: ``MNI152``, ``fsaverage``, ``fsLR``
+
+   .. grid-item-card:: ``schaefer-400``
+      :img-top: ../images/atlases/schaefer-400_gallery.png
+
+      Fine Schaefer preset with ``400`` bilateral cortical parcels. Best for
+      cortex-only analyses where higher regional granularity matters more than
+      simplicity.
+
+      - Coverage: cortex
+      - Spaces: ``MNI152``, ``fsaverage``, ``fsLR``
+
+   .. grid-item-card:: ``destrieux``
+
+      Destrieux cortical atlas with ``148`` bilateral regions (``74`` left-only).
+      The packaged preset includes expression and label assets, but it does not
+      currently ship a surface parcellation file for the gallery preview.
+
+      - Coverage: cortex
+      - Spaces: ``MNI152``, ``fsaverage``
+
+   .. grid-item-card:: ``glasser-360``
+      :img-top: ../images/atlases/glasser-360_gallery.png
+
+      Surface-oriented multimodal atlas with ``360`` bilateral cortical
+      parcels. Use it when you want a modern high-resolution cortical workflow,
+      especially for surface-first analyses.
+
+      - Coverage: cortex
+      - Spaces: ``fsLR``, ``fsaverage``, ``MNI152``
+
+Atlas comparison
+----------------
 
 .. list-table::
    :header-rows: 1
-   :widths: 18 10 10 20 20 22
+   :widths: 18 10 10 16 20 26
 
    * - Atlas ID
      - Left regions
