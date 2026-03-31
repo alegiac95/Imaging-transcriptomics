@@ -346,6 +346,16 @@ body {
   font-family: var(--font-stack);
 }
 
+article p,
+article li,
+article dd,
+article blockquote,
+.imt-section-copy p {
+  text-align: justify;
+  text-justify: inter-word;
+  hyphens: auto;
+}
+
 a {
   text-decoration-color: var(--color-link-underline);
   text-underline-offset: 0.15em;
