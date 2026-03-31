@@ -28,3 +28,29 @@ If you use the GEDAR workflow, also cite:
   cartography of polygenic risk and association with brain structure in major
   psychiatric disorders.* Molecular Psychiatry.
   https://doi.org/10.1038/s41380-026-03497-4
+
+Further reading
+---------------
+
+This section is intended for broader references and practical resources related
+to imaging transcriptomics beyond the toolbox itself. It is a good place to
+collect recommended reviews, methodological papers, datasets, and companion
+software that help with interpretation and downstream analysis.
+
+Topics to expand here include:
+
+- imaging transcriptomics reviews and perspective papers
+- studies combining neuroimaging with regional gene expression
+- resources for transcriptomic preprocessing and atlas alignment
+- complementary tools and datasets such as AHBA-derived pipelines and
+  neuroimaging map resources
+
+Useful resources
+----------------
+
+- Allen Human Brain Atlas:
+  https://human.brain-map.org/
+- abagen:
+  https://abagen.readthedocs.io/
+- neuromaps:
+  https://neuromaps-main.readthedocs.io/
