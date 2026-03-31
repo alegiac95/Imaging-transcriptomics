@@ -67,4 +67,5 @@ Documentation map
 - :doc:`CLI guide </chapters/usage/cli>` and :doc:`Python API guide </chapters/usage/python_api>`: how to run analyses
 - :doc:`Inputs </chapters/usage/inputs>` and :doc:`Outputs </chapters/usage/outputs>`: accepted data and generated files
 - :doc:`Methods </chapters/methods/statistics>`: statistical definitions, null models, and enrichment calculations
-- :doc:`Reference </chapters/reference/file_formats>`: output schemas and command details
+- :doc:`FAQ </chapters/08_faq>` and :doc:`Contact Us </chapters/07_contact_us>`: troubleshooting and support
+- :doc:`Citations </chapters/reference/citations>`: papers to cite for the toolbox and GEDAR

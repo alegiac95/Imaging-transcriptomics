@@ -1,8 +1,8 @@
 .. _contactus:
 
-====================
-Support and citation
-====================
+==========
+Contact Us
+==========
 
 Support
 -------
@@ -12,32 +12,27 @@ on GitHub:
 
 - Repository issues: https://github.com/alegiac95/Imaging-transcriptomics/issues
 
-For method interpretation, it is often best to consult the workflow and methods
-documentation first, then the cited papers below.
+For method interpretation, start with the workflow and methods pages, then use
+the dedicated citation page for manuscript references.
 
-Citing the toolbox
-------------------
+When to open an issue
+---------------------
 
-If you publish work using the toolbox, please cite the core papers relevant to
-your workflow:
+GitHub issues are the best option when you can describe a reproducible problem,
+such as:
 
-- Martins D, Giacomel A, Williams SCR, Turkheimer F, Dipasquale O, Veronese M.
-  *Imaging transcriptomics: Convergent cellular, transcriptomic, and molecular
-  neuroimaging signatures in the healthy adult human brain.* Cell Reports.
-  https://doi.org/10.1016/j.celrep.2021.110173
-- Giacomel A, Martins D, Frigo M, Turkheimer F, Williams SCR, Dipasquale O,
-  Veronese M. *Integrating neuroimaging and gene expression data using the
-  imaging transcriptomics toolbox.* STAR Protocols.
-  https://doi.org/10.1016/j.xpro.2022.101315
-- Giacomel A, Martins D. *Imaging-transcriptomics: Second release update
-  (v1.0.2).* Zenodo. https://doi.org/10.5281/zenodo.5726839
+- installation failures
+- unexpected CLI or Python API behavior
+- documentation problems
+- bugs in outputs, plots, or statistical summaries
 
-For GEDAR
----------
+What to include
+---------------
 
-If you use the GEDAR workflow, also cite:
+For faster support, include:
 
-- Giacomel A, Powell TR, Duarte RRR, et al. *Transcriptome-informed brain
-  cartography of polygenic risk and association with brain structure in major
-  psychiatric disorders.* Molecular Psychiatry.
-  https://doi.org/10.1038/s41380-026-03497-4
+- the command or Python call you ran
+- the full error message or traceback
+- your platform and Python version
+- the atlas, workflow, and main options used
+- whether the problem is reproducible on a small example

@@ -123,16 +123,6 @@ interpret the resulting statistics.
    chapters/methods/null_models
    chapters/methods/gene_sets
 
-.. toctree::
-   :maxdepth: 1
-   :caption: Reference and help
-
-   chapters/reference/public_api
-   chapters/reference/cli_reference
-   chapters/reference/file_formats
-   chapters/08_faq
-   chapters/07_contact_us
-
 .. raw:: html
 
    <section class="imt-section-intro">
@@ -152,3 +142,16 @@ interpret the resulting statistics.
        </p>
      </div>
    </section>
+
+.. toctree::
+   :maxdepth: 1
+   :caption: FAQ and Contact
+
+   chapters/08_faq
+   chapters/07_contact_us
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Reference
+
+   chapters/reference/citations
