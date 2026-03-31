@@ -254,6 +254,7 @@ body[data-theme="dark"] .sidebar-logo {
 
 .imt-section-intro {
   display: flex;
+  flex-direction: row;
   align-items: center;
   gap: 2rem;
   margin: 2rem 0 2.25rem;
