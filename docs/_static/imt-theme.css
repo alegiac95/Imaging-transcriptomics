@@ -274,6 +274,11 @@ body[data-theme="dark"] .sidebar-logo {
   height: auto;
 }
 
+.imt-section-image--flip {
+  transform: scaleX(-1);
+  transform-origin: center;
+}
+
 .imt-section-copy {
   flex: 1 1 auto;
   min-width: 0;

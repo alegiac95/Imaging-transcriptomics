@@ -92,7 +92,30 @@ interpret the resulting statistics.
    chapters/atlases/included_atlases
    chapters/atlases/building_atlases
 
+.. raw:: html
+
+   <section class="imt-section-intro imt-section-intro--reverse">
+     <img src="_static/undraw_problem-solving_1kpx.svg" alt="Illustration for understanding the methods behind the toolbox" class="imt-section-image--flip">
+     <div class="imt-section-copy">
+       <p class="imt-section-kicker">Methods</p>
+       <h2>Understand the models, nulls, and enrichment logic before you interpret the results</h2>
+       <p>
+         This section explains how the toolbox computes association scores,
+         generates null maps, and evaluates enrichment so you can understand
+         what each workflow is actually testing.
+       </p>
+       <p class="imt-section-links">
+         <a href="chapters/methods/statistics.html">Statistics</a>
+         <span>•</span>
+         <a href="chapters/methods/null_models.html">Null models</a>
+         <span>•</span>
+         <a href="chapters/methods/gene_sets.html">Gene sets</a>
+       </p>
+     </div>
+   </section>
+
 .. toctree::
+   :hidden:
    :maxdepth: 1
    :caption: Methods
 
