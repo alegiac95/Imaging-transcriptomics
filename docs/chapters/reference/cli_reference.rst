@@ -37,7 +37,8 @@ Shared analysis options
 - ``--output``: output directory
 - ``--atlas``: atlas preset ID
 - ``--hemisphere``: ``left`` or ``both``
-- ``--regions``: ``all``, ``cort``, or ``cort+sub``
+- ``--regions``: ``default``, ``all``, ``cort``, or ``cort+sub``. ``default``
+  and ``cort`` are equivalent, and ``all`` and ``cort+sub`` are equivalent
 - ``--space``: source space, such as ``MNI152``, ``fsaverage``, ``fsLR``, or ``CIVET``
 - ``--permutations``: number of null samples
 - ``--seed``: random seed

@@ -1,0 +1,41 @@
+{
+  "atlas": "schaefer-400-aseg",
+  "base_atlas": "schaefer-400",
+  "subcortex_source": "dk",
+  "subcortical_labels": [
+    "thalamusproper",
+    "caudate",
+    "putamen",
+    "pallidum",
+    "accumbensarea",
+    "hippocampus",
+    "amygdala",
+    "thalamusproper",
+    "caudate",
+    "putamen",
+    "pallidum",
+    "accumbensarea",
+    "hippocampus",
+    "amygdala",
+    "brainstem"
+  ],
+  "subcortical_hemispheres": [
+    "L",
+    "L",
+    "L",
+    "L",
+    "L",
+    "L",
+    "L",
+    "R",
+    "R",
+    "R",
+    "R",
+    "R",
+    "R",
+    "R",
+    "B"
+  ],
+  "volume_packaged": true,
+  "expression_strategy": "base cortical matrix plus dk aseg rows aligned to base gene labels"
+}

@@ -11,6 +11,7 @@ from .outputs.brain import (
     load_surface_parcellation as _load_surface_parcellation,
     plot_brain_volume_map,
     plot_cortical_surface_map,
+    plot_cortical_surface_map_brainspace,
     surface_value_frames as _surface_value_frames,
     vertex_values_for_hemisphere as _vertex_values_for_hemisphere,
 )
@@ -56,6 +57,7 @@ __all__ = [
     "plot_correlation_distribution",
     "plot_correlation_ranking",
     "plot_cortical_surface_map",
+    "plot_cortical_surface_map_brainspace",
     "plot_gene_pca_loadings",
     "plot_gene_pca_regional_component",
     "plot_gene_pca_variance",

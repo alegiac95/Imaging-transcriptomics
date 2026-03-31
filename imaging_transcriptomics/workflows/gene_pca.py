@@ -115,7 +115,7 @@ def run_gene_pca(
     *,
     atlas: str = "dk",
     hemisphere: HemisphereMode = "left",
-    regions: RegionScope = "all",
+    regions: RegionScope = "default",
     n_components: int = 3,
     output_dir: str | Path | None = None,
     select_atlas_data_fn: Callable[..., AtlasSelection],

@@ -107,7 +107,8 @@ def render_readme(result: CorrelationResult | PLSResult | GenePCAResult | GEDARR
                 [
                     "plots/gene_pca_variance.png: variance explained by each PCA component.",
                     "plots/gene_pca_pc<n>_brain.png: atlas brain map of the regional PCA score for each plotted component.",
-                    "plots/gene_pca_pc<n>_cortex.png: cortical surface map of the regional PCA score when surface atlas geometry is available.",
+                    "plots/gene_pca_pc<n>_cortex.png: publication-oriented cortical surface map of the regional PCA score when surface atlas geometry is available.",
+                    "plots/gene_pca_pc<n>_cortex_brainspace.png: optional BrainSpace-rendered cortical comparison plot when the BrainSpace backend is available.",
                     "plots/gene_pca_pc<n>_regions.png: regional score profile for each plotted component.",
                     "plots/gene_pca_pc<n>_loadings.png: strongest positive and negative gene loadings for each plotted component.",
                 ]
@@ -143,7 +144,8 @@ def render_readme(result: CorrelationResult | PLSResult | GenePCAResult | GEDARR
                 [
                     "plots/gedar_scores.png: regional GEDAR score profile across the selected atlas regions.",
                     "plots/gedar_brain.png: atlas brain map of the z-scored GEDAR regional score.",
-                    "plots/gedar_cortex.png: cortical surface map of the z-scored GEDAR regional score when surface atlas geometry is available.",
+                    "plots/gedar_cortex.png: publication-oriented cortical surface map of the z-scored GEDAR regional score when surface atlas geometry is available.",
+                    "plots/gedar_cortex_brainspace.png: optional BrainSpace-rendered cortical comparison plot when the BrainSpace backend is available.",
                     "plots/gedar_weights.png: strongest positive and negative gene weights used in the GEDAR average.",
                 ]
             )
@@ -152,7 +154,8 @@ def render_readme(result: CorrelationResult | PLSResult | GenePCAResult | GEDARR
                 [
                     "plots/gedar_up_scores.png / plots/gedar_down_scores.png: regional GEDAR score profiles for the separate up and down runs.",
                     "plots/gedar_up_brain.png / plots/gedar_down_brain.png: atlas brain maps of the z-scored up and down GEDAR scores.",
-                    "plots/gedar_up_cortex.png / plots/gedar_down_cortex.png: cortical surface maps of the z-scored up and down GEDAR scores when surface atlas geometry is available.",
+                    "plots/gedar_up_cortex.png / plots/gedar_down_cortex.png: publication-oriented cortical surface maps of the z-scored up and down GEDAR scores when surface atlas geometry is available.",
+                    "plots/gedar_up_cortex_brainspace.png / plots/gedar_down_cortex_brainspace.png: optional BrainSpace-rendered cortical comparison plots when the BrainSpace backend is available.",
                     "plots/gedar_up_weights.png / plots/gedar_down_weights.png: strongest gene weights used in the separate up and down GEDAR averages.",
                 ]
             )
@@ -184,7 +187,8 @@ def render_readme(result: CorrelationResult | PLSResult | GenePCAResult | GEDARR
             lines.extend(
                 [
                     "plots/regional_values_brain.png: atlas brain map of the extracted regional values.",
-                    "plots/regional_values_cortex.png: cortical surface map of z-scored regional values when surface atlas geometry is available.",
+                    "plots/regional_values_cortex.png: publication-oriented cortical surface map of z-scored regional values when surface atlas geometry is available.",
+                    "plots/regional_values_cortex_brainspace.png: optional BrainSpace-rendered cortical comparison plot when the BrainSpace backend is available.",
                     "plots/corr_top_genes.png: strongest positive and negative gene hits.",
                     "plots/corr_distribution.png: distribution of all gene correlations.",
                 ]
@@ -210,7 +214,8 @@ def render_readme(result: CorrelationResult | PLSResult | GenePCAResult | GEDARR
             lines.extend(
                 [
                     "plots/regional_values_brain.png: atlas brain map of the extracted regional values.",
-                    "plots/regional_values_cortex.png: cortical surface map of z-scored regional values when surface atlas geometry is available.",
+                    "plots/regional_values_cortex.png: publication-oriented cortical surface map of z-scored regional values when surface atlas geometry is available.",
+                    "plots/regional_values_cortex_brainspace.png: optional BrainSpace-rendered cortical comparison plot when the BrainSpace backend is available.",
                     "plots/pls_variance.png: variance explained by each kept PLS component.",
                     "plots/pls_cumulative_variance.png: cumulative variance curve.",
                     "plots/pls_component_<n>_genes.png: strongest positive and negative gene weights for each component.",

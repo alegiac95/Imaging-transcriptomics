@@ -74,9 +74,9 @@ def make_shared_analysis_parent() -> argparse.ArgumentParser:
     shared.add_argument(
         "-r",
         "--regions",
-        choices=["all", "cort+sub", "cort"],
-        default="all",
-        help="Which atlas regions to analyze: all regions, cortex plus subcortex, or cortex only.",
+        choices=["default", "all", "cort+sub", "cort"],
+        default="default",
+        help="Which atlas regions to analyze. `default` and `cort` are cortex only; `all` and `cort+sub` include the packaged aseg add-on.",
     )
     shared.add_argument(
         "--space",
@@ -176,8 +176,8 @@ def make_gene_pca_parent() -> argparse.ArgumentParser:
     parser.add_argument(
         "-r",
         "--regions",
-        choices=["all", "cort+sub", "cort"],
-        default="all",
-        help="Which atlas regions to analyze: all regions, cortex plus subcortex, or cortex only.",
+        choices=["default", "all", "cort+sub", "cort"],
+        default="default",
+        help="Which atlas regions to analyze. `default` and `cort` are cortex only; `all` and `cort+sub` include the packaged aseg add-on.",
     )
     return parser

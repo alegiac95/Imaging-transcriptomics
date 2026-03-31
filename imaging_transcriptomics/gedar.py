@@ -14,7 +14,7 @@ def run_gedar(
     *,
     atlas: str = "dk",
     hemisphere: str = "both",
-    regions: str = "all",
+    regions: str = "default",
     gene_column: str = "gene",
     weight_column: str = "weight",
     rank_column: str | None = None,

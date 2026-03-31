@@ -9,7 +9,7 @@ import pandas as pd
 
 
 HemisphereMode = Literal["left", "both"]
-RegionScope = Literal["all", "cort", "cort+sub"]
+RegionScope = Literal["default", "all", "cort", "cort+sub"]
 AnalysisMethod = Literal["corr", "pls", "gene-pca", "gedar"]
 NullMethod = Literal["auto", "vasa", "alexander_bloch", "moran", "random"]
 SourceKind = Literal["vector", "surface", "volume"]

@@ -13,12 +13,27 @@ This documentation is organized around what most users actually need to do:
 install the toolbox, choose a workflow, understand the inputs and outputs, and
 interpret the resulting statistics.
 
-Recommended path for new users:
+.. raw:: html
 
-1. read :doc:`the quickstart <chapters/01_getting_started>`
-2. choose a workflow in :doc:`the workflow hub <chapters/05_what_to_do>`
-3. use the workflow-specific guide together with the methods pages when you
-   need more detail
+   <section class="imt-start-here-intro">
+     <img src="_static/undraw_outer-space_qey5.svg" alt="Illustration for getting started with the toolbox">
+     <div class="imt-start-here-copy">
+       <p class="imt-start-here-kicker">Start here</p>
+       <h2>Take your first steps without getting lost in the details</h2>
+       <p>
+         If you are new to the toolbox, begin with the quickstart, move through
+         installation, and then use the workflow hub to choose the analysis that
+         matches your data and question.
+       </p>
+       <p class="imt-start-here-links">
+         <a href="chapters/01_getting_started.html">Quickstart</a>
+         <span>•</span>
+         <a href="chapters/03_installation.html">Installation</a>
+         <span>•</span>
+         <a href="chapters/05_what_to_do.html">Workflow hub</a>
+       </p>
+     </div>
+   </section>
 
 .. toctree::
    :maxdepth: 1

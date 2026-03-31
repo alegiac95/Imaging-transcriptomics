@@ -2,16 +2,19 @@
 Included atlases
 ================
 
-The toolbox ships six atlas presets with packaged ``abagen`` expression assets.
-The same atlas IDs work in the command-line interface, the Python API, and the
-docs examples.
+The toolbox ships six base atlas presets with packaged ``abagen`` expression
+assets. The same atlas IDs work in the command-line interface, the Python API,
+and the docs examples.
 
 Atlas gallery
 -------------
 
 The previews below show the cortical surface coverage of each packaged atlas as
 single left-lateral surface renders. They are intended to help you compare
-parcel scale and cortical coverage quickly, not to encode biology.
+parcel scale and cortical coverage quickly, not to encode biology. All atlas
+IDs below now use the same simple interface: ``regions="default"`` or
+``regions="cort"`` keeps the cortical atlas, while ``regions="all"`` or
+``regions="cort+sub"`` appends the packaged ``aseg`` subcortical add-on.
 
 .. grid:: 1 1 2 2
    :gutter: 2
@@ -19,62 +22,61 @@ parcel scale and cortical coverage quickly, not to encode biology.
    .. grid-item-card:: ``dk``
       :img-top: ../images/atlases/dk_gallery.png
 
-      Desikan-Killiany with ``83`` bilateral regions (``41`` left-only),
-      including cortex and subcortex. Best when you want a low-resolution,
-      legacy-compatible default with whole-brain coverage.
+      Legacy-compatible Desikan-Killiany atlas. ``default`` returns the
+      cortical parcels; ``all`` appends the packaged ``aseg`` subcortical
+      add-on, for ``83`` bilateral regions total.
 
-      - Coverage: cortex + subcortex
+      - Coverage: cortex by default, optional ``aseg`` add-on
       - Spaces: ``MNI152``, ``fsaverage``
 
    .. grid-item-card:: ``schaefer-100``
       :img-top: ../images/atlases/schaefer-100_gallery.png
 
       Coarse Schaefer parcellation with ``100`` bilateral cortical parcels.
-      Good for cortex-only workflows when you want a compact, easy-to-interpret
-      regional map.
+      ``all`` appends the shared ``aseg`` subcortical add-on for ``115``
+      bilateral regions total.
 
-      - Coverage: cortex
+      - Coverage: cortex by default, optional ``aseg`` add-on
       - Spaces: ``MNI152``, ``fsaverage``
 
    .. grid-item-card:: ``schaefer-200``
       :img-top: ../images/atlases/schaefer-200_gallery.png
 
       Mid-resolution Schaefer preset with ``200`` bilateral cortical parcels.
-      A good default when you want more regional detail without moving to the
-      finest cortical scales.
+      ``all`` appends the shared ``aseg`` subcortical add-on for ``215``
+      bilateral regions total.
 
-      - Coverage: cortex
+      - Coverage: cortex by default, optional ``aseg`` add-on
       - Spaces: ``MNI152``, ``fsaverage``, ``fsLR``
 
    .. grid-item-card:: ``schaefer-400``
       :img-top: ../images/atlases/schaefer-400_gallery.png
 
-      Fine Schaefer preset with ``400`` bilateral cortical parcels. Best for
-      cortex-only analyses where higher regional granularity matters more than
-      simplicity.
+      Fine Schaefer preset with ``400`` bilateral cortical parcels. ``all``
+      appends the shared ``aseg`` subcortical add-on for ``415`` bilateral
+      regions total.
 
-      - Coverage: cortex
+      - Coverage: cortex by default, optional ``aseg`` add-on
       - Spaces: ``MNI152``, ``fsaverage``, ``fsLR``
 
    .. grid-item-card:: ``destrieux``
       :img-top: ../images/atlases/destrieux_gallery.png
 
       Destrieux cortical atlas with ``148`` bilateral regions (``74`` left-only).
-      A classical cortical atlas based on sulco-gyral patterns. Useful when you
-      want a traditional anatomical parcellation that is distinct from the
-      Schaefer family.
+      ``all`` appends the shared ``aseg`` subcortical add-on for ``163``
+      bilateral regions total.
 
-      - Coverage: cortex
+      - Coverage: cortex by default, optional ``aseg`` add-on
       - Spaces: ``MNI152``, ``fsaverage``
 
    .. grid-item-card:: ``glasser-360``
       :img-top: ../images/atlases/glasser-360_gallery.png
 
       Surface-oriented multimodal atlas with ``360`` bilateral cortical
-      parcels. Use it when you want a modern high-resolution cortical workflow,
-      especially for surface-first analyses.
+      parcels. ``all`` appends the shared ``aseg`` subcortical add-on for
+      ``375`` bilateral regions total.
 
-      - Coverage: cortex
+      - Coverage: cortex by default, optional ``aseg`` add-on
       - Spaces: ``fsLR``, ``fsaverage``, ``MNI152``
 
 Hemisphere modes
@@ -92,10 +94,25 @@ independent AHBA matrix for the right hemisphere.
 Coverage and region scope
 -------------------------
 
-- ``regions="all"`` keeps all atlas rows selected by the hemisphere mode
-- ``regions="cort"`` keeps only cortical parcels
-- ``regions="cort+sub"`` is accepted for API consistency; it is most relevant
-  for ``dk``, which includes subcortex
+- ``regions="default"`` keeps only cortical parcels
+- ``regions="cort"`` is an explicit synonym for ``default``
+- ``regions="all"`` keeps cortex plus the packaged ``aseg`` subcortical add-on
+- ``regions="cort+sub"`` is an explicit synonym for ``all``
+
+Subcortical add-on
+------------------
+
+All packaged atlas names can now expose the same shared ``aseg``-derived
+subcortical parcels through the region scope, rather than through separate
+atlas IDs.
+
+This means:
+
+- the atlas name stays the same
+- ``default`` gives you the historical cortical atlas
+- ``all`` adds the same subcortical parcel set used in ``dk``
+- old ``*-aseg`` names are accepted as compatibility aliases, but they resolve
+  to the base atlas name
 
 Expression matrices
 -------------------
@@ -115,12 +132,12 @@ Choosing an atlas
 Use ``dk`` when you want:
 
 - a legacy-compatible default
-- cortical and subcortical regions
+- easy access to both cortical and aseg-derived subcortical regions
 - the lowest-resolution preset
 
 Use a Schaefer atlas when you want:
 
-- cortex-only workflows
+- cortex-first workflows with an optional subcortical extension
 - a family of matched resolutions
 - better control over coarse versus fine parcellation
 

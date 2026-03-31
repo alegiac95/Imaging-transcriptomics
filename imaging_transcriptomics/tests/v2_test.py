@@ -58,12 +58,56 @@ def test_select_atlas_data_supports_left_and_both_hemispheres():
     assert {"L", "R", "B"}.issubset(set(both.labels["hemisphere"]))
 
 
-def test_select_atlas_data_keeps_glasser_expression_finite():
+def test_select_atlas_data_default_matches_cortical_scope():
+    default = select_atlas_data(atlas="schaefer-100", hemisphere="both", regions="default")
+    cortical = select_atlas_data(atlas="schaefer-100", hemisphere="both", regions="cort")
+
+    assert default.n_regions == 100
+    assert cortical.n_regions == 100
+    assert list(default.labels["id"]) == list(cortical.labels["id"])
+
+
+def test_select_atlas_data_all_matches_cortical_plus_subcortical_scope():
+    full = select_atlas_data(atlas="schaefer-100", hemisphere="both", regions="all")
+    cort_sub = select_atlas_data(atlas="schaefer-100", hemisphere="both", regions="cort+sub")
+
+    assert full.n_regions == 115
+    assert cort_sub.n_regions == 115
+    assert list(full.labels["id"]) == list(cort_sub.labels["id"])
+    assert set(full.labels.loc[full.labels["structure"] != "cortex", "label"]) == {
+        "thalamusproper",
+        "caudate",
+        "putamen",
+        "pallidum",
+        "accumbensarea",
+        "hippocampus",
+        "amygdala",
+        "brainstem",
+    }
+
+
+def test_glasser_all_scope_keeps_cortical_expression_finite():
     selection = select_atlas_data(atlas="glasser-360", hemisphere="both", regions="all")
+    cortical = selection.labels["structure"].astype(str) == "cortex"
+    matrix = selection.expression.iloc[:, 2:].to_numpy(dtype=float)
+
+    assert selection.n_regions == 375
+    assert cortical.sum() == 360
+    assert np.isfinite(matrix[cortical.to_numpy()]).all()
+
+
+def test_select_atlas_data_keeps_glasser_expression_finite():
+    selection = select_atlas_data(atlas="glasser-360", hemisphere="both", regions="default")
     matrix = selection.expression.iloc[:, 2:].to_numpy(dtype=float)
 
     assert matrix.shape[0] == 360
     assert np.isfinite(matrix).all()
+
+
+def test_legacy_aseg_aliases_normalize_to_base_atlas_ids():
+    assert get_atlas("schaefer-100-aseg").id == "schaefer-100"
+    assert get_atlas("destrieux-aseg").id == "destrieux"
+    assert get_atlas("glasser-360-aseg").id == "glasser-360"
 
 
 def test_surface_density_is_inferred_from_packaged_parcellations():
@@ -166,7 +210,7 @@ def test_build_run_config_normalizes_inputs(tmp_path):
         "corr",
         atlas="DK",
         hemisphere="left",
-        regions="all",
+        regions="default",
         output_dir=tmp_path,
         n_permutations=8,
     )
@@ -185,8 +229,9 @@ def test_run_analysis_accepts_explicit_config(monkeypatch):
         return np.tile(zvalues.reshape(-1, 1), (1, n_permutations)), null_method
 
     monkeypatch.setattr(api, "_permute_scan_values", fake_permutations)
-    config = build_run_config("corr", atlas="dk", hemisphere="left", regions="all", n_permutations=4)
-    result = run_analysis(np.linspace(-1.0, 1.0, 41), config)
+    config = build_run_config("corr", atlas="dk", hemisphere="left", regions="default", n_permutations=4)
+    n_regions = select_atlas_data(atlas="dk", hemisphere="left", regions="default").n_regions
+    result = run_analysis(np.linspace(-1.0, 1.0, n_regions), config)
 
     assert result.metadata.method == "corr"
     assert result.metadata.n_permutations == 4

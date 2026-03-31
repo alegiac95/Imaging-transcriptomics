@@ -98,7 +98,7 @@ imt corr \
   --space MNI152 \
   --atlas dk \
   --hemisphere left \
-  --regions all \
+  --regions default \
   --permutations 1000 \
   --null-method auto \
   --output /abs/path/out_corr
@@ -112,7 +112,7 @@ imt pls \
   --space MNI152 \
   --atlas dk \
   --hemisphere both \
-  --regions all \
+  --regions default \
   --ncomp 2 \
   --permutations 1000 \
   --null-method auto \
@@ -183,7 +183,7 @@ result = imt.run_corr(
     scan,
     atlas="dk",
     hemisphere="left",
-    regions="all",
+    regions="default",
     n_permutations=1000,
     output_dir="out_corr",
 )
@@ -200,7 +200,7 @@ result = imt.run_pls(
     scan,
     atlas="dk",
     hemisphere="both",
-    regions="all",
+    regions="default",
     n_components=2,
     n_permutations=1000,
     output_dir="out_pls",
@@ -251,7 +251,8 @@ This is the most direct way to reproduce or extend a GEDAR-style atlas projectio
 
 ## Included atlases
 
-The branch ships with packaged atlas assets and expression matrices for:
+The branch ships with packaged atlas assets and expression matrices for these
+base presets:
 
 - `dk`
 - `schaefer-100`
@@ -259,6 +260,14 @@ The branch ships with packaged atlas assets and expression matrices for:
 - `schaefer-400`
 - `destrieux`
 - `glasser-360`
+
+All atlas names now use the same region-scope interface:
+
+- `regions="default"` or `regions="cort"` keeps the cortical atlas
+- `regions="all"` or `regions="cort+sub"` adds the packaged `aseg`
+  subcortical extension
+
+`dk` uses the same model, so the atlas name stays simple there as well.
 
 The expression matrices are derived with `abagen`. For `hemisphere="both"`, the right side is obtained through the `abagen` mirror option (`lr_mirror="leftright"`).
 

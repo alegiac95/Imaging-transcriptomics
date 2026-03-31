@@ -15,7 +15,7 @@ DEFAULT_SEED = 1234
 DEFAULT_N_JOBS = 1
 DEFAULT_GENESET_ORGANISM = "Human"
 VALID_HEMISPHERES = {"left", "both"}
-VALID_REGIONS = {"all", "cort", "cort+sub"}
+VALID_REGIONS = {"default", "all", "cort", "cort+sub"}
 VALID_METHODS = {"corr", "pls"}
 VALID_NULL_METHODS = {"auto", "vasa", "alexander_bloch", "moran", "random"}
 
@@ -27,7 +27,7 @@ class RunConfig:
     method: AnalysisMethod
     atlas: str = "dk"
     hemisphere: HemisphereMode = "left"
-    regions: RegionScope = "all"
+    regions: RegionScope = "default"
     source_space: str | None = None
     n_permutations: int = DEFAULT_PERMUTATIONS
     null_method: NullMethod = DEFAULT_NULL_METHOD
@@ -57,7 +57,7 @@ def build_run_config(
     *,
     atlas: str = "dk",
     hemisphere: str = "left",
-    regions: str = "all",
+    regions: str = "default",
     source_space: str | None = None,
     n_permutations: int = DEFAULT_PERMUTATIONS,
     null_method: str = DEFAULT_NULL_METHOD,

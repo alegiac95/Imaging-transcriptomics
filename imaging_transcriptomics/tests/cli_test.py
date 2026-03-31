@@ -45,6 +45,9 @@ def test_corr_help_mentions_ora_only_default():
     assert "want both analyses." in help_text
     assert "--no-gsea" in help_text
     assert "--geneset-organism" in help_text
+    assert "--regions" in help_text
+    assert "default" in help_text
+    assert "cort+sub" in help_text
 
 
 def test_gene_pca_help_mentions_gene_list_and_normalization():

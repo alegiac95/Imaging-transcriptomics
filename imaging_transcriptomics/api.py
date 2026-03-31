@@ -44,7 +44,7 @@ def run_corr(
     *,
     atlas: str = "dk",
     hemisphere: str = "left",
-    regions: str = "all",
+    regions: str = "default",
     source_space: str | None = None,
     input_rh=None,
     n_permutations: int = DEFAULT_PERMUTATIONS,
@@ -71,8 +71,8 @@ def run_corr(
         Hemisphere subset to analyse. Use ``"left"`` for the historical
         left-only workflow or ``"both"`` for mirrored bilateral expression.
     regions
-        Atlas region subset. Accepted values are ``"all"``, ``"cort"``, and
-        ``"cort+sub"``.
+        Atlas region subset. ``"default"`` and ``"cort"`` keep cortex only;
+        ``"all"`` and ``"cort+sub"`` include the packaged aseg add-on.
     source_space
         Declared space of the input image when it is not already on the packaged
         MNI atlas grid.
@@ -134,7 +134,7 @@ def run_pls(
     *,
     atlas: str = "dk",
     hemisphere: str = "left",
-    regions: str = "all",
+    regions: str = "default",
     source_space: str | None = None,
     input_rh=None,
     n_components: int | None = None,
@@ -160,8 +160,8 @@ def run_pls(
     hemisphere
         Hemisphere subset to analyse.
     regions
-        Atlas region subset. Accepted values are ``"all"``, ``"cort"``, and
-        ``"cort+sub"``.
+        Atlas region subset. ``"default"`` and ``"cort"`` keep cortex only;
+        ``"all"`` and ``"cort+sub"`` include the packaged aseg add-on.
     source_space
         Declared space of the input image when resampling is required.
     input_rh

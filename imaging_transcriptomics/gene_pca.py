@@ -15,7 +15,7 @@ def run_gene_pca(
     *,
     atlas: str = "dk",
     hemisphere: str = "left",
-    regions: str = "all",
+    regions: str = "default",
     n_components: int = 3,
     output_dir: str | Path | None = None,
 ):

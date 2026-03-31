@@ -11,6 +11,7 @@ import imaging_transcriptomics.api as api
 
 ATLAS_GOLDENS = {
     "dk": {
+        "regions": "all",
         "n_regions": 41,
         "n_genes": 15677,
         "label_hash": "d92356c388bb5e0d",
@@ -19,6 +20,7 @@ ATLAS_GOLDENS = {
         "corr_hash": "e6d735763d3f06a2",
     },
     "schaefer-100": {
+        "regions": "default",
         "n_regions": 50,
         "n_genes": 15677,
         "label_hash": "fa545bc4262ec06d",
@@ -27,6 +29,7 @@ ATLAS_GOLDENS = {
         "corr_hash": "acecd739e0f92a88",
     },
     "schaefer-200": {
+        "regions": "default",
         "n_regions": 100,
         "n_genes": 15677,
         "label_hash": "49825e5cb83e4c4b",
@@ -35,6 +38,7 @@ ATLAS_GOLDENS = {
         "corr_hash": "09d4aab318a73559",
     },
     "schaefer-400": {
+        "regions": "default",
         "n_regions": 200,
         "n_genes": 15675,
         "label_hash": "b562fc94de9c514d",
@@ -43,6 +47,7 @@ ATLAS_GOLDENS = {
         "corr_hash": "d80a1f2d14e400dc",
     },
     "destrieux": {
+        "regions": "default",
         "n_regions": 74,
         "n_genes": 15675,
         "label_hash": "946b32c1e4e7a15f",
@@ -51,6 +56,7 @@ ATLAS_GOLDENS = {
         "corr_hash": "31ac6a7efdfe6cc5",
     },
     "glasser-360": {
+        "regions": "default",
         "n_regions": 180,
         "n_genes": 15675,
         "label_hash": "22c8034debd37393",
@@ -108,7 +114,7 @@ def test_packaged_atlases_share_gene_label_files():
 @pytest.mark.parametrize("atlas", list(ATLAS_GOLDENS), ids=list(ATLAS_GOLDENS))
 def test_packaged_atlas_selection_and_corr_outputs_are_golden(monkeypatch, atlas):
     expected = ATLAS_GOLDENS[atlas]
-    selection = imt.select_atlas_data(atlas=atlas, hemisphere="left", regions="all")
+    selection = imt.select_atlas_data(atlas=atlas, hemisphere="left", regions=expected["regions"])
 
     assert selection.n_regions == expected["n_regions"]
     assert selection.gene_labels.shape[0] == expected["n_genes"]
@@ -124,7 +130,7 @@ def test_packaged_atlas_selection_and_corr_outputs_are_golden(monkeypatch, atlas
         scan,
         atlas=atlas,
         hemisphere="left",
-        regions="all",
+        regions=expected["regions"],
         n_permutations=8,
         run_gsea=False,
     )

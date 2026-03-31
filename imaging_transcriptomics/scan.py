@@ -27,7 +27,7 @@ def extract_scan_data(
     data,
     atlas: str = "dk",
     hemisphere: HemisphereMode = "left",
-    regions: RegionScope = "all",
+    regions: RegionScope = "default",
     source_space: str | None = None,
     input_rh=None,
     prefer_neuromaps: bool = True,

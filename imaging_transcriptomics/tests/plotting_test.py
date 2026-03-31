@@ -15,11 +15,14 @@ from imaging_transcriptomics.plotting import (
     _load_surface_parcellation,
     _surface_value_frames,
     _vertex_values_for_hemisphere,
+    plot_brain_volume_map,
     plot_cortical_surface_map,
     save_result_plots,
 )
 from imaging_transcriptomics import select_atlas_data
 from imaging_transcriptomics.atlas_registry import get_atlas
+from imaging_transcriptomics.outputs import bundle as bundle_output
+from imaging_transcriptomics.outputs import brain as brain_output
 
 
 def _gsea_table() -> pd.DataFrame:
@@ -201,7 +204,7 @@ def test_save_result_plots_writes_gene_pca_plots(tmp_path: Path):
 
 
 def test_plot_cortical_surface_map_writes_glasser_surface_plot(tmp_path: Path):
-    selection = select_atlas_data(atlas="glasser-360", hemisphere="left", regions="all")
+    selection = select_atlas_data(atlas="glasser-360", hemisphere="left", regions="default")
     regional = selection.labels.assign(value=np.linspace(-1.0, 1.0, selection.n_regions))
 
     path = plot_cortical_surface_map(
@@ -214,6 +217,97 @@ def test_plot_cortical_surface_map_writes_glasser_surface_plot(tmp_path: Path):
 
     assert path is not None
     assert path.exists()
+
+
+def test_plot_cortical_surface_map_writes_bilateral_surface_plot(tmp_path: Path):
+    selection = select_atlas_data(atlas="glasser-360", hemisphere="both", regions="default")
+    regional = selection.labels.assign(value=np.linspace(-1.0, 1.0, selection.n_regions))
+
+    path = plot_cortical_surface_map(
+        regional,
+        atlas_id="glasser-360",
+        value_column="value",
+        title="Glasser cortical map",
+        output_path=tmp_path / "glasser_cortex.png",
+    )
+
+    assert path is not None
+    assert path.exists()
+
+
+def test_plot_brain_volume_map_keeps_missing_subcortex_visible(tmp_path: Path):
+    selection = select_atlas_data(atlas="dk", hemisphere="both", regions="all")
+    cortical = selection.labels.loc[selection.labels["structure"] == "cortex"].copy()
+    cortical["score_z"] = np.linspace(-1.0, 1.0, cortical.shape[0])
+
+    path = plot_brain_volume_map(
+        cortical,
+        atlas_id="dk",
+        value_column="score_z",
+        title="GEDAR brain map",
+        output_path=tmp_path / "gedar_brain.png",
+    )
+
+    assert path is not None
+    assert path.exists()
+
+
+def test_surface_mesh_paths_passes_requested_mesh_kind(monkeypatch):
+    class FakeAtlas:
+        surface_geometry = None
+        surface_space = "fsaverage"
+        surface_density = "10k"
+
+    seen: list[str] = []
+
+    def fake_fetch(space: str, density: str, mesh_kind: str = "pial"):
+        seen.append(mesh_kind)
+        return ("left.surf.gii", "right.surf.gii")
+
+    monkeypatch.setattr(brain_output, "get_atlas", lambda atlas_id: FakeAtlas())
+    monkeypatch.setattr(brain_output, "fetch_standard_surface_meshes", fake_fetch)
+
+    paths = brain_output.surface_mesh_paths("dk", mesh_kind="inflated")
+
+    assert paths == ("left.surf.gii", "right.surf.gii")
+    assert seen == ["inflated"]
+
+
+def test_save_result_plots_writes_brainspace_comparison_when_available(tmp_path: Path, monkeypatch):
+    selection = select_atlas_data(atlas="glasser-360", hemisphere="both", regions="default")
+    regional_scores = selection.labels.assign(PC1=np.linspace(-1.0, 1.0, selection.n_regions))
+    result = GenePCAResult(
+        atlas_id="glasser-360",
+        atlas_label="Glasser 360",
+        hemisphere="both",
+        regions="all",
+        requested_genes=("A", "B", "C"),
+        regional_scores=regional_scores,
+        gene_loadings=pd.DataFrame({"gene": ["A", "B", "C"], "PC1": [0.5, -0.3, 0.2]}),
+        variance_table=pd.DataFrame(
+            {
+                "component": [1],
+                "variance_explained": [0.6],
+                "cumulative_variance": [0.6],
+            }
+        ),
+        matched_genes=("A", "B", "C"),
+        brain_filtered_genes=(),
+        missing_genes=(),
+    )
+
+    def fake_brainspace(*args, output_path: Path, **kwargs):
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_bytes(b"brainspace")
+        return output_path
+
+    monkeypatch.setattr(bundle_output, "plot_cortical_surface_map_brainspace", fake_brainspace)
+
+    paths = save_result_plots(result, tmp_path)
+
+    assert tmp_path.joinpath("plots", "gene_pca_pc1_cortex.png").exists()
+    assert tmp_path.joinpath("plots", "gene_pca_pc1_cortex_brainspace.png").exists()
+    assert any(path.name == "gene_pca_pc1_cortex_brainspace.png" for path in paths)
 
 
 def test_ora_heatmap_frame_limits_large_term_sets_to_top_25():

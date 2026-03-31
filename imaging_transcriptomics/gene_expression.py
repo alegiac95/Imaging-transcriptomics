@@ -12,7 +12,7 @@ from .models import AtlasSelection, AtlasSpec, HemisphereMode, RegionScope
 
 
 VALID_HEMISPHERES = {"left", "both"}
-VALID_REGION_SCOPES = {"all", "cort", "cort+sub"}
+VALID_REGION_SCOPES = {"default", "all", "cort", "cort+sub"}
 DATA_DIR = Path(__file__).resolve().parent / "data"
 AHPA_BRAIN_GENES_PATH = DATA_DIR / "filters" / "AHPA_mrna_brain.tsv"
 
@@ -121,10 +121,10 @@ def _filter_labels(
     else:
         raise ConfigurationError("hemisphere must be either 'left' or 'both'.")
 
-    if regions == "cort":
+    if regions in {"default", "cort"}:
         filtered = filtered.loc[filtered["structure"] == "cortex"]
     elif regions not in VALID_REGION_SCOPES:
-        raise ConfigurationError("regions must be 'all', 'cort', or 'cort+sub'.")
+        raise ConfigurationError("regions must be 'default', 'all', 'cort', or 'cort+sub'.")
     return filtered
 
 
@@ -198,7 +198,7 @@ def _select_expression_rows(
 def load_expression_frame(
     atlas: str = "dk",
     hemisphere: HemisphereMode = "left",
-    regions: RegionScope = "all",
+    regions: RegionScope = "default",
     zscore_expression: bool = True,
 ) -> pd.DataFrame:
     """Load a packaged atlas expression table as a DataFrame.
@@ -230,7 +230,7 @@ def load_gene_labels(atlas: str = "dk") -> np.ndarray:
 def select_atlas_data(
     atlas: str = "dk",
     hemisphere: HemisphereMode = "left",
-    regions: RegionScope = "all",
+    regions: RegionScope = "default",
     zscore_expression: bool = True,
 ) -> AtlasSelection:
     """Load the packaged labels and expression data for one atlas subset.
@@ -243,7 +243,7 @@ def select_atlas_data(
     if hemisphere not in VALID_HEMISPHERES:
         raise ConfigurationError("hemisphere must be either 'left' or 'both'.")
     if regions not in VALID_REGION_SCOPES:
-        raise ConfigurationError("regions must be one of 'all', 'cort', or 'cort+sub'.")
+        raise ConfigurationError("regions must be one of 'default', 'all', 'cort', or 'cort+sub'.")
 
     spec = _packaged_atlas_spec(atlas)
     labels, expression = _select_expression_rows(

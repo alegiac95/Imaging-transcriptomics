@@ -5,7 +5,11 @@ from pathlib import Path
 import numpy as np
 
 from ..models import CorrelationResult, GEDARResult, GenePCAResult, PLSResult
-from .brain import plot_brain_volume_map, plot_cortical_surface_map
+from .brain import (
+    plot_brain_volume_map,
+    plot_cortical_surface_map,
+    plot_cortical_surface_map_brainspace,
+)
 from .common import zscore_for_plot
 from .enrichment import plot_gsea_dotplot, plot_ora_heatmap
 from .gene_tables import (
@@ -19,6 +23,38 @@ from .gene_tables import (
     plot_pls_component,
     plot_pls_variance,
 )
+
+
+def _append_cortical_plots(
+    paths: list[Path],
+    *,
+    table,
+    atlas_id: str,
+    value_column: str,
+    title: str,
+    output_path: Path,
+) -> None:
+    """Write the default cortical plot plus the optional BrainSpace variant."""
+
+    cortex_path = plot_cortical_surface_map(
+        table,
+        atlas_id=atlas_id,
+        value_column=value_column,
+        title=title,
+        output_path=output_path,
+    )
+    if cortex_path is not None:
+        paths.append(cortex_path)
+
+    brainspace_path = plot_cortical_surface_map_brainspace(
+        table,
+        atlas_id=atlas_id,
+        value_column=value_column,
+        title=title,
+        output_path=output_path.with_name(f"{output_path.stem}_brainspace{output_path.suffix}"),
+    )
+    if brainspace_path is not None:
+        paths.append(brainspace_path)
 
 
 def save_result_plots(result: CorrelationResult | PLSResult | GenePCAResult | GEDARResult, output_dir: Path) -> list[Path]:
@@ -36,15 +72,14 @@ def save_result_plots(result: CorrelationResult | PLSResult | GenePCAResult | GE
             )
             if brain_path is not None:
                 paths.append(brain_path)
-            cortex_path = plot_cortical_surface_map(
-                result.regional_scores,
+            _append_cortical_plots(
+                paths,
+                table=result.regional_scores,
                 atlas_id=result.atlas_id,
                 value_column=f"PC{component_index}",
                 title=f"Cortical map for PC{component_index}",
                 output_path=output_dir / "plots" / f"gene_pca_pc{component_index}_cortex.png",
             )
-            if cortex_path is not None:
-                paths.append(cortex_path)
             paths.append(plot_gene_pca_regional_component(result, output_dir, component_index))
             paths.append(plot_gene_pca_loadings(result, output_dir, component_index))
         return paths
@@ -76,15 +111,14 @@ def save_result_plots(result: CorrelationResult | PLSResult | GenePCAResult | GE
                 )
                 if brain_path is not None:
                     paths.append(brain_path)
-                cortex_path = plot_cortical_surface_map(
-                    result.regional_scores,
+                _append_cortical_plots(
+                    paths,
+                    table=result.regional_scores,
                     atlas_id=result.atlas_id,
                     value_column=score_column,
                     title=f"GEDAR {label.lower()} cortical map",
                     output_path=output_dir / "plots" / f"gedar_{mode}_cortex.png",
                 )
-                if cortex_path is not None:
-                    paths.append(cortex_path)
                 weights_path = plot_gedar_weights(
                     result,
                     output_dir,
@@ -106,15 +140,14 @@ def save_result_plots(result: CorrelationResult | PLSResult | GenePCAResult | GE
             )
             if brain_path is not None:
                 paths.append(brain_path)
-            cortex_path = plot_cortical_surface_map(
-                result.regional_scores,
+            _append_cortical_plots(
+                paths,
+                table=result.regional_scores,
                 atlas_id=result.atlas_id,
                 value_column="score_z",
                 title="GEDAR cortical map",
                 output_path=output_dir / "plots" / "gedar_cortex.png",
             )
-            if cortex_path is not None:
-                paths.append(cortex_path)
             weights_path = plot_gedar_weights(result, output_dir)
             if weights_path is not None:
                 paths.append(weights_path)
@@ -133,15 +166,14 @@ def save_result_plots(result: CorrelationResult | PLSResult | GenePCAResult | GE
     cortical_values = result.regional_values.assign(
         value_z=zscore_for_plot(result.regional_values["value"].to_numpy(dtype=float, copy=False))
     )
-    cortex_path = plot_cortical_surface_map(
-        cortical_values,
+    _append_cortical_plots(
+        paths,
+        table=cortical_values,
         atlas_id=result.metadata.atlas_id,
         value_column="value_z",
         title="Cortical regional map (z-scored)",
         output_path=output_dir / "plots" / "regional_values_cortex.png",
     )
-    if cortex_path is not None:
-        paths.append(cortex_path)
     if isinstance(result, CorrelationResult):
         paths.append(plot_correlation_ranking(result.gene_table, output_dir))
         paths.append(plot_correlation_distribution(result.gene_table, output_dir))

@@ -8,10 +8,10 @@ re-exported from ``imaging_transcriptomics``.
 Stable workflow functions
 -------------------------
 
-- ``run_corr(data, *, atlas="dk", hemisphere="left", regions="all", source_space=None, input_rh=None, n_permutations=1000, null_method="auto", output_dir=None, run_gsea=False, gene_set="lake", ora_p_threshold=None, seed=1234, n_jobs=1)``
-- ``run_pls(data, *, atlas="dk", hemisphere="left", regions="all", source_space=None, input_rh=None, n_components=None, var=None, n_permutations=1000, null_method="auto", output_dir=None, run_gsea=False, gene_set="lake", ora_p_threshold=None, seed=1234, n_jobs=1)``
-- ``run_gene_pca(genes, *, atlas="dk", hemisphere="left", regions="all", n_components=3, output_dir=None)``
-- ``run_gedar(weights, *, atlas="dk", hemisphere="both", regions="all", gene_column="gene", weight_column="weight", rank_column=None, rank_mode="ascending", top_percent=None, top_n=None, p_threshold=None, direction="combined", normalize_expression="zscore", normalize_weights="none", output_dir=None)``
+- ``run_corr(data, *, atlas="dk", hemisphere="left", regions="default", source_space=None, input_rh=None, n_permutations=1000, null_method="auto", output_dir=None, run_gsea=False, gene_set="lake", ora_p_threshold=None, seed=1234, n_jobs=1)``
+- ``run_pls(data, *, atlas="dk", hemisphere="left", regions="default", source_space=None, input_rh=None, n_components=None, var=None, n_permutations=1000, null_method="auto", output_dir=None, run_gsea=False, gene_set="lake", ora_p_threshold=None, seed=1234, n_jobs=1)``
+- ``run_gene_pca(genes, *, atlas="dk", hemisphere="left", regions="default", n_components=3, output_dir=None)``
+- ``run_gedar(weights, *, atlas="dk", hemisphere="both", regions="default", gene_column="gene", weight_column="weight", rank_column=None, rank_mode="ascending", top_percent=None, top_n=None, p_threshold=None, direction="combined", normalize_expression="zscore", normalize_weights="none", output_dir=None)``
 - ``run_analysis(data, config, *, input_rh=None)``
 
 Configuration and selection helpers
