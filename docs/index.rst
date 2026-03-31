@@ -73,16 +73,6 @@ interpret the resulting statistics.
 .. toctree::
    :hidden:
    :maxdepth: 1
-   :caption: Development
-
-   chapters/development/testing
-   chapters/development/contributing
-
-
-
-.. toctree::
-   :hidden:
-   :maxdepth: 1
    :caption: Using the toolbox
 
    chapters/usage/cli
@@ -123,6 +113,12 @@ interpret the resulting statistics.
    chapters/methods/null_models
    chapters/methods/gene_sets
 
+.. toctree::
+   :maxdepth: 1
+   :caption: Reference
+
+   chapters/reference/citations
+
 .. raw:: html
 
    <section class="imt-section-intro">
@@ -144,14 +140,16 @@ interpret the resulting statistics.
    </section>
 
 .. toctree::
+   :hidden:
+   :maxdepth: 1
+   :caption: Development
+
+   chapters/development/testing
+   chapters/development/contributing
+
+.. toctree::
    :maxdepth: 1
    :caption: FAQ and Contact
 
    chapters/08_faq
    chapters/07_contact_us
-
-.. toctree::
-   :maxdepth: 1
-   :caption: Reference
-
-   chapters/reference/citations
