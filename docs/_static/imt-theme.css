@@ -263,6 +263,10 @@ body[data-theme="dark"] .sidebar-logo {
   background: linear-gradient(135deg, var(--color-background-secondary) 0%, var(--color-background-hover) 100%);
 }
 
+.imt-section-intro--reverse {
+  flex-direction: row-reverse;
+}
+
 .imt-section-intro img {
   flex: 0 0 min(220px, 34%);
   width: min(220px, 34%);
@@ -317,6 +321,10 @@ body[data-theme="dark"] .sidebar-logo {
 
   .imt-section-intro img {
     width: min(220px, 100%);
+  }
+
+  .imt-section-intro--reverse {
+    flex-direction: column;
   }
 }
 

@@ -36,8 +36,52 @@ interpret the resulting statistics.
    </section>
 
 
+.. toctree::
+   :hidden:
+   :maxdepth: 1
+   :caption: Start here
+
+   chapters/01_getting_started
+   chapters/03_installation
+   chapters/05_what_to_do
+
+
+.. raw:: html
+
+   <section class="imt-section-intro imt-section-intro--reverse">
+     <img src="_static/undraw_data-at-work_3tbf.svg" alt="Illustration for using the toolbox in practice">
+     <div class="imt-section-copy">
+       <p class="imt-section-kicker">Using the toolbox</p>
+       <h2>Work with real inputs, inspect outputs, and move smoothly between the CLI and Python API</h2>
+       <p>
+         Once you know which workflow you need, this section helps you run the
+         toolbox in practice: choose the right interface, prepare the inputs,
+         understand the atlases, and interpret the output bundle.
+       </p>
+       <p class="imt-section-links">
+         <a href="chapters/usage/cli.html">CLI</a>
+         <span>•</span>
+         <a href="chapters/usage/python_api.html">Python API</a>
+         <span>•</span>
+         <a href="chapters/usage/inputs.html">Inputs</a>
+         <span>•</span>
+         <a href="chapters/usage/outputs.html">Outputs</a>
+       </p>
+     </div>
+   </section>
 
 .. toctree::
+   :hidden:
+   :maxdepth: 1
+   :caption: Development
+
+   chapters/development/testing
+   chapters/development/contributing
+
+
+
+.. toctree::
+   :hidden:
    :maxdepth: 1
    :caption: Using the toolbox
 
@@ -85,10 +129,3 @@ interpret the resulting statistics.
        </p>
      </div>
    </section>
-
-.. toctree::
-   :maxdepth: 1
-   :caption: Development
-
-   chapters/development/testing
-   chapters/development/contributing
