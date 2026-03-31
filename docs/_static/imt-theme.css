@@ -252,6 +252,26 @@ body[data-theme="dark"] .sidebar-logo {
   margin: 0 auto;
 }
 
+.imt-index-badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.45rem 0.55rem;
+  margin: 0 auto 1.25rem;
+}
+
+.imt-index-badges a {
+  display: inline-flex;
+  align-items: center;
+  line-height: 0;
+  text-decoration: none;
+}
+
+.imt-index-badges img {
+  height: 20px;
+  border-radius: 0.3rem;
+}
+
 .imt-section-intro {
   display: flex;
   flex-direction: row;

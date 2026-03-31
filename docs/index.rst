@@ -5,6 +5,19 @@
      <img src="_static/imaging_transcriptomics_toolbox_logo_dark.png" alt="Imaging Transcriptomics Toolbox logo" class="only-dark">
    </div>
 
+.. raw:: html
+
+   <div class="imt-index-badges">
+     <a href="https://github.com/alegiac95/Imaging-transcriptomics"><img src="https://img.shields.io/badge/GitHub-repository-172842?style=flat-square&amp;logo=github" alt="GitHub repository"></a>
+     <a href="https://codecov.io/gh/alegiac95/Imaging-transcriptomics"><img src="https://img.shields.io/badge/Codecov-placeholder-D7E3F0?style=flat-square&amp;logo=codecov&amp;logoColor=0E2F5A&amp;color=D7E3F0&amp;labelColor=EEF4FA" alt="Codecov placeholder"></a>
+     <a href="https://pypi.org/project/imaging-transcriptomics/"><img src="https://img.shields.io/badge/PyPI-placeholder-D7E3F0?style=flat-square&amp;logo=pypi&amp;logoColor=0E2F5A&amp;color=D7E3F0&amp;labelColor=EEF4FA" alt="PyPI placeholder"></a>
+     <a href="https://hub.docker.com/"><img src="https://img.shields.io/badge/Docker-placeholder-D7E3F0?style=flat-square&amp;logo=docker&amp;logoColor=0E2F5A&amp;color=D7E3F0&amp;labelColor=EEF4FA" alt="Docker placeholder"></a>
+     <a href="https://apptainer.org/"><img src="https://img.shields.io/badge/Singularity-placeholder-D7E3F0?style=flat-square&amp;color=D7E3F0&amp;labelColor=EEF4FA" alt="Singularity placeholder"></a>
+     <a href="https://pypi.org/project/imaging-transcriptomics/"><img src="https://img.shields.io/badge/python-%3E%3D3.10-1565C0?style=flat-square&amp;logo=python&amp;logoColor=white" alt="Python version"></a>
+     <a href="https://doi.org/10.5281/zenodo.5507505"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.5507505.svg" alt="Zenodo DOI"></a>
+     <a href="https://github.com/alegiac95/Imaging-transcriptomics/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-AGPL--3.0-F28C28?style=flat-square" alt="License"></a>
+   </div>
+
 
 The Imaging Transcriptomics Toolbox helps researchers integrate neuroimaging data with transcriptomic information from the Allen Human Brain Atlas. 
 Built to be practical, accessible, and extensible, it provides a streamlined framework for exploring the molecular basis of brain imaging findings 
