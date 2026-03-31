@@ -17,7 +17,7 @@
      <a href="https://apptainer.org/"><img src="https://img.shields.io/badge/Singularity-placeholder-D7E3F0?style=flat-square&amp;color=D7E3F0&amp;labelColor=EEF4FA" alt="Singularity placeholder"></a>
      <a href="https://pypi.org/project/imaging-transcriptomics/"><img src="https://img.shields.io/badge/python-%3E%3D3.10-1565C0?style=flat-square&amp;logo=python&amp;logoColor=white" alt="Python version"></a>
      <a href="https://doi.org/10.5281/zenodo.5507505"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.5507505.svg" alt="Zenodo DOI"></a>
-     <a href="https://github.com/alegiac95/Imaging-transcriptomics/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-AGPL--3.0-F28C28?style=flat-square" alt="License"></a>
+     <a href="https://github.com/alegiac95/Imaging-transcriptomics/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-F28C28?style=flat-square" alt="License"></a>
    </div>
 
 
