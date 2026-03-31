@@ -95,7 +95,7 @@ interpret the resulting statistics.
 .. raw:: html
 
    <section class="imt-section-intro imt-section-intro--reverse">
-     <img src="_static/undraw_problem-solving_1kpx.svg" alt="Illustration for understanding the methods behind the toolbox" class="imt-section-image--flip">
+     <img src="_static/undraw_problem-solving_1kpx.svg" alt="Illustration for understanding the methods behind the toolbox">
      <div class="imt-section-copy">
        <p class="imt-section-kicker">Methods</p>
        <h2>Understand the models, nulls, and enrichment logic before you interpret the results</h2>
