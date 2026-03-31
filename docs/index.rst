@@ -113,6 +113,24 @@ interpret the resulting statistics.
    chapters/methods/null_models
    chapters/methods/gene_sets
 
+.. raw:: html
+
+   <section class="imt-section-intro imt-section-intro--reverse">
+     <img src="_static/undraw_book-lover_m9n3.svg" alt="Illustration for citations and references" class="imt-section-image--flip">
+     <div class="imt-section-copy">
+       <p class="imt-section-kicker">Reference</p>
+       <h2>Keep the key papers close when you write up or compare results</h2>
+       <p>
+         Use the reference section to find the core toolbox citations and the
+         dedicated GEDAR paper, so the methodological background stays easy to
+         trace back to the original publications.
+       </p>
+       <p class="imt-section-links">
+         <a href="chapters/reference/citations.html">Citations</a>
+       </p>
+     </div>
+   </section>
+
 .. toctree::
    :maxdepth: 1
    :caption: Reference
@@ -146,6 +164,27 @@ interpret the resulting statistics.
 
    chapters/development/testing
    chapters/development/contributing
+
+.. raw:: html
+
+   <section class="imt-section-intro imt-section-intro--reverse">
+     <img src="_static/undraw_questions_52ic.svg" alt="Illustration for frequently asked questions and support">
+     <div class="imt-section-copy">
+       <p class="imt-section-kicker">FAQ and Contact</p>
+       <h2>Get unstuck quickly when something is unclear, unexpected, or hard to reproduce</h2>
+       <p>
+         This section collects the most common questions about inputs,
+         permutations, and workflow interpretation, and it also points to the
+         best place to ask for help when something still is not behaving as
+         expected.
+       </p>
+       <p class="imt-section-links">
+         <a href="chapters/08_faq.html">FAQ</a>
+         <span>•</span>
+         <a href="chapters/07_contact_us.html">Contact Us</a>
+       </p>
+     </div>
+   </section>
 
 .. toctree::
    :maxdepth: 1
