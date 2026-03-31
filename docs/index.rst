@@ -132,6 +132,7 @@ interpret the resulting statistics.
    </section>
 
 .. toctree::
+   :hidden:
    :maxdepth: 1
    :caption: Reference
 
@@ -187,6 +188,7 @@ interpret the resulting statistics.
    </section>
 
 .. toctree::
+   :hidden:
    :maxdepth: 1
    :caption: FAQ and Contact
 
