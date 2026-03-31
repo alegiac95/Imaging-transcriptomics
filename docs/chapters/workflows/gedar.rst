@@ -28,6 +28,21 @@ This makes GEDAR useful for TWAS-style or other ranked gene-weight analyses
 where the end goal is a regional transcriptomic score rather than a gene-level
 association test.
 
+Interpretation
+--------------
+
+The Gene-Expression derived Disorder Associated Risk (GEDAR) score is a regional weighted-expression summary. It is not a p-value
+and it is not itself a statistical association test.
+
+Interpret it as:
+
+- a transcriptomic regional pattern induced by the retained weighted genes
+- a map that can be inspected directly or compared with imaging maps in a
+  separate analysis
+
+The z-scored output is usually the most convenient version for plotting and
+map-to-map comparison.
+
 Inputs
 ------
 
@@ -172,20 +187,6 @@ Reading the outputs
 ``matched_genes.txt`` and ``missing_genes.txt``
    Simple audit files for gene matching.
 
-Interpretation
---------------
-
-The GEDAR score is a regional weighted-expression summary. It is not a p-value
-and it is not itself a statistical association test.
-
-Interpret it as:
-
-- a transcriptomic regional pattern induced by the retained weighted genes
-- a map that can be inspected directly or compared with imaging maps in a
-  separate analysis
-
-The z-scored output is usually the most convenient version for plotting and
-map-to-map comparison.
 
 Common pitfalls
 ---------------
