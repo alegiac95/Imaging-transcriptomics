@@ -15,17 +15,17 @@ interpret the resulting statistics.
 
 .. raw:: html
 
-   <section class="imt-start-here-intro">
+   <section class="imt-section-intro">
      <img src="_static/undraw_outer-space_qey5.svg" alt="Illustration for getting started with the toolbox">
-     <div class="imt-start-here-copy">
-       <p class="imt-start-here-kicker">Start here</p>
+     <div class="imt-section-copy">
+       <p class="imt-section-kicker">Start here</p>
        <h2>Take your first steps without getting lost in the details</h2>
        <p>
          If you are new to the toolbox, begin with the quickstart, move through
          installation, and then use the workflow hub to choose the analysis that
          matches your data and question.
        </p>
-       <p class="imt-start-here-links">
+       <p class="imt-section-links">
          <a href="chapters/01_getting_started.html">Quickstart</a>
          <span>•</span>
          <a href="chapters/03_installation.html">Installation</a>
@@ -35,13 +35,7 @@ interpret the resulting statistics.
      </div>
    </section>
 
-.. toctree::
-   :maxdepth: 1
-   :caption: Start here
 
-   chapters/01_getting_started
-   chapters/03_installation
-   chapters/05_what_to_do
 
 .. toctree::
    :maxdepth: 1
@@ -72,17 +66,29 @@ interpret the resulting statistics.
    chapters/08_faq
    chapters/07_contact_us
 
+.. raw:: html
+
+   <section class="imt-section-intro">
+     <img src="_static/undraw_version-control_e4yu.svg" alt="Illustration for developing and contributing to the toolbox">
+     <div class="imt-section-copy">
+       <p class="imt-section-kicker">Development</p>
+       <h2>Test, extend, and contribute without guessing how the project fits together</h2>
+       <p>
+         If you want to work on the package itself, start with the testing
+         guide and then move to the contributing notes for coding conventions,
+         local workflows, and release-facing project structure.
+       </p>
+       <p class="imt-section-links">
+         <a href="chapters/development/testing.html">Testing</a>
+         <span>•</span>
+         <a href="chapters/development/contributing.html">Contributing</a>
+       </p>
+     </div>
+   </section>
+
 .. toctree::
    :maxdepth: 1
    :caption: Development
 
    chapters/development/testing
    chapters/development/contributing
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
