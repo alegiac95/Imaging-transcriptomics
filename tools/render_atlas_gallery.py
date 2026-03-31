@@ -71,6 +71,19 @@ def gallery_mesh_paths(atlas_id: str, *, mesh_kind: str = "inflated") -> tuple[s
     return surface_mesh_paths(atlas_id, mesh_kind=mesh_kind)
 
 
+def destrieux_surface_parcellation() -> tuple[np.ndarray, dict[int, str]]:
+    """Load the standard fsaverage5 Destrieux surface parcellation."""
+
+    from nilearn.datasets import fetch_atlas_surf_destrieux
+
+    cache_dir = _repo_root() / ".cache" / "nilearn"
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    atlas = fetch_atlas_surf_destrieux(data_dir=str(cache_dir), verbose=0)
+    labels = np.asarray(atlas.map_left, dtype=np.int32)
+    code_to_name = {int(code): str(name) for code, name in enumerate(atlas.labels)}
+    return labels, code_to_name
+
+
 def load_labels(atlas_id: str) -> pd.DataFrame:
     """Load one packaged atlas label table with a consistent schema."""
 
@@ -107,7 +120,6 @@ def cortical_gallery_table(atlas_id: str) -> pd.DataFrame:
 def _crop_white_margin(image: np.ndarray, *, pad: int = 10) -> np.ndarray:
     """Crop a mostly white screenshot down to its visible surface content."""
 
-    _, plt = matplotlib_backend()
     if image.ndim == 2:
         mask = image < 0.995
     else:
@@ -123,16 +135,7 @@ def _crop_white_margin(image: np.ndarray, *, pad: int = 10) -> np.ndarray:
     row_stop = min(int(rows[-1]) + pad + 1, image.shape[0])
     col_start = max(int(cols[0]) - pad, 0)
     col_stop = min(int(cols[-1]) + pad + 1, image.shape[1])
-    cropped = image[row_start:row_stop, col_start:col_stop]
-
-    fig = plt.figure(figsize=(3.6, 2.8), facecolor="white")
-    ax = fig.add_axes([0.0, 0.0, 1.0, 1.0])
-    ax.imshow(cropped)
-    ax.axis("off")
-    fig.canvas.draw()
-    buffer = np.asarray(fig.canvas.buffer_rgba())
-    plt.close(fig)
-    return buffer
+    return image[row_start:row_stop, col_start:col_stop]
 
 
 def _render_brainspace_left_lateral(
@@ -174,9 +177,9 @@ surf_lh.append_array(payload['left'], name='atlas_preview', at='p')
 normals = wrap_vtk(vtkPolyDataNormals, splitting=False, featureAngle=0.1)
 surf_lh = serial_connect(surf_lh, normals)
 
-plot_surf(
-    {'lh': surf_lh},
-    [['lh']],
+    plot_surf(
+        {'lh': surf_lh},
+        [['lh']],
     array_name=[['atlas_preview']],
     view=[['lateral']],
     color_bar=None,
@@ -189,7 +192,7 @@ plot_surf(
     size=(520, 380),
     screenshot=True,
     filename=str(output_path),
-    transparent_bg=False,
+    transparent_bg=True,
     scale=(2, 2),
     interactive=False,
     suppress_warnings=True,
@@ -236,7 +239,7 @@ def _render_matplotlib_left_lateral(
     from matplotlib.colors import Normalize
 
     coords, triangles = load_surface_mesh(mesh_paths[0])
-    fig = plt.figure(figsize=(3.6, 2.8), facecolor="white")
+    fig = plt.figure(figsize=(3.6, 2.8), facecolor=(1.0, 1.0, 1.0, 0.0))
     ax = fig.add_axes([0.0, 0.0, 1.0, 1.0], projection="3d")
     surface_view(
         ax,
@@ -248,8 +251,9 @@ def _render_matplotlib_left_lateral(
         norm=Normalize(vmin=0.0, vmax=1.0),
         elev=10.0,
     )
+    ax.set_facecolor((1.0, 1.0, 1.0, 0.0))
     tmp_output = output_path.with_suffix(".tmp.png")
-    fig.savefig(tmp_output, dpi=220, facecolor="white")
+    fig.savefig(tmp_output, dpi=220, transparent=True)
     plt.close(fig)
     cropped = _crop_white_margin(plt.imread(tmp_output), pad=10)
     plt.imsave(output_path, cropped)
@@ -261,7 +265,7 @@ def render_atlas_gallery_figure(atlas_id: str, output_path: Path) -> Path | None
     """Render one atlas preview as a left-lateral cortical gallery figure."""
 
     atlas = get_atlas(atlas_id)
-    if atlas.surface_paths is None:
+    if atlas.surface_paths is None and atlas_id != "destrieux":
         return None
 
     table = cortical_gallery_table(atlas_id)
@@ -269,7 +273,10 @@ def render_atlas_gallery_figure(atlas_id: str, output_path: Path) -> Path | None
     if "left" not in hemi_frames:
         return None
 
-    label_array, code_to_name = load_surface_parcellation(str(atlas.surface_paths[0]))
+    if atlas_id == "destrieux":
+        label_array, code_to_name = destrieux_surface_parcellation()
+    else:
+        label_array, code_to_name = load_surface_parcellation(str(atlas.surface_paths[0]))
     vertex_values = vertex_values_for_hemisphere(
         hemi_frames["left"],
         value_column="gallery_value",

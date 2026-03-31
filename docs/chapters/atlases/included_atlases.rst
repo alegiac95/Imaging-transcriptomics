@@ -57,10 +57,12 @@ parcel scale and cortical coverage quickly, not to encode biology.
       - Spaces: ``MNI152``, ``fsaverage``, ``fsLR``
 
    .. grid-item-card:: ``destrieux``
+      :img-top: ../images/atlases/destrieux_gallery.png
 
       Destrieux cortical atlas with ``148`` bilateral regions (``74`` left-only).
-      The packaged preset includes expression and label assets, but it does not
-      currently ship a surface parcellation file for the gallery preview.
+      A classical cortical atlas based on sulco-gyral patterns. Useful when you
+      want a traditional anatomical parcellation that is distinct from the
+      Schaefer family.
 
       - Coverage: cortex
       - Spaces: ``MNI152``, ``fsaverage``
@@ -74,56 +76,6 @@ parcel scale and cortical coverage quickly, not to encode biology.
 
       - Coverage: cortex
       - Spaces: ``fsLR``, ``fsaverage``, ``MNI152``
-
-Atlas comparison
-----------------
-
-.. list-table::
-   :header-rows: 1
-   :widths: 18 10 10 16 20 26
-
-   * - Atlas ID
-     - Left regions
-     - Both regions
-     - Coverage
-     - Supported spaces
-     - Notes
-   * - ``dk``
-     - 41
-     - 83
-     - cortex + subcortex
-     - ``MNI152``, ``fsaverage``
-     - Legacy-compatible Desikan-Killiany preset with mirrored right-side expression.
-   * - ``schaefer-100``
-     - 50
-     - 100
-     - cortex
-     - ``MNI152``, ``fsaverage``
-     - Packaged Schaefer 100 cortical atlas.
-   * - ``schaefer-200``
-     - 100
-     - 200
-     - cortex
-     - ``MNI152``, ``fsaverage``, ``fsLR``
-     - Higher-resolution Schaefer preset with packaged local build assets.
-   * - ``schaefer-400``
-     - 200
-     - 400
-     - cortex
-     - ``MNI152``, ``fsaverage``, ``fsLR``
-     - Higher-resolution Schaefer preset with packaged local build assets.
-   * - ``destrieux``
-     - 74
-     - 148
-     - cortex
-     - ``MNI152``, ``fsaverage``
-     - Destrieux cortical atlas built from local atlas assets.
-   * - ``glasser-360``
-     - 180
-     - 360
-     - cortex
-     - ``fsLR``, ``fsaverage``, ``MNI152``
-     - Surface-oriented Glasser preset with packaged surface geometry.
 
 Hemisphere modes
 ----------------
