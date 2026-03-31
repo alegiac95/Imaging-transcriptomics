@@ -351,6 +351,11 @@ a {
   text-underline-offset: 0.15em;
 }
 
+a:visited {
+  color: #F28C28;
+  text-decoration-color: rgba(242, 140, 40, 0.38);
+}
+
 a:hover {
   text-decoration-thickness: 2px;
 }
