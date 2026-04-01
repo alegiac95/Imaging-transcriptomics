@@ -45,6 +45,7 @@ where:
 - :math:`\tilde{g}` is the standardized rank vector of one gene
 
 ..note:: 
+
    Two implementation details matter:
 
    - ranks are produced with a stable sort, so exact ties are broken by order
