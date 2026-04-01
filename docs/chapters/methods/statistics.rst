@@ -44,7 +44,7 @@ where:
 - :math:`\tilde{x}` is the standardized rank vector of the imaging values
 - :math:`\tilde{g}` is the standardized rank vector of one gene
 
-..note:: 
+.. note:: 
 
    Two implementation details matter:
 
