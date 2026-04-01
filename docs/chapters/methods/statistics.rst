@@ -7,20 +7,19 @@ workflows. It is written to match the current implementation in the toolbox,
 so the formulas below describe what the package actually computes rather than
 an idealized textbook version.
 
-Notation
---------
+.. ``admonition``:: Notation
 
-Throughout this page:
+   Throughout this page:
 
-- :math:`n` is the number of selected atlas regions
-- :math:`p` is the number of genes in the selected atlas expression matrix
-- :math:`B` is the number of imaging permutations
-- :math:`x` is the observed regional imaging vector with shape :math:`n \times 1`
-- :math:`X` is the atlas expression matrix with shape :math:`n \times p`
-- :math:`x^{(b)}` is the :math:`b`\ th permuted imaging vector
+   - :math:`n` is the number of selected atlas regions
+   - :math:`p` is the number of genes in the selected atlas expression matrix
+   - :math:`B` is the number of imaging permutations
+   - :math:`x` is the observed regional imaging vector with shape :math:`n \times 1`
+   - :math:`X` is the atlas expression matrix with shape :math:`n \times p`
+   - :math:`x^{(b)}` is the :math:`b`\ th permuted imaging vector
 
-The package always works on the selected atlas subset, so :math:`n` changes with
-the chosen atlas, hemisphere, and region scope.
+   The package always works on the selected atlas subset, so :math:`n` changes with
+   the chosen atlas, hemisphere, and region scope.
 
 Correlation workflow
 --------------------
