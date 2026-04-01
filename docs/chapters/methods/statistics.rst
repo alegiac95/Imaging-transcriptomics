@@ -44,10 +44,12 @@ where:
 - :math:`\tilde{x}` is the standardized rank vector of the imaging values
 - :math:`\tilde{g}` is the standardized rank vector of one gene
 
-.. note:: 
+.. note::
 
    Two implementation details matter:
-   - ranks are produced with a stable sort, so exact ties are broken by order rather than by average rank as in textbook Spearman correlation
+
+   - ranks are produced with a stable sort, so exact ties are broken by order
+     rather than by average rank as in textbook Spearman correlation
    - standardization uses the sample standard deviation with ``ddof=1``
 
    This makes the workflow equivalent to Spearman rank correlation when there are
