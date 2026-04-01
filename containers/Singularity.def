@@ -1,0 +1,29 @@
+Bootstrap: docker
+From: python:3.11-slim
+
+%files
+    pyproject.toml /opt/imaging-transcriptomics/pyproject.toml
+    README.md /opt/imaging-transcriptomics/README.md
+    imaging_transcriptomics /opt/imaging-transcriptomics/imaging_transcriptomics
+
+%environment
+    export MPLBACKEND=Agg
+    export PYTHONDONTWRITEBYTECODE=1
+    export PYTHONUNBUFFERED=1
+
+%post
+    export DEBIAN_FRONTEND=noninteractive
+    apt-get update
+    apt-get install --yes --no-install-recommends ca-certificates
+    rm -rf /var/lib/apt/lists/*
+
+    cd /opt/imaging-transcriptomics
+    python -m pip install --upgrade pip
+    python -m pip install .[plots,gsea,maps]
+
+%runscript
+    exec imt "$@"
+
+%test
+    imt --help >/dev/null
+

@@ -1,0 +1,56 @@
+# syntax=docker/dockerfile:1.7
+
+FROM python:3.11-slim AS builder
+
+ENV MPLBACKEND=Agg \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy
+
+ARG APP_DIR=/opt/imaging-transcriptomics
+
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
+WORKDIR ${APP_DIR}
+
+RUN apt-get update \
+    && apt-get install --yes --no-install-recommends ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY pyproject.toml uv.lock README.md ./
+
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-dev --no-install-project --extra plots --extra gsea --extra maps
+
+COPY imaging_transcriptomics imaging_transcriptomics
+
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-dev --extra plots --extra gsea --extra maps
+
+
+FROM python:3.11-slim
+
+ENV MPLBACKEND=Agg \
+    PATH="/opt/imaging-transcriptomics/.venv/bin:${PATH}" \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+ARG APP_DIR=/opt/imaging-transcriptomics
+
+WORKDIR ${APP_DIR}
+
+RUN apt-get update \
+    && apt-get install --yes --no-install-recommends ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder ${APP_DIR} ${APP_DIR}
+
+RUN useradd --create-home --uid 1000 imt \
+    && chown -R imt:imt ${APP_DIR}
+
+USER imt
+
+ENTRYPOINT ["imt"]
+CMD ["--help"]
+
