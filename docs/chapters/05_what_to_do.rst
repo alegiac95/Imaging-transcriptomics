@@ -7,7 +7,8 @@ Workflows
 In this section you can decide which of the available workflows best suits 
 your research question and how to run it.
 
-Once you decide which workflow you want to use, simply click on the respective 
+If you want to learn more about each workflow, what it does, 
+how to run it, and the expected inputs and outputs simply click on the respective 
 icon on the figure below.
 
 .. only:: html
@@ -29,14 +30,6 @@ icon on the figure below.
       :alt: Workflow overview
       :width: 100%
 
-Each workflow page should explain:
-
-- what the workflow is for
-- what inputs it needs
-- the main CLI and Python entry points
-- the key outputs
-- how to interpret the results
-- the most common pitfalls
 
 .. toctree::
    :hidden:
