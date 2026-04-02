@@ -4,10 +4,11 @@ Gene-list PCA workflow
 
 This page is the user guide for ``imt gene-pca`` and ``run_gene_pca()``.
 
-.. image:: ../images/gene_pattern_workflow.svg
-   :alt: Schematic of gene-centered workflows from filtering and atlas matching through GEDAR and gene PCA outputs.
-   :width: 100%
-   :align: center
+.. figure:: ../images/gene_pca_pipeline_story.png
+   :alt: Gene-list PCA story figure showing a selected gene list, atlas expression matrix, PCA summaries, and an aparc component map.
+   :class: imt-workflow-story
+
+   Start from a curated gene list, extract the matching atlas matrix, and reduce it into regional expression components that can be compared against imaging maps.
 
 What the workflow does
 ----------------------

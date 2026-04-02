@@ -4,10 +4,11 @@ GEDAR workflow
 
 This page is the user guide for ``imt gedar`` and ``run_gedar()``.
 
-.. image:: ../images/gene_pattern_workflow.svg
-   :alt: Schematic of gene-centered workflows from filtering and atlas matching through GEDAR and gene PCA outputs.
-   :width: 100%
-   :align: center
+.. figure:: ../images/gedar_pipeline_story.png
+   :alt: GEDAR workflow story figure showing a weighted gene table, atlas matching, weighted regional scoring, and a final aparc score map.
+   :class: imt-workflow-story
+
+   Start from a weighted gene signature, align it to atlas expression, project it regionally, and visualize the resulting GEDAR map.
 
 What the workflow answers
 -------------------------

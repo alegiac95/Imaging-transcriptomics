@@ -337,6 +337,27 @@ body[data-theme="dark"] .sidebar-logo {
   color: var(--color-foreground-muted);
 }
 
+.imt-workflow-story {
+  margin: 1rem 0 1.5rem;
+}
+
+.imt-workflow-story img {
+  width: 100%;
+  height: auto;
+  display: block;
+  padding: 0.8rem 0.95rem;
+  border: 1px solid var(--color-card-border);
+  border-radius: 1.2rem;
+  background: linear-gradient(135deg, var(--color-background-secondary) 0%, var(--color-background-hover) 100%);
+}
+
+.imt-workflow-story .caption {
+  margin-top: 0.6rem;
+  color: var(--color-foreground-secondary);
+  font-size: 0.97rem;
+  text-align: center;
+}
+
 @media (max-width: 760px) {
   .imt-section-intro {
     flex-direction: column;
@@ -351,6 +372,10 @@ body[data-theme="dark"] .sidebar-logo {
 
   .imt-section-intro--reverse {
     flex-direction: column;
+  }
+
+  .imt-workflow-story img {
+    padding: 0.55rem 0.65rem;
   }
 }
 

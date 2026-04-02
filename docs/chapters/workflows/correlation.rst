@@ -4,10 +4,11 @@ Correlation workflow
 
 This page is the user guide for ``imt corr`` and ``run_corr()``.
 
-.. image:: ../images/imaging_map_workflow.svg
-   :alt: Schematic of the imaging-map workflow from atlas extraction through null generation and enrichment.
-   :width: 100%
-   :align: center
+.. figure:: ../images/correlation_pipeline_story.png
+   :alt: Correlation workflow story figure showing an aparc cortical map, atlas-level values, spatial nulls, and ranked genes.
+   :class: imt-workflow-story
+
+   Start from an atlas-aligned brain map, collapse it into regional values, generate spatial nulls, and rank genes against the observed regional profile.
 
 What the workflow answers
 -------------------------

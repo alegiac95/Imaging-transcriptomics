@@ -5,6 +5,12 @@ Enrichment workflows
 This page unifies user guidance for GSEA and ORA across the correlation and
 PLS workflows.
 
+.. figure:: ../images/enrichment_pipeline_story.png
+   :alt: Enrichment story figure showing an aparc brain map, a ranked gene signature, GSEA pathway summaries, and ORA hit tables.
+   :class: imt-workflow-story
+
+   Enrichment sits downstream of the brain-based workflows: move from a regional map to a ranked gene signature, then test it with GSEA and ORA.
+
 Overview
 --------
 
