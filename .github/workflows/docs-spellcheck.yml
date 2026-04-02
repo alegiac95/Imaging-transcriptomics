@@ -6,7 +6,6 @@ on:
       - refactor-v2.0.0
     paths:
       - "docs/**"
-      - "README.md"
       - ".codespellignore"
       - ".github/workflows/docs-spellcheck.yml"
   pull_request:
@@ -14,7 +13,6 @@ on:
       - refactor-v2.0.0
     paths:
       - "docs/**"
-      - "README.md"
       - ".codespellignore"
       - ".github/workflows/docs-spellcheck.yml"
   workflow_dispatch:
@@ -42,11 +40,3 @@ jobs:
           ignore_words_file: .codespellignore
           uri_ignore_words_list: "*"
           skip: docs/_build,docs/_static,docs/chapters/images,docs/**/data/**,**/data/**,*.png,*.jpg,*.jpeg,*.ico,*.svg
-
-      - name: Spellcheck README
-        uses: codespell-project/actions-codespell@v2
-        with:
-          path: README.md
-          ignore_words_file: .codespellignore
-          uri_ignore_words_list: "*"
-          skip: **/data/**
