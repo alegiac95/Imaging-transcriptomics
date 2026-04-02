@@ -2,12 +2,16 @@ name: Docs spellcheck
 
 on:
   push:
+    branches:
+      - refactor-v2.0.0
     paths:
       - "docs/**"
       - "README.md"
       - ".codespellignore"
       - ".github/workflows/docs-spellcheck.yml"
   pull_request:
+    branches:
+      - refactor-v2.0.0
     paths:
       - "docs/**"
       - "README.md"

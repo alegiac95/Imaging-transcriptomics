@@ -2,7 +2,11 @@ name: Security
 
 on:
   push:
+    branches:
+      - refactor-v2.0.0
   pull_request:
+    branches:
+      - refactor-v2.0.0
   workflow_dispatch:
 
 permissions:
@@ -37,4 +41,3 @@ jobs:
 
       - name: Run pip-audit
         run: python -m pip_audit
-
