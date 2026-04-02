@@ -41,7 +41,7 @@ jobs:
           path: docs
           ignore_words_file: .codespellignore
           uri_ignore_words_list: "*"
-          skip: docs/_build,docs/_static,docs/chapters/images,*.png,*.jpg,*.jpeg,*.ico,*.svg
+          skip: docs/_build,docs/_static,docs/chapters/images,docs/**/data/**,**/data/**,*.png,*.jpg,*.jpeg,*.ico,*.svg
 
       - name: Spellcheck README
         uses: codespell-project/actions-codespell@v2
@@ -49,3 +49,4 @@ jobs:
           path: README.md
           ignore_words_file: .codespellignore
           uri_ignore_words_list: "*"
+          skip: **/data/**
