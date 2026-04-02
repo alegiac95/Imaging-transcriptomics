@@ -12,6 +12,19 @@ PLS workflows.
 
    Enrichment sits downstream of the brain-based workflows: move from a regional map to a ranked gene signature, then test it with GSEA and ORA.
 
+What the workflow answers
+-------------------------
+
+The enrichment workflows ask:
+
+*Given a ranked gene signature, which pathways are enriched across the full
+ranking (GSEA), and which are overrepresented among the strongest positive or
+negative gene hits (ORA)?*
+
+Use enrichment when you want to move from individual genes to pathway-level or
+cell-type-level interpretation of the ranked outputs produced by the main
+imaging-transcriptomic workflows.
+
 Overview
 --------
 

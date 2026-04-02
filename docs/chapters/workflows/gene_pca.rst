@@ -11,6 +11,18 @@ This page is the user guide for ``imt gene-pca`` and ``run_gene_pca()``.
 
    Start from a curated gene list, extract the matching atlas matrix, and reduce it into regional expression components that can be compared against imaging maps.
 
+What the workflow answers
+-------------------------
+
+The gene-list PCA workflow asks:
+
+*What are the dominant regional expression patterns within a curated gene set,
+and which genes contribute most strongly to each of those patterns?*
+
+Use gene-list PCA when you want to summarize a selected set of genes into a
+small number of regional transcriptomic gradients before comparing them with
+imaging data in a separate step.
+
 What the workflow does
 ----------------------
 
