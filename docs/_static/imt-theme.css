@@ -339,11 +339,11 @@ body[data-theme="dark"] .sidebar-logo {
 
 figure.imt-workflow-story-figure {
   margin: 1rem 0 1.5rem;
-  padding: 0.8rem 0.95rem;
-  border: 1px solid rgba(21, 101, 192, 0.14);
+  padding: 0.45rem 0.55rem;
+  border: 1px solid rgba(14, 47, 90, 0.08);
   border-radius: 1.2rem;
-  background: linear-gradient(135deg, #F8FBFE 0%, #ECF4FB 100%);
-  box-shadow: 0 12px 28px rgba(14, 47, 90, 0.08);
+  background: linear-gradient(135deg, #FAFCFD 0%, #F2F6F9 100%);
+  box-shadow: 0 8px 20px rgba(14, 47, 90, 0.05);
   overflow: hidden;
 }
 
@@ -370,6 +370,20 @@ figure.imt-workflow-story-figure .caption-text {
   text-align: center;
 }
 
+body[data-theme="dark"] figure.imt-workflow-story-figure {
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: linear-gradient(135deg, #F6F8FA 0%, #EEF2F5 100%);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.14);
+}
+
+@media (prefers-color-scheme: dark) {
+  body:not([data-theme="light"]) figure.imt-workflow-story-figure {
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: linear-gradient(135deg, #F6F8FA 0%, #EEF2F5 100%);
+    box-shadow: 0 10px 22px rgba(0, 0, 0, 0.14);
+  }
+}
+
 @media (max-width: 760px) {
   .imt-section-intro {
     flex-direction: column;
@@ -387,7 +401,7 @@ figure.imt-workflow-story-figure .caption-text {
   }
 
   figure.imt-workflow-story-figure {
-    padding: 0.55rem 0.65rem;
+    padding: 0.35rem 0.4rem;
   }
 }
 
