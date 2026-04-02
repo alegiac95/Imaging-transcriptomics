@@ -9,6 +9,17 @@ This page is the user guide for ``imt gedar`` and ``run_gedar()``.
    :width: 100%
    :align: center
 
+What the workflow answers
+-------------------------
+
+The GEDAR workflow asks:
+
+*Where in the brain is the transcriptomic signature of genetically associated disease risk most strongly expressed, 
+given a TWAS-derived weighted gene set?*
+
+It is the simplest entry point in the toolbox and is often the best first pass
+for a new map.
+
 What the workflow does
 ----------------------
 
