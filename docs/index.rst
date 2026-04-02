@@ -13,8 +13,8 @@
      <a href="https://github.com/alegiac95/Imaging-transcriptomics/releases"><img src="https://img.shields.io/github/v/release/alegiac95/Imaging-transcriptomics?style=flat-square" alt="Latest release"></a>
      <a href="https://codecov.io/gh/alegiac95/Imaging-transcriptomics"><img src="https://img.shields.io/badge/Codecov-placeholder-D7E3F0?style=flat-square&amp;logo=codecov&amp;logoColor=0E2F5A&amp;color=D7E3F0&amp;labelColor=EEF4FA" alt="Codecov placeholder"></a>
      <a href="https://pypi.org/project/imaging-transcriptomics/"><img src="https://img.shields.io/pypi/v/imaging-transcriptomics?style=flat-square&amp;logo=pypi&amp;logoColor=white" alt="PyPI version"></a>
-     <a href="https://hub.docker.com/"><img src="https://img.shields.io/badge/Docker-placeholder-D7E3F0?style=flat-square&amp;logo=docker&amp;logoColor=0E2F5A&amp;color=D7E3F0&amp;labelColor=EEF4FA" alt="Docker placeholder"></a>
-     <a href="https://apptainer.org/"><img src="https://img.shields.io/badge/Singularity-placeholder-D7E3F0?style=flat-square&amp;color=D7E3F0&amp;labelColor=EEF4FA" alt="Singularity placeholder"></a>
+     <a href="https://github.com/alegiac95/Imaging-transcriptomics/pkgs/container/imaging-transcriptomics"><img src="https://img.shields.io/badge/Docker-GHCR-2496ED?style=flat-square&amp;logo=docker&amp;logoColor=white" alt="Docker image on GHCR"></a>
+     <a href="chapters/03_installation.html"><img src="https://img.shields.io/badge/Apptainer-from_GHCR-0E2F5A?style=flat-square&amp;color=0E2F5A&amp;labelColor=EEF4FA" alt="Apptainer and Singularity via GHCR"></a>
      <a href="https://pypi.org/project/imaging-transcriptomics/"><img src="https://img.shields.io/badge/python-%3E%3D3.10-1565C0?style=flat-square&amp;logo=python&amp;logoColor=white" alt="Python version"></a>
      <a href="https://doi.org/10.5281/zenodo.5507505"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.5507505.svg" alt="Zenodo DOI"></a>
      <a href="https://github.com/alegiac95/Imaging-transcriptomics/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-F28C28?style=flat-square" alt="License"></a>
@@ -113,7 +113,7 @@ and developing reproducible imaging transcriptomics workflows.
          <span>•</span>
          <a href="chapters/methods/null_models.html">Null models</a>
          <span>•</span>
-         <a href="chapters/methods/gene_sets.html">Gene sets</a>
+         <a href="chapters/methods/gene_sets.html">Gene enrichment</a>
        </p>
      </div>
    </section>

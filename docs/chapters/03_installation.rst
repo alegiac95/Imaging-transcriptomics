@@ -110,16 +110,28 @@ Stable install routes
 
    .. tab-item:: Apptainer / Singularity
 
-      If you use Apptainer or Singularity on shared compute systems, you can
-      pull a local ``.sif`` image from the published OCI image:
+      Apptainer and Singularity use the same GHCR OCI image as Docker and
+      Podman. Instead of publishing a separate ``.sif`` artifact, the toolbox
+      release flow publishes the OCI image once and lets cluster users derive a
+      local ``.sif`` from it.
+
+      Pull a local image from GHCR:
 
       .. code-block:: bash
 
          apptainer pull imaging-transcriptomics.sif docker://ghcr.io/alegiac95/imaging-transcriptomics:latest
          apptainer exec imaging-transcriptomics.sif imt --help
 
+      Pull a specific tagged release:
+
+      .. code-block:: bash
+
+         apptainer pull imaging-transcriptomics.sif docker://ghcr.io/alegiac95/imaging-transcriptomics:v2.0.0
+
       The same approach works with Singularity installations that support
-      ``docker://`` sources.
+      ``docker://`` sources. The repository still ships
+      ``containers/Singularity.def`` for advanced users who want a native
+      definition-based rebuild.
 
 What The Extras Add
 -------------------
@@ -179,7 +191,9 @@ Platform notes
 --------------
 
 - surface-based null models and surface inputs require the ``maps`` extra
-- published containers already include the runtime extras used by the CLI
+- published GHCR containers already include the runtime extras used by the CLI
+- Apptainer and Singularity users pull from the GHCR OCI image rather than a
+  separately published ``.sif`` artifact
 - cloud-synced folders such as Dropbox or iCloud may trigger macOS permission
   issues when used directly as inputs; copying files to a regular local folder
   is often the simplest fix
