@@ -17,7 +17,7 @@ ATLAS_GOLDENS = {
         "label_hash": "d92356c388bb5e0d",
         "gene_hash": "3df2a85878a343a9",
         "value_hash": "8129d8f1295502b2",
-        "corr_hash": "e6d735763d3f06a2",
+        "corr_hash": "3ab9f642fc6836c0",
     },
     "schaefer-100": {
         "regions": "default",

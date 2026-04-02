@@ -2,21 +2,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from ._compat import suppress_pkg_resources_deprecation
-
-
-def _import_neuromaps_images():
-    try:
-        with suppress_pkg_resources_deprecation():
-            from neuromaps.images import annot_to_gifti
-    except ImportError as exc:  # pragma: no cover - optional dependency
-        raise ImportError(
-            "neuromaps is required for surface atlas support and is part of "
-            "the standard imaging-transcriptomics install. Reinstall the "
-            "package if it is missing from the current environment."
-        ) from exc
-    return annot_to_gifti
-
 
 def surface_paths(atlas, hemisphere: str) -> tuple[str, ...]:
     paths = atlas.surface_paths
@@ -44,11 +29,12 @@ def surface_geometry_paths(atlas, hemisphere: str) -> tuple[str, ...] | None:
 
 
 def load_surface_parcellation(atlas, hemisphere: str):
-    paths = surface_paths(atlas, hemisphere)
-    if all(Path(path).suffix == ".annot" for path in paths):
-        annot_to_gifti = _import_neuromaps_images()
-        return annot_to_gifti(paths)
-    return paths
+    # Keep surface parcellations as path strings. Passing pre-loaded GiftiImage
+    # objects through neuromaps' annotation helpers is currently brittle on
+    # Python 3.12 because neuromaps re-loads those objects via pathlib.Path.
+    # Raw .annot paths work for the downstream neuromaps entry points we use
+    # and keep density inference deterministic across platforms.
+    return surface_paths(atlas, hemisphere)
 
 
 def _parcellation_vertex_count(item) -> int:
