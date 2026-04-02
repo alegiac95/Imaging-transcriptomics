@@ -8,16 +8,16 @@
 .. raw:: html
 
    <div class="imt-index-badges">
-     <a href="https://github.com/alegiac95/Imaging-transcriptomics"><img src="https://img.shields.io/badge/GitHub-repository-172842?style=flat-square&amp;logo=github" alt="GitHub repository"></a>
-     <a href="https://imaging-transcriptomics.readthedocs.io/"><img src="https://readthedocs.org/projects/imaging-transcriptomics/badge/?version=latest" alt="Docs status"></a>
-     <a href="https://github.com/alegiac95/Imaging-transcriptomics/releases"><img src="https://img.shields.io/github/v/release/alegiac95/Imaging-transcriptomics?style=flat-square" alt="Latest release"></a>
-     <a href="https://codecov.io/gh/alegiac95/Imaging-transcriptomics" > <img src="https://codecov.io/gh/alegiac95/Imaging-transcriptomics/branch/refactor-v2.0.0/graph/badge.svg?token=5VA10XQKAY"/></a>
-     <a href="https://pypi.org/project/imaging-transcriptomics/"><img src="https://img.shields.io/pypi/v/imaging-transcriptomics?style=flat-square&amp;logo=pypi&amp;logoColor=white" alt="PyPI version"></a>
+     <a href="https://github.com/alegiac95/Imaging-transcriptomics"><img src="https://img.shields.io/badge/GitHub-repository-E76F51?style=flat-square&amp;logo=github&amp;logoColor=white" alt="GitHub repository"></a>
+     <a href="https://imaging-transcriptomics.readthedocs.io/"><img src="https://img.shields.io/badge/Docs-Read_the_Docs-F4A261?style=flat-square&amp;logo=readthedocs&amp;logoColor=white" alt="Read the Docs"></a>
+     <a href="https://github.com/alegiac95/Imaging-transcriptomics/releases"><img src="https://img.shields.io/github/v/release/alegiac95/Imaging-transcriptomics?style=flat-square&amp;color=E9C46A" alt="Latest release"></a>
+     <a href="https://codecov.io/gh/alegiac95/Imaging-transcriptomics"><img src="https://img.shields.io/badge/Coverage-Codecov-90BE6D?style=flat-square&amp;logo=codecov&amp;logoColor=white" alt="Codecov coverage"></a>
+     <a href="https://pypi.org/project/imaging-transcriptomics/"><img src="https://img.shields.io/pypi/v/imaging-transcriptomics?style=flat-square&amp;color=43AA8B&amp;logo=pypi&amp;logoColor=white" alt="PyPI version"></a>
+     <a href="https://pypi.org/project/imaging-transcriptomics/"><img src="https://img.shields.io/badge/python-%3E%3D3.10-2A9D8F?style=flat-square&amp;logo=python&amp;logoColor=white" alt="Python version"></a>
      <a href="https://github.com/alegiac95/Imaging-transcriptomics/pkgs/container/imaging-transcriptomics"><img src="https://img.shields.io/badge/Docker-GHCR-2496ED?style=flat-square&amp;logo=docker&amp;logoColor=white" alt="Docker image on GHCR"></a>
-     <a href="chapters/03_installation.html"><img src="https://img.shields.io/badge/Apptainer-from_GHCR-0E2F5A?style=flat-square&amp;color=0E2F5A&amp;labelColor=EEF4FA" alt="Apptainer and Singularity via GHCR"></a>
-     <a href="https://pypi.org/project/imaging-transcriptomics/"><img src="https://img.shields.io/badge/python-%3E%3D3.10-1565C0?style=flat-square&amp;logo=python&amp;logoColor=white" alt="Python version"></a>
-     <a href="https://doi.org/10.5281/zenodo.5507505"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.5507505.svg" alt="Zenodo DOI"></a>
-     <a href="https://github.com/alegiac95/Imaging-transcriptomics/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-F28C28?style=flat-square" alt="License"></a>
+     <a href="chapters/03_installation.html"><img src="https://img.shields.io/badge/Apptainer-577590?style=flat-square&amp;logo=apptainer&amp;logoColor=white" alt="Apptainer"></a>
+     <a href="https://doi.org/10.5281/zenodo.5507505"><img src="https://img.shields.io/badge/DOI-10.5281%2Fzenodo.5507505-7B2CBF?style=flat-square" alt="Zenodo DOI"></a>
+     <a href="https://github.com/alegiac95/Imaging-transcriptomics/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-B565C2?style=flat-square" alt="License"></a>
    </div>
 
 

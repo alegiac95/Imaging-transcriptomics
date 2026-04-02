@@ -42,21 +42,21 @@ Stable install routes
 
       .. code-block:: bash
 
-         python -m pip install --upgrade pip
-         python -m pip install imaging-transcriptomics
+         pip install --upgrade pip
+         pip install imaging-transcriptomics
 
       Upgrade to the latest published release:
 
       .. code-block:: bash
 
-         python -m pip install --upgrade imaging-transcriptomics
+         pip install --upgrade imaging-transcriptomics
 
       Add the optional advanced extras only if you need them:
 
       .. code-block:: bash
 
-         python -m pip install "imaging-transcriptomics[brainspace]"
-         python -m pip install "imaging-transcriptomics[atlas-build]"
+         pip install "imaging-transcriptomics[brainspace]"
+         pip install "imaging-transcriptomics[atlas-build]"
 
    .. tab-item:: uv
 
@@ -176,8 +176,8 @@ Editable ``pip`` install:
    cd Imaging-transcriptomics
    python -m venv .venv
    source .venv/bin/activate
-   python -m pip install --upgrade pip
-   python -m pip install -e ".[dev]"
+   pip install --upgrade pip
+   pip install -e ".[dev]"
 
 If you prefer ``uv`` for development:
 
@@ -192,7 +192,7 @@ environment:
 
 .. code-block:: bash
 
-   python -m pip install -e ".[dev,maps]"
+   pip install -e ".[dev,maps]"
    uv sync --extra dev --extra maps
 
 Quick validation
