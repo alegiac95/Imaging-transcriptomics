@@ -5,7 +5,7 @@ import pandas as pd
 
 from ..config import RunConfig
 from ..gene_expression import expression_matrix
-from ..models import AnalysisMetadata, CorrelationResult, PLSComponentResult
+from ..models import AnalysisMetadata, PLSComponentResult
 from ..scan import extract_scan_data
 
 

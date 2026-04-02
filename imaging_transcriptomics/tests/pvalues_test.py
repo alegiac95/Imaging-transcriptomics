@@ -4,7 +4,6 @@ import types
 from pathlib import Path
 
 import numpy as np
-import pytest
 PACKAGE_ROOT = Path(__file__).resolve().parents[1]
 
 

@@ -18,7 +18,6 @@ from ..gsea_utils import (
     run_prerank,
 )
 from ..genesets import resolve_geneset_resource
-from ..ora import ora_from_gene_table
 from ..pls_backend import pls_regression
 from ..stats_utils import bh_fdr, empirical_signed_pvalues, max_t_fwer_abs
 
