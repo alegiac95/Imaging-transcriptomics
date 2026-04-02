@@ -337,14 +337,11 @@ body[data-theme="dark"] .sidebar-logo {
   color: var(--color-foreground-muted);
 }
 
-.imt-workflow-story {
-  margin: 1rem 0 1.5rem;
-}
-
-.imt-workflow-story img {
+img.imt-workflow-story {
   width: 100%;
   height: auto;
   display: block;
+  margin: 1rem 0 0;
   padding: 0.8rem 0.95rem;
   border: 1px solid rgba(21, 101, 192, 0.14);
   border-radius: 1.2rem;
@@ -352,7 +349,7 @@ body[data-theme="dark"] .sidebar-logo {
   box-shadow: 0 12px 28px rgba(14, 47, 90, 0.08);
 }
 
-.imt-workflow-story .caption {
+img.imt-workflow-story ~ figcaption .caption-text {
   margin-top: 0.6rem;
   color: var(--color-foreground-secondary);
   font-size: 0.97rem;
@@ -375,7 +372,7 @@ body[data-theme="dark"] .sidebar-logo {
     flex-direction: column;
   }
 
-  .imt-workflow-story img {
+  img.imt-workflow-story {
     padding: 0.55rem 0.65rem;
   }
 }
