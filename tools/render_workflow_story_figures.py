@@ -14,6 +14,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import colormaps
 from matplotlib.colors import Normalize
+from matplotlib.patches import FancyBboxPatch
 from PIL import Image
 
 import pySimpleBrainPlot as psbp
@@ -51,6 +52,30 @@ def _brain_values(seed: int, *, scale: float = 1.9) -> np.ndarray:
     )
     signal /= np.max(np.abs(signal))
     return signal * scale
+
+
+def _smooth_profile(values: np.ndarray, window: int = 3) -> np.ndarray:
+    if values.size <= 1:
+        return values
+    window = min(window, values.size)
+    if window <= 1:
+        return values
+    pad_left = window // 2
+    pad_right = window - 1 - pad_left
+    padded = np.pad(values, (pad_left, pad_right), mode="edge")
+    kernel = np.ones(window) / window
+    return np.convolve(padded, kernel, mode="valid")
+
+
+def _blocky_matrix(rows: int, cols: int, seed: int, *, scale: float = 1.0) -> np.ndarray:
+    rng = np.random.default_rng(seed)
+    row_profile = rng.normal(0, 0.9, rows)
+    col_profile = rng.normal(0, 0.9, cols)
+    row_profile = _smooth_profile(row_profile)
+    col_profile = _smooth_profile(col_profile)
+    data = np.outer(row_profile, col_profile) + 0.28 * rng.normal(size=(rows, cols))
+    data /= np.max(np.abs(data))
+    return data * scale
 
 
 def _trim_image(img: Image.Image, *, pad: int = 6) -> Image.Image:
@@ -161,7 +186,7 @@ def _add_stage_title(fig: plt.Figure, x: float, title: str, subtitle: str) -> No
     )
 
 
-def _add_arrow(fig: plt.Figure, x0: float, x1: float, *, y: float = 0.54, width: float = 0.045) -> None:
+def _add_arrow(fig: plt.Figure, x0: float, x1: float, *, y: float = 0.54, width: float = 0.064) -> None:
     arrow = _load_arrow_image()
     height = width * (arrow.shape[0] / arrow.shape[1])
     left = ((x0 + x1) / 2) - (width / 2)
@@ -176,15 +201,63 @@ def _add_image(fig: plt.Figure, image: np.ndarray, rect: list[float]) -> None:
     ax.axis("off")
 
 
-def _add_heatmap(fig: plt.Figure, rect: list[float], data: np.ndarray, *, cmap: str, title: str | None = None) -> None:
-    ax = fig.add_axes(rect)
-    ax.imshow(data, cmap=cmap, aspect="auto")
+def _style_tile_panel(ax: plt.Axes) -> None:
     ax.set_xticks([])
     ax.set_yticks([])
     for spine in ax.spines.values():
         spine.set_visible(False)
+    ax.set_facecolor("none")
+
+
+def _add_heatmap(
+    fig: plt.Figure,
+    rect: list[float],
+    data: np.ndarray,
+    *,
+    cmap: str,
+    title: str | None = None,
+    left_label: str | None = None,
+    left_label_x: float = -0.16,
+    title_pad: float = 4.0,
+    rounded: bool = True,
+) -> None:
+    ax = fig.add_axes(rect)
+    if rounded:
+        bg = FancyBboxPatch(
+            (0.0, 0.0),
+            1.0,
+            1.0,
+            boxstyle="round,pad=0.02,rounding_size=0.05",
+            transform=ax.transAxes,
+            facecolor="#F4F8FC",
+            edgecolor="#D7E3F0",
+            linewidth=0.8,
+            zorder=-20,
+        )
+        ax.add_patch(bg)
+
+    ax.imshow(data, cmap=cmap, aspect="equal", interpolation="nearest", zorder=1)
+    ax.set_anchor("C")
+    n_rows, n_cols = data.shape
+    ax.set_xticks(np.arange(-0.5, n_cols, 1), minor=True)
+    ax.set_yticks(np.arange(-0.5, n_rows, 1), minor=True)
+    ax.grid(which="minor", color=(1, 1, 1, 0.92), linewidth=1.4)
+    ax.tick_params(which="minor", bottom=False, left=False)
+    _style_tile_panel(ax)
     if title:
-        ax.set_title(title, fontsize=8.5, color="#5B6472", pad=4)
+        ax.set_title(title, fontsize=8.5, color="#5B6472", pad=title_pad)
+    if left_label:
+        ax.text(
+            left_label_x,
+            0.5,
+            left_label,
+            transform=ax.transAxes,
+            rotation=90,
+            ha="center",
+            va="center",
+            fontsize=8.0,
+            color="#5B6472",
+        )
 
 
 def _add_gene_column(
@@ -244,14 +317,26 @@ def _add_component_summary(fig: plt.Figure, rect: list[float]) -> None:
     ax.set_facecolor("none")
 
 
-def _add_weighted_strip(fig: plt.Figure, rect: list[float]) -> None:
-    ax = fig.add_axes(rect)
+def _add_weighted_strip(
+    fig: plt.Figure,
+    rect: list[float],
+    *,
+    title: str | None = None,
+    left_label: str | None = None,
+    left_label_x: float = -0.16,
+    title_pad: float = 4.0,
+) -> None:
     vals = np.linspace(-1.6, 1.6, 12).reshape(-1, 1)
-    ax.imshow(vals, cmap="RdBu_r", aspect="auto")
-    ax.set_xticks([])
-    ax.set_yticks([])
-    for spine in ax.spines.values():
-        spine.set_visible(False)
+    _add_heatmap(
+        fig,
+        rect,
+        vals,
+        cmap="RdBu_r",
+        title=title,
+        left_label=left_label,
+        left_label_x=left_label_x,
+        title_pad=title_pad,
+    )
 
 
 def _add_null_panel(fig: plt.Figure, rect: list[float]) -> None:
@@ -296,14 +381,22 @@ def render_correlation() -> None:
     _add_stage_title(fig, 0.655, "Spatial nulls", "Permute the imaging map")
     _add_stage_title(fig, 0.885, "Gene ranking", "Observed scores and empirical p")
 
-    _add_image(fig, brain, [0.03, 0.22, 0.22, 0.48])
-    _add_heatmap(fig, [0.31, 0.24, 0.17, 0.44], np.linspace(-1, 1, 24).reshape(12, 2), cmap="RdBu_r", title="regions x value")
-    _add_null_panel(fig, [0.56, 0.23, 0.15, 0.43])
-    _add_gene_column(fig, [0.80, 0.17, 0.16, 0.58], ["RELN", "SLC1A2", "GAD1", "...", "MBP", "SNAP25", "GFAP"], [1.7, 1.1, 0.8, 0.0, -0.6, -1.1, -1.6], heading="top genes")
+    _add_image(fig, brain, [0.035, 0.22, 0.215, 0.48])
+    _add_heatmap(
+        fig,
+        [0.315, 0.24, 0.165, 0.44],
+        _blocky_matrix(12, 2, 21, scale=1.2),
+        cmap="RdBu_r",
+        title="regional vector",
+        left_label="regions",
+        left_label_x=-0.22,
+    )
+    _add_null_panel(fig, [0.565, 0.23, 0.145, 0.43])
+    _add_gene_column(fig, [0.805, 0.17, 0.15, 0.58], ["RELN", "SLC1A2", "GAD1", "...", "MBP", "SNAP25", "GFAP"], [1.7, 1.1, 0.8, 0.0, -0.6, -1.1, -1.6], heading="top genes")
 
-    _add_arrow(fig, 0.245, 0.315)
-    _add_arrow(fig, 0.485, 0.565)
-    _add_arrow(fig, 0.73, 0.79)
+    _add_arrow(fig, 0.25, 0.315)
+    _add_arrow(fig, 0.48, 0.565)
+    _add_arrow(fig, 0.715, 0.805)
     _save(fig, "correlation_pipeline_story.png")
 
 
@@ -315,16 +408,22 @@ def render_pls() -> None:
     _add_stage_title(fig, 0.655, "Latent components", "Find multivariate gene axes")
     _add_stage_title(fig, 0.885, "Component genes", "Inspect aligned weights")
 
-    _add_image(fig, brain, [0.03, 0.22, 0.22, 0.48])
-    matrix = np.outer(np.linspace(-1, 1, 12), np.linspace(1, -1, 10))
-    _add_heatmap(fig, [0.305, 0.21, 0.18, 0.49], matrix, cmap="viridis", title="regions x genes")
-    _add_heatmap(fig, [0.57, 0.28, 0.10, 0.34], np.array([[1.0, -0.5], [0.6, 0.2], [-0.7, 0.9], [-1.0, 0.4], [0.4, -0.9]]), cmap="RdBu_r", title="weights")
-    _add_component_summary(fig, [0.68, 0.30, 0.1, 0.30])
-    _add_gene_column(fig, [0.82, 0.17, 0.14, 0.58], ["CAMK2A", "RELN", "GRIN2B", "...", "MBP", "GFAP", "PDYN"], [1.6, 1.1, 0.7, 0.0, -0.5, -1.0, -1.5], heading="PLS1")
+    _add_image(fig, brain, [0.035, 0.22, 0.215, 0.48])
+    _add_heatmap(fig, [0.31, 0.21, 0.175, 0.49], _blocky_matrix(12, 10, 7), cmap="viridis", title="expression matrix", left_label="regions")
+    _add_heatmap(
+        fig,
+        [0.575, 0.285, 0.09, 0.33],
+        _blocky_matrix(6, 3, 31, scale=1.2),
+        cmap="RdBu_r",
+        title="gene weights",
+        left_label="genes",
+    )
+    _add_component_summary(fig, [0.655, 0.30, 0.11, 0.30])
+    _add_gene_column(fig, [0.81, 0.17, 0.145, 0.58], ["CAMK2A", "RELN", "GRIN2B", "...", "MBP", "GFAP", "PDYN"], [1.6, 1.1, 0.7, 0.0, -0.5, -1.0, -1.5], heading="PLS1")
 
-    _add_arrow(fig, 0.245, 0.31)
-    _add_arrow(fig, 0.495, 0.57)
-    _add_arrow(fig, 0.78, 0.82)
+    _add_arrow(fig, 0.25, 0.31)
+    _add_arrow(fig, 0.49, 0.575)
+    _add_arrow(fig, 0.765, 0.81)
     _save(fig, "pls_pipeline_story.png")
 
 
@@ -336,15 +435,21 @@ def render_gedar() -> None:
     _add_stage_title(fig, 0.62, "Weighted score", "Project the signature regionally")
     _add_stage_title(fig, 0.87, "Regional map", "Visualize the GEDAR pattern")
 
-    _add_gene_column(fig, [0.04, 0.17, 0.15, 0.58], ["CACNA1C", "GRIA1", "RELN", "...", "MBP", "GFAP", "SST"], [1.7, 1.1, 0.7, 0.0, -0.7, -1.1, -1.5], heading="z or beta")
-    _add_heatmap(fig, [0.28, 0.21, 0.18, 0.49], np.outer(np.linspace(-1, 1, 12), np.linspace(1, -1, 6)), cmap="viridis", title="matched expression")
-    _add_weighted_strip(fig, [0.56, 0.26, 0.08, 0.42])
-    _add_gene_column(fig, [0.65, 0.26, 0.09, 0.42], ["R1", "R2", "R3", "...", "R10", "R11", "R12"], neutral=True, heading="regions")
-    _add_image(fig, brain, [0.75, 0.22, 0.22, 0.48])
+    _add_gene_column(fig, [0.04, 0.17, 0.145, 0.58], ["CACNA1C", "GRIA1", "RELN", "...", "MBP", "GFAP", "SST"], [1.7, 1.1, 0.7, 0.0, -0.7, -1.1, -1.5], heading="z or beta")
+    _add_heatmap(fig, [0.285, 0.21, 0.175, 0.49], _blocky_matrix(12, 6, 41), cmap="viridis", title="matched expression", left_label="regions")
+    _add_weighted_strip(
+        fig,
+        [0.565, 0.26, 0.072, 0.42],
+        title="weighted score",
+        left_label="regions",
+        title_pad=14.0,
+    )
+    _add_gene_column(fig, [0.635, 0.26, 0.085, 0.42], ["R1", "R2", "R3", "...", "R10", "R11", "R12"], neutral=True, heading="regions")
+    _add_image(fig, brain, [0.765, 0.22, 0.205, 0.48])
 
-    _add_arrow(fig, 0.205, 0.285)
-    _add_arrow(fig, 0.47, 0.56)
-    _add_arrow(fig, 0.74, 0.755)
+    _add_arrow(fig, 0.195, 0.285)
+    _add_arrow(fig, 0.46, 0.565)
+    _add_arrow(fig, 0.72, 0.765)
     _save(fig, "gedar_pipeline_story.png")
 
 
@@ -356,15 +461,15 @@ def render_gene_pca() -> None:
     _add_stage_title(fig, 0.62, "PCA summary", "Components and variance")
     _add_stage_title(fig, 0.87, "Regional pattern", "Project component scores back to cortex")
 
-    _add_gene_column(fig, [0.04, 0.17, 0.15, 0.58], ["RELN", "GAD1", "SLC1A2", "...", "VIP", "PVALB", "SST"], neutral=True, heading="selected genes")
-    _add_heatmap(fig, [0.28, 0.21, 0.18, 0.49], np.outer(np.linspace(-1, 1, 12), np.linspace(-1, 1, 7)), cmap="viridis", title="regions x genes")
-    _add_heatmap(fig, [0.56, 0.30, 0.08, 0.28], np.array([[0.8, 0.3, -0.1], [0.4, -0.7, 0.2], [-0.6, 0.4, 0.5], [-0.9, 0.2, 0.7], [0.3, -0.4, 0.8]]), cmap="RdBu_r", title="loadings")
-    _add_component_summary(fig, [0.67, 0.30, 0.09, 0.30])
-    _add_image(fig, brain, [0.77, 0.22, 0.20, 0.48])
+    _add_gene_column(fig, [0.045, 0.17, 0.145, 0.58], ["RELN", "GAD1", "SLC1A2", "...", "VIP", "PVALB", "SST"], neutral=True, heading="selected genes")
+    _add_heatmap(fig, [0.285, 0.21, 0.175, 0.49], _blocky_matrix(12, 7, 51), cmap="viridis", title="expression matrix", left_label="regions")
+    _add_heatmap(fig, [0.555, 0.30, 0.078, 0.28], _blocky_matrix(5, 3, 61, scale=1.2), cmap="RdBu_r", title="loadings", left_label="genes")
+    _add_component_summary(fig, [0.632, 0.30, 0.102, 0.30])
+    _add_image(fig, brain, [0.758, 0.22, 0.212, 0.48])
 
-    _add_arrow(fig, 0.205, 0.285)
-    _add_arrow(fig, 0.47, 0.56)
-    _add_arrow(fig, 0.76, 0.775)
+    _add_arrow(fig, 0.195, 0.285)
+    _add_arrow(fig, 0.46, 0.555)
+    _add_arrow(fig, 0.724, 0.758)
     _save(fig, "gene_pca_pipeline_story.png")
 
 
@@ -376,14 +481,14 @@ def render_enrichment() -> None:
     _add_stage_title(fig, 0.67, "GSEA", "Pathways across the whole list")
     _add_stage_title(fig, 0.89, "ORA", "Hits among thresholded genes")
 
-    _add_image(fig, brain, [0.03, 0.22, 0.20, 0.48])
-    _add_gene_column(fig, [0.29, 0.17, 0.18, 0.58], ["RELN", "CAMK2A", "GAD1", "...", "GFAP", "MBP", "PDYN"], [1.8, 1.2, 0.7, 0.0, -0.6, -1.1, -1.7], heading="ranked signal")
-    _add_dotplot(fig, [0.60, 0.22, 0.15, 0.48], ["Synapse", "Interneuron", "Glutamate", "Myelin"], [1.7, 1.0, -0.9, -1.4], [5, 4, 3, 2])
-    _add_heatmap(fig, [0.83, 0.28, 0.11, 0.34], np.array([[1.2, 0.5, -0.4, -1.0], [0.9, 0.2, -0.7, -1.2]]), cmap="RdBu_r", title="up / down")
+    _add_image(fig, brain, [0.035, 0.22, 0.195, 0.48])
+    _add_gene_column(fig, [0.29, 0.17, 0.17, 0.58], ["RELN", "CAMK2A", "GAD1", "...", "GFAP", "MBP", "PDYN"], [1.8, 1.2, 0.7, 0.0, -0.6, -1.1, -1.7], heading="ranked signal")
+    _add_dotplot(fig, [0.605, 0.22, 0.145, 0.48], ["Synapse", "Interneuron", "Glutamate", "Myelin"], [1.7, 1.0, -0.9, -1.4], [5, 4, 3, 2])
+    _add_heatmap(fig, [0.815, 0.28, 0.12, 0.34], _blocky_matrix(2, 4, 71, scale=1.2), cmap="RdBu_r", title="up / down")
 
-    _add_arrow(fig, 0.235, 0.295)
-    _add_arrow(fig, 0.45, 0.51, y=0.595)
-    _add_arrow(fig, 0.75, 0.83)
+    _add_arrow(fig, 0.23, 0.29)
+    _add_arrow(fig, 0.46, 0.605, y=0.595)
+    _add_arrow(fig, 0.75, 0.815)
     _save(fig, "enrichment_pipeline_story.png")
 
 
