@@ -56,11 +56,11 @@ Why did a cortical null fall back to random shuffling?
 ------------------------------------------------------
 
 Usually because the required ``neuromaps`` assets are unavailable locally or
-the ``maps`` extra is not installed.
+the local ``neuromaps`` installation or cache is unavailable.
 
 Check:
 
-- ``pip install -e .[maps]``
+- ``pip install --upgrade imaging-transcriptomics``
 - a writable ``NEUROMAPS_DATA`` cache
 - that the selected atlas has compatible surface assets for the requested null
   method

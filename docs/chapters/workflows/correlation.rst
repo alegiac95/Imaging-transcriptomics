@@ -36,7 +36,7 @@ Accepted inputs include:
 - an atlas-length vector
 - a text, CSV, or TSV table that can be interpreted as a regional vector
 - an ``MNI152`` NIfTI map
-- supported surface files when the ``maps`` extra is installed
+- supported surface files through the standard ``neuromaps`` runtime support
 
 The workflow does not accept a raw native-space T1w anatomical image as a
 meaningful direct imaging phenotype.

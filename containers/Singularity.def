@@ -19,11 +19,10 @@ From: python:3.11-slim
 
     cd /opt/imaging-transcriptomics
     python -m pip install --upgrade pip
-    python -m pip install .[plots,gsea,maps]
+    python -m pip install .
 
 %runscript
     exec imt "$@"
 
 %test
     imt --help >/dev/null
-

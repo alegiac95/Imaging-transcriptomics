@@ -8,11 +8,15 @@ This directory contains reproducible runtime definitions for:
 - `Singularity.def`: optional Apptainer / Singularity definition file for
   advanced local rebuilds
 
-Each environment installs the toolbox with the runtime extras used by the CLI:
+Each environment installs the standard toolbox runtime with plotting, GSEA,
+and `neuromaps` support already included in the base package.
 
-- `plots`
-- `gsea`
-- `maps`
+Advanced optional extras such as BrainSpace rendering and atlas building are
+not required for the main container runtime. If you need them from source, use:
+
+- `.[brainspace]` for optional BrainSpace comparison renders
+- `.[atlas-build]` for `abagen`-based atlas asset generation
+- `.[maps]` as the legacy compatibility bundle for both
 
 Typical local commands:
 

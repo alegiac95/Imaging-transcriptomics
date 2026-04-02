@@ -21,12 +21,12 @@ RUN apt-get update \
 COPY pyproject.toml uv.lock README.md ./
 
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-dev --no-install-project --extra plots --extra gsea --extra maps
+    uv sync --frozen --no-dev --no-install-project
 
 COPY imaging_transcriptomics imaging_transcriptomics
 
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-dev --extra plots --extra gsea --extra maps
+    uv sync --frozen --no-dev
 
 
 FROM python:3.11-slim
@@ -53,4 +53,3 @@ USER imt
 
 ENTRYPOINT ["imt"]
 CMD ["--help"]
-

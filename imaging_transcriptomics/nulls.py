@@ -25,8 +25,10 @@ def _import_neuromaps_nulls():
             from neuromaps import nulls
     except ImportError as exc:  # pragma: no cover - optional dependency
         raise ImportError(
-            "neuromaps is required for surface-based spatial null models. "
-            "Install imaging-transcriptomics[maps]."
+            "neuromaps is required for surface-based spatial null models and "
+            "is part of the standard imaging-transcriptomics install. "
+            "Reinstall the package if it is missing from the current "
+            "environment."
         ) from exc
     return nulls
 

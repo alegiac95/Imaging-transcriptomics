@@ -62,7 +62,7 @@ Most workflows write:
 Documentation map
 -----------------
 
-- :doc:`Installation </chapters/03_installation>`: install options and extras
+- :doc:`Installation </chapters/03_installation>`: install options and advanced extras
 - :doc:`Workflow hub </chapters/05_what_to_do>`: choose between correlation, PLS, GEDAR, gene PCA, and enrichment
 - :doc:`CLI guide </chapters/usage/cli>` and :doc:`Python API guide </chapters/usage/python_api>`: how to run analyses
 - :doc:`Inputs </chapters/usage/inputs>` and :doc:`Outputs </chapters/usage/outputs>`: accepted data and generated files

@@ -77,7 +77,9 @@ def _import_abagen():
         import abagen
     except ImportError as exc:  # pragma: no cover - optional dependency
         raise ImportError(
-            "abagen is required to build atlas expression assets. Install imaging-transcriptomics[maps]."
+            "abagen is required to build atlas expression assets. Install "
+            "imaging-transcriptomics[atlas-build] or use the legacy "
+            "compatibility bundle imaging-transcriptomics[maps]."
         ) from exc
     _patch_abagen_pandas_compat(abagen)
     return abagen

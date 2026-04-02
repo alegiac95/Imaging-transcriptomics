@@ -27,8 +27,9 @@ def matplotlib_backend():
         import matplotlib.pyplot as plt
     except ImportError as exc:  # pragma: no cover - optional dependency
         raise PlottingUnavailableError(
-            "Plot writing requires the optional plotting dependencies. "
-            "Install imaging-transcriptomics[plots]."
+            "Plot writing requires Matplotlib, which is part of the standard "
+            "imaging-transcriptomics install. Reinstall the package if it is "
+            "missing from the current environment."
         ) from exc
     return matplotlib, plt
 

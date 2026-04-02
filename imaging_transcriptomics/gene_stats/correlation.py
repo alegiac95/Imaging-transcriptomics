@@ -91,7 +91,10 @@ class CorrGenes:
         """Sort observed and permuted gene statistics by descending correlation."""
 
         logger.info("Sorting genes in descending order.")
-        self._index = np.argsort(self.corr[0, :], kind="mergesort")[::-1]
+        # Sorting ``-corr`` with a stable mergesort preserves the original gene
+        # order for exact ties across platforms. Reversing an ascending stable
+        # sort would invert tied groups and make golden tests drift.
+        self._index = np.argsort(-self.corr[0, :], kind="mergesort")
         self.corr[0, :] = self.corr[0, self._index]
         self.genes = self.genes[self._index, :]
         self.pval[0, :] = self.pval[0, self._index]

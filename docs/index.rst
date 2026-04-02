@@ -11,7 +11,7 @@
      <a href="https://github.com/alegiac95/Imaging-transcriptomics"><img src="https://img.shields.io/badge/GitHub-repository-172842?style=flat-square&amp;logo=github" alt="GitHub repository"></a>
      <a href="https://imaging-transcriptomics.readthedocs.io/"><img src="https://readthedocs.org/projects/imaging-transcriptomics/badge/?version=latest" alt="Docs status"></a>
      <a href="https://github.com/alegiac95/Imaging-transcriptomics/releases"><img src="https://img.shields.io/github/v/release/alegiac95/Imaging-transcriptomics?style=flat-square" alt="Latest release"></a>
-     <a href="https://codecov.io/gh/alegiac95/Imaging-transcriptomics"><img src="https://img.shields.io/badge/Codecov-placeholder-D7E3F0?style=flat-square&amp;logo=codecov&amp;logoColor=0E2F5A&amp;color=D7E3F0&amp;labelColor=EEF4FA" alt="Codecov placeholder"></a>
+     <a href="https://codecov.io/gh/alegiac95/Imaging-transcriptomics" > <img src="https://codecov.io/gh/alegiac95/Imaging-transcriptomics/branch/refactor-v2.0.0/graph/badge.svg?token=5VA10XQKAY"/></a>
      <a href="https://pypi.org/project/imaging-transcriptomics/"><img src="https://img.shields.io/pypi/v/imaging-transcriptomics?style=flat-square&amp;logo=pypi&amp;logoColor=white" alt="PyPI version"></a>
      <a href="https://github.com/alegiac95/Imaging-transcriptomics/pkgs/container/imaging-transcriptomics"><img src="https://img.shields.io/badge/Docker-GHCR-2496ED?style=flat-square&amp;logo=docker&amp;logoColor=white" alt="Docker image on GHCR"></a>
      <a href="chapters/03_installation.html"><img src="https://img.shields.io/badge/Apptainer-from_GHCR-0E2F5A?style=flat-square&amp;color=0E2F5A&amp;labelColor=EEF4FA" alt="Apptainer and Singularity via GHCR"></a>

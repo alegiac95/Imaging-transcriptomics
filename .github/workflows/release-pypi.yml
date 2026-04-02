@@ -32,7 +32,7 @@ jobs:
 
       - name: Install package and release dependencies
         run: |
-          python -m pip install -e ".[dev,plots,gsea]"
+          python -m pip install -e ".[dev]"
           python -m pip install build twine
 
       - name: Run test suite

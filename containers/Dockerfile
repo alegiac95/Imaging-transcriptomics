@@ -17,7 +17,7 @@ COPY pyproject.toml README.md ./
 COPY imaging_transcriptomics imaging_transcriptomics
 
 RUN python -m pip install --upgrade pip \
-    && python -m pip install .[plots,gsea,maps]
+    && python -m pip install .
 
 RUN useradd --create-home --uid 1000 imt \
     && chown -R imt:imt ${APP_DIR}
@@ -26,4 +26,3 @@ USER imt
 
 ENTRYPOINT ["imt"]
 CMD ["--help"]
-

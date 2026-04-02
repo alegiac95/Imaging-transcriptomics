@@ -40,7 +40,7 @@ jobs:
         run: python -m pip install "uv>=0.7,<1"
 
       - name: Create the locked uv environment
-        run: uv sync --frozen --extra dev --extra plots --extra gsea --extra maps
+        run: uv sync --frozen --extra dev
 
       - name: Smoke test CLI
         run: uv run imt --help

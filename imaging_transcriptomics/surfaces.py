@@ -11,8 +11,9 @@ def _import_neuromaps_images():
             from neuromaps.images import annot_to_gifti
     except ImportError as exc:  # pragma: no cover - optional dependency
         raise ImportError(
-            "neuromaps is required for surface atlas support. "
-            "Install imaging-transcriptomics[maps]."
+            "neuromaps is required for surface atlas support and is part of "
+            "the standard imaging-transcriptomics install. Reinstall the "
+            "package if it is missing from the current environment."
         ) from exc
     return annot_to_gifti
 

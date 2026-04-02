@@ -18,8 +18,9 @@ def import_neuromaps():
             from neuromaps.parcellate import Parcellater
     except ImportError as exc:  # pragma: no cover - optional dependency
         raise ImportError(
-            "neuromaps is required for cross-space resampling or surface inputs. "
-            "Install imaging-transcriptomics[maps]."
+            "neuromaps is required for cross-space resampling or surface inputs "
+            "and is part of the standard imaging-transcriptomics install. "
+            "Reinstall the package if it is missing from the current environment."
         ) from exc
     return Parcellater
 

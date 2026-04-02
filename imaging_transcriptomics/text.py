@@ -240,7 +240,10 @@ def render_readme(result: CorrelationResult | PLSResult | GenePCAResult | GEDARR
         ]
     )
     if not plots_available:
-        lines.append("Plot PNGs were skipped because the optional plotting dependencies are not installed.")
+        lines.append(
+            "Plot PNGs were skipped because Matplotlib is unavailable in the "
+            "current environment."
+        )
     return "\n".join(lines) + "\n"
 
 

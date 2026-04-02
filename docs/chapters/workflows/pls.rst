@@ -28,7 +28,7 @@ workflow:
 
 - regional vectors
 - ``MNI152`` NIfTI maps
-- supported surface inputs when the ``maps`` extra is installed
+- supported surface inputs through the standard ``neuromaps`` runtime support
 
 You also need either:
 

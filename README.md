@@ -57,10 +57,17 @@ Install the package:
 pip install -e .
 ```
 
-Optional extras:
+The default install now includes the common runtime stack:
 
-- `pip install -e .[gsea]` for GSEA support
-- `pip install -e .[maps]` for `neuromaps`/surface resampling support
+- plotting outputs through `matplotlib`
+- GSEA support through `gseapy`
+- surface inputs, surface nulls, and cross-space resampling through `neuromaps`
+
+Advanced extras are still available when needed:
+
+- `pip install -e .[brainspace]` for optional BrainSpace cortical comparison renders
+- `pip install -e .[atlas-build]` for `abagen`-based atlas asset building
+- `pip install -e .[maps]` as a compatibility bundle for both advanced extras
 - `pip install -e .[dev]` for tests and development tools
 
 ## Usage
@@ -277,7 +284,7 @@ Version `2.0` accepts:
 
 - regional vectors as NumPy arrays, text files, or tabular files
 - volumetric NIfTI maps in `MNI152`
-- surface files and non-MNI inputs through `neuromaps` when the `maps` extra is installed
+- surface files and non-MNI inputs through the standard `neuromaps` runtime support
 
 If the input map is already in `MNI152`, the package can extract region values directly from the packaged atlas image. For surface or non-MNI standard-space inputs, `neuromaps` can resample the input before analysis.
 
@@ -287,7 +294,7 @@ Examples:
 
 - valid: `41` left-hemisphere DK values in a text file
 - valid: a PET or MRI-derived NIfTI map in `MNI152`
-- valid: a supported surface map when the `maps` extra is installed
+- valid: a supported surface map
 - not valid: a native-space subject T1w scan used directly as an analysis map
 
 ## Outputs
@@ -340,7 +347,7 @@ imt gedar --help
 Common issues on this branch:
 
 - raw subject T1w scans are not valid direct inputs; the map should be a meaningful derived image in `MNI152`, or a regional vector
-- if cortical null generation falls back unexpectedly, set a writable `NEUROMAPS_DATA` cache and make sure the `maps` extra is installed
+- if cortical null generation falls back unexpectedly, set a writable `NEUROMAPS_DATA` cache and make sure `neuromaps` is available in the environment
 - if a cloud-synced file under Dropbox or iCloud raises a macOS permission error, copy it to a regular local folder before running the analysis
 - for gene-level FDR with correlation, low permutation counts can make adjusted p-values collapse to `1`; use substantially more permutations if gene-level multiple-testing correction matters
 

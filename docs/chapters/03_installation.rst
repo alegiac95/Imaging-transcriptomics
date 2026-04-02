@@ -12,6 +12,7 @@ For most users, the recommended paths are:
 - install the CLI into an isolated environment with ``uv``
 - run the published container images if you want a reproducible runtime with
   no local Python setup
+- use extras only for advanced atlas-building or BrainSpace-specific features
 
 Requirements
 ------------
@@ -22,11 +23,11 @@ Core requirements:
 - a writable user environment
 - Docker, Podman, or Apptainer/Singularity only if you plan to use containers
 
-Optional extras:
+Advanced extras:
 
-- ``plots`` for saved figures and report-style plot outputs
-- ``gsea`` for GSEA and geneset-based enrichment workflows
-- ``maps`` for ``neuromaps`` resampling, surface inputs, and spatial nulls
+- ``brainspace`` for optional BrainSpace-rendered cortical comparison plots
+- ``atlas-build`` for ``abagen``-based atlas asset building
+- ``maps`` as a compatibility bundle that installs both advanced extras
 
 Stable install routes
 ---------------------
@@ -37,35 +38,36 @@ Stable install routes
 
       This is the simplest route for most users.
 
-      Recommended full install:
+      Recommended install:
 
       .. code-block:: bash
 
          python -m pip install --upgrade pip
-         python -m pip install "imaging-transcriptomics[plots,gsea,maps]"
-
-      Minimal core install:
-
-      .. code-block:: bash
-
          python -m pip install imaging-transcriptomics
 
       Upgrade to the latest published release:
 
       .. code-block:: bash
 
-         python -m pip install --upgrade "imaging-transcriptomics[plots,gsea,maps]"
+         python -m pip install --upgrade imaging-transcriptomics
+
+      Add the optional advanced extras only if you need them:
+
+      .. code-block:: bash
+
+         python -m pip install "imaging-transcriptomics[brainspace]"
+         python -m pip install "imaging-transcriptomics[atlas-build]"
 
    .. tab-item:: uv
 
       ``uv`` is a good choice if you want the CLI in an isolated tool
       environment without managing a project virtual environment by hand.
 
-      Recommended full install:
+      Recommended install:
 
       .. code-block:: bash
 
-         uv tool install "imaging-transcriptomics[plots,gsea,maps]"
+         uv tool install imaging-transcriptomics
 
       Upgrade an existing tool install:
 
@@ -79,12 +81,19 @@ Stable install routes
       .. code-block:: bash
 
          uv venv
-         uv pip install "imaging-transcriptomics[plots,gsea,maps]"
+         uv pip install imaging-transcriptomics
+
+      Add the optional advanced extras only if you need them:
+
+      .. code-block:: bash
+
+         uv tool install "imaging-transcriptomics[brainspace]"
+         uv pip install "imaging-transcriptomics[atlas-build]"
 
    .. tab-item:: Docker / Podman
 
       Published container images are useful when you want a reproducible
-      runtime with the CLI and runtime extras already installed.
+      runtime with the standard CLI dependencies already installed.
 
       Standard image:
 
@@ -133,23 +142,25 @@ Stable install routes
       ``containers/Singularity.def`` for advanced users who want a native
       definition-based rebuild.
 
-What The Extras Add
--------------------
+What The Default Install Includes
+---------------------------------
 
-The published package can be installed in a minimal core form, but most users
-will want the runtime extras:
+The standard package install already includes the common runtime stack used by
+the main workflows:
 
-- ``plots`` adds Matplotlib-backed figure generation for cortical, volumetric,
-  enrichment, and summary outputs
-- ``gsea`` adds ``gseapy`` for preranked GSEA and remote GMT library access
-- ``maps`` adds ``neuromaps``, ``abagen``, and ``brainspace`` support for
-  spatial resampling, surface workflows, and atlas-building utilities
+- Matplotlib-backed figure generation for cortical, volumetric, enrichment,
+  and summary outputs
+- ``gseapy`` for preranked GSEA and remote GMT library access
+- ``neuromaps`` support for surface inputs, cross-space resampling, and
+  cortical spatial nulls
 
-If you are unsure, install:
+Use the advanced extras only when you specifically need them:
 
-.. code-block:: bash
-
-   python -m pip install "imaging-transcriptomics[plots,gsea,maps]"
+- ``brainspace`` for optional comparison renders such as
+  ``*_cortex_brainspace.png``
+- ``atlas-build`` for rebuilding atlas expression assets with ``abagen``
+- ``maps`` if you want the legacy one-step compatibility bundle for both
+  advanced extras
 
 Source install for development
 ------------------------------
@@ -166,7 +177,7 @@ Editable ``pip`` install:
    python -m venv .venv
    source .venv/bin/activate
    python -m pip install --upgrade pip
-   python -m pip install -e ".[dev,plots,gsea,maps]"
+   python -m pip install -e ".[dev]"
 
 If you prefer ``uv`` for development:
 
@@ -174,7 +185,15 @@ If you prefer ``uv`` for development:
 
    git clone https://github.com/alegiac95/Imaging-transcriptomics.git
    cd Imaging-transcriptomics
-   uv sync --extra dev --extra plots --extra gsea --extra maps
+   uv sync --extra dev
+
+If you also want the advanced build/rendering dependencies in a development
+environment:
+
+.. code-block:: bash
+
+   python -m pip install -e ".[dev,maps]"
+   uv sync --extra dev --extra maps
 
 Quick validation
 ----------------
@@ -190,8 +209,11 @@ After installation, these are good first checks:
 Platform notes
 --------------
 
-- surface-based null models and surface inputs require the ``maps`` extra
-- published GHCR containers already include the runtime extras used by the CLI
+- surface-based null models and surface inputs are part of the standard
+  install through ``neuromaps``
+- published GHCR containers already include the standard runtime dependencies
+- BrainSpace comparison renders require the ``brainspace`` extra
+- atlas-building utilities require the ``atlas-build`` extra
 - Apptainer and Singularity users pull from the GHCR OCI image rather than a
   separately published ``.sif`` artifact
 - cloud-synced folders such as Dropbox or iCloud may trigger macOS permission

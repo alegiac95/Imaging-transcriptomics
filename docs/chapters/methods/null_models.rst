@@ -70,7 +70,7 @@ The current order is:
 ``vasa`` is a surface-based cortical null exposed through ``neuromaps``. It
 requires:
 
-- the ``maps`` extra
+- the standard ``neuromaps`` runtime dependency
 - a compatible cortical surface representation for the selected atlas
 - the needed surface geometry assets in the ``neuromaps`` cache
 
@@ -129,7 +129,7 @@ especially for PLS or for enrichment runs. Still, two things matter:
 
 If a run unexpectedly falls back to random shuffling, first check:
 
-- whether the ``maps`` extra is installed
+- whether ``neuromaps`` is available in the environment
 - whether ``NEUROMAPS_DATA`` points to a writable cache
 - whether the selected atlas has compatible surface assets for the requested
   method
