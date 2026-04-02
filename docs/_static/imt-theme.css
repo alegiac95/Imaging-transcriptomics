@@ -337,19 +337,33 @@ body[data-theme="dark"] .sidebar-logo {
   color: var(--color-foreground-muted);
 }
 
-img.imt-workflow-story {
-  width: 100%;
-  height: auto;
-  display: block;
-  margin: 1rem 0 0;
+figure.imt-workflow-story-figure {
+  margin: 1rem 0 1.5rem;
   padding: 0.8rem 0.95rem;
   border: 1px solid rgba(21, 101, 192, 0.14);
   border-radius: 1.2rem;
   background: linear-gradient(135deg, #F8FBFE 0%, #ECF4FB 100%);
   box-shadow: 0 12px 28px rgba(14, 47, 90, 0.08);
+  overflow: hidden;
 }
 
-img.imt-workflow-story ~ figcaption .caption-text {
+figure.imt-workflow-story-figure img.imt-workflow-story {
+  width: 100%;
+  height: auto;
+  display: block;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+figure.imt-workflow-story-figure figcaption {
+  margin-top: 0.6rem;
+}
+
+figure.imt-workflow-story-figure .caption-text {
   margin-top: 0.6rem;
   color: var(--color-foreground-secondary);
   font-size: 0.97rem;
@@ -372,7 +386,7 @@ img.imt-workflow-story ~ figcaption .caption-text {
     flex-direction: column;
   }
 
-  img.imt-workflow-story {
+  figure.imt-workflow-story-figure {
     padding: 0.55rem 0.65rem;
   }
 }

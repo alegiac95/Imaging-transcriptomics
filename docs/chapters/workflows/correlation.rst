@@ -7,6 +7,7 @@ This page is the user guide for ``imt corr`` and ``run_corr()``.
 .. figure:: ../images/correlation_pipeline_story.png
    :alt: Correlation workflow story figure showing an aparc cortical map, atlas-level values, spatial nulls, and ranked genes.
    :class: imt-workflow-story
+   :figclass: imt-workflow-story-figure
 
    Start from an atlas-aligned brain map, collapse it into regional values, generate spatial nulls, and rank genes against the observed regional profile.
 

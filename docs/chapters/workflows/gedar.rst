@@ -7,6 +7,7 @@ This page is the user guide for ``imt gedar`` and ``run_gedar()``.
 .. figure:: ../images/gedar_pipeline_story.png
    :alt: GEDAR workflow story figure showing a weighted gene table, atlas matching, weighted regional scoring, and a final aparc score map.
    :class: imt-workflow-story
+   :figclass: imt-workflow-story-figure
 
    Start from a weighted gene signature, align it to atlas expression, project it regionally, and visualize the resulting GEDAR map.
 

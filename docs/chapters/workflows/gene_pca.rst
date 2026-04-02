@@ -7,6 +7,7 @@ This page is the user guide for ``imt gene-pca`` and ``run_gene_pca()``.
 .. figure:: ../images/gene_pca_pipeline_story.png
    :alt: Gene-list PCA story figure showing a selected gene list, atlas expression matrix, PCA summaries, and an aparc component map.
    :class: imt-workflow-story
+   :figclass: imt-workflow-story-figure
 
    Start from a curated gene list, extract the matching atlas matrix, and reduce it into regional expression components that can be compared against imaging maps.
 

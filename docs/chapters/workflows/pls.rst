@@ -7,6 +7,7 @@ This page is the user guide for ``imt pls`` and ``run_pls()``.
 .. figure:: ../images/pls_pipeline_story.png
    :alt: PLS workflow story figure showing an aparc cortical map, the atlas expression matrix, latent components, and component-defining genes.
    :class: imt-workflow-story
+   :figclass: imt-workflow-story-figure
 
    Start from an atlas-aligned brain map, bring the expression matrix into the same regional space, and extract multivariate gene components aligned with that signal.
 
