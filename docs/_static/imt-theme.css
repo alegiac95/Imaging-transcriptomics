@@ -346,9 +346,10 @@ body[data-theme="dark"] .sidebar-logo {
   height: auto;
   display: block;
   padding: 0.8rem 0.95rem;
-  border: 1px solid var(--color-card-border);
+  border: 1px solid rgba(21, 101, 192, 0.14);
   border-radius: 1.2rem;
-  background: linear-gradient(135deg, var(--color-background-secondary) 0%, var(--color-background-hover) 100%);
+  background: linear-gradient(135deg, #F8FBFE 0%, #ECF4FB 100%);
+  box-shadow: 0 12px 28px rgba(14, 47, 90, 0.08);
 }
 
 .imt-workflow-story .caption {
