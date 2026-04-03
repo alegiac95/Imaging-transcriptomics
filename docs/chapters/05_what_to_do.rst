@@ -34,20 +34,6 @@ The workflows are grouped below by the kind of question they answer.
        </div>
      </section>
 
-     <section class="imt-workflow-group imt-workflow-group--gene">
-       <div class="imt-workflow-group-head">
-         <p class="imt-workflow-group-kicker">Gene utilities</p>
-         <h2>Start from one gene and inspect where it is expressed and who travels with it</h2>
-         <p>Use this workflow when your question is gene-centric rather than map-centric.</p>
-       </div>
-       <div class="imt-workflow-card-grid imt-workflow-card-grid--single">
-         <a class="imt-workflow-card" href="workflows/gene.html">
-           <h3>Single-gene query</h3>
-           <p>Extract one gene's regional expression profile and its strongest positive and negative co-expression partners.</p>
-         </a>
-       </div>
-     </section>
-
      <section class="imt-workflow-group imt-workflow-group--signature">
        <div class="imt-workflow-group-head">
          <p class="imt-workflow-group-kicker">Gene-signature workflows</p>
@@ -62,6 +48,20 @@ The workflows are grouped below by the kind of question they answer.
          <a class="imt-workflow-card" href="workflows/gedar.html">
            <h3>GEDAR</h3>
            <p>Project a weighted gene signature, such as a TWAS table, into a regional transcriptomic score.</p>
+         </a>
+       </div>
+     </section>
+
+     <section class="imt-workflow-group imt-workflow-group--gene">
+       <div class="imt-workflow-group-head">
+         <p class="imt-workflow-group-kicker">Gene utilities</p>
+         <h2>Start from one gene and inspect where it is expressed and who travels with it</h2>
+         <p>Use this workflow when your question is gene-centric rather than map-centric.</p>
+       </div>
+       <div class="imt-workflow-card-grid imt-workflow-card-grid--single">
+         <a class="imt-workflow-card" href="workflows/gene.html">
+           <h3>Single-gene query</h3>
+           <p>Extract one gene's regional expression profile and its strongest positive and negative co-expression partners.</p>
          </a>
        </div>
      </section>
