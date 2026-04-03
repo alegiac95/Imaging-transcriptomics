@@ -473,6 +473,46 @@ def render_gene_pca() -> None:
     _save(fig, "gene_pca_pipeline_story.png")
 
 
+def render_gene() -> None:
+    fig = _setup_canvas()
+    brain = _render_brain_png("gene_output", _brain_values(23))
+    _add_stage_title(fig, 0.12, "Gene query", "Select one atlas gene")
+    _add_stage_title(fig, 0.37, "Atlas profile", "Regional expression vector")
+    _add_stage_title(fig, 0.64, "Co-expression tails", "Positive and negative partners")
+    _add_stage_title(fig, 0.88, "Regional map", "Visualize the queried gene")
+
+    _add_gene_column(fig, [0.05, 0.22, 0.12, 0.48], ["RELN"], neutral=True, heading="seed gene")
+    _add_heatmap(
+        fig,
+        [0.28, 0.24, 0.16, 0.42],
+        _blocky_matrix(12, 1, 81, scale=1.5),
+        cmap="RdBu_r",
+        title="expression vector",
+        left_label="regions",
+    )
+    _add_gene_column(
+        fig,
+        [0.565, 0.17, 0.155, 0.58],
+        ["SLC1A2", "GAD1", "PVALB", "...", "MBP", "GFAP", "PDYN"],
+        [1.7, 1.1, 0.7, 0.0, -0.7, -1.1, -1.6],
+        heading="top hits",
+    )
+    _add_heatmap(
+        fig,
+        [0.69, 0.25, 0.09, 0.38],
+        _blocky_matrix(8, 8, 82, scale=1.2),
+        cmap="RdBu_r",
+        title="matrix",
+        left_label="genes",
+    )
+    _add_image(fig, brain, [0.80, 0.22, 0.19, 0.48])
+
+    _add_arrow(fig, 0.18, 0.28)
+    _add_arrow(fig, 0.44, 0.565)
+    _add_arrow(fig, 0.78, 0.80)
+    _save(fig, "gene_pipeline_story.png")
+
+
 def render_enrichment() -> None:
     fig = _setup_canvas()
     brain = _render_brain_png("enrichment_input", _brain_values(19))
@@ -495,6 +535,7 @@ def render_enrichment() -> None:
 def main() -> None:
     render_correlation()
     render_pls()
+    render_gene()
     render_gedar()
     render_gene_pca()
     render_enrichment()

@@ -337,6 +337,116 @@ body[data-theme="dark"] .sidebar-logo {
   color: var(--color-foreground-muted);
 }
 
+.imt-workflow-groups {
+  display: grid;
+  gap: 1.25rem;
+  margin: 1.5rem 0 1rem;
+}
+
+.imt-workflow-group {
+  border: 1px solid rgba(14, 47, 90, 0.08);
+  border-radius: 1.25rem;
+  padding: 1.15rem 1.15rem 1.05rem;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(245, 249, 252, 0.94));
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.045);
+}
+
+.imt-workflow-group-head {
+  margin-bottom: 0.95rem;
+}
+
+.imt-workflow-group-kicker {
+  margin: 0 0 0.35rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.imt-workflow-group-head h2 {
+  margin: 0 0 0.45rem;
+  font-size: 1.32rem;
+  line-height: 1.15;
+}
+
+.imt-workflow-group-head p {
+  margin: 0;
+  color: var(--color-foreground-secondary);
+}
+
+.imt-workflow-card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.95rem;
+}
+
+.imt-workflow-card-grid--single {
+  grid-template-columns: minmax(0, 1fr);
+  max-width: 26rem;
+}
+
+.imt-workflow-card {
+  display: block;
+  padding: 1rem 1rem 0.95rem;
+  border-radius: 1rem;
+  text-decoration: none;
+  border: 1px solid rgba(14, 47, 90, 0.08);
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.035);
+  transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+}
+
+.imt-workflow-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.06);
+}
+
+.imt-workflow-card h3 {
+  margin: 0 0 0.35rem;
+  font-size: 1.03rem;
+}
+
+.imt-workflow-card p {
+  margin: 0;
+  color: var(--color-foreground-secondary);
+}
+
+.imt-workflow-group--inferential {
+  background: linear-gradient(180deg, rgba(230, 240, 252, 0.92), rgba(244, 248, 253, 0.94));
+}
+
+.imt-workflow-group--inferential .imt-workflow-group-kicker {
+  color: #1565C0;
+}
+
+.imt-workflow-group--inferential .imt-workflow-card:hover {
+  border-color: rgba(21, 101, 192, 0.32);
+}
+
+.imt-workflow-group--gene {
+  background: linear-gradient(180deg, rgba(232, 247, 238, 0.92), rgba(246, 252, 248, 0.94));
+}
+
+.imt-workflow-group--gene .imt-workflow-group-kicker {
+  color: #2F855A;
+}
+
+.imt-workflow-group--gene .imt-workflow-card:hover {
+  border-color: rgba(47, 133, 90, 0.32);
+}
+
+.imt-workflow-group--signature {
+  background: linear-gradient(180deg, rgba(255, 242, 227, 0.94), rgba(253, 248, 242, 0.94));
+}
+
+.imt-workflow-group--signature .imt-workflow-group-kicker {
+  color: #C96E12;
+}
+
+.imt-workflow-group--signature .imt-workflow-card:hover {
+  border-color: rgba(201, 110, 18, 0.32);
+}
+
 figure.imt-workflow-story-figure {
   margin: 1rem 0 1.5rem;
   padding: 0 !important;
@@ -385,6 +495,29 @@ body[data-theme="dark"] figure.imt-workflow-story-figure {
   box-shadow: none;
 }
 
+body[data-theme="dark"] .imt-workflow-group {
+  border-color: rgba(255, 255, 255, 0.06);
+  background: linear-gradient(180deg, rgba(226, 233, 240, 0.88), rgba(214, 224, 233, 0.88));
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+}
+
+body[data-theme="dark"] .imt-workflow-card {
+  border-color: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.82);
+}
+
+body[data-theme="dark"] .imt-workflow-group--inferential {
+  background: linear-gradient(180deg, rgba(213, 225, 239, 0.9), rgba(201, 216, 232, 0.9));
+}
+
+body[data-theme="dark"] .imt-workflow-group--gene {
+  background: linear-gradient(180deg, rgba(217, 234, 224, 0.9), rgba(205, 224, 213, 0.9));
+}
+
+body[data-theme="dark"] .imt-workflow-group--signature {
+  background: linear-gradient(180deg, rgba(236, 225, 213, 0.9), rgba(228, 216, 203, 0.9));
+}
+
 body[data-theme="dark"] figure.imt-workflow-story-figure img.imt-workflow-story {
   border: 1px solid rgba(255, 255, 255, 0.05);
   background: linear-gradient(135deg, #DDE6ED 0%, #CCD8E2 100%);
@@ -396,6 +529,29 @@ body[data-theme="dark"] figure.imt-workflow-story-figure img.imt-workflow-story 
     border: none;
     background: transparent;
     box-shadow: none;
+  }
+
+  body:not([data-theme="light"]) .imt-workflow-group {
+    border-color: rgba(255, 255, 255, 0.06);
+    background: linear-gradient(180deg, rgba(226, 233, 240, 0.88), rgba(214, 224, 233, 0.88));
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+  }
+
+  body:not([data-theme="light"]) .imt-workflow-card {
+    border-color: rgba(255, 255, 255, 0.06);
+    background: rgba(255, 255, 255, 0.82);
+  }
+
+  body:not([data-theme="light"]) .imt-workflow-group--inferential {
+    background: linear-gradient(180deg, rgba(213, 225, 239, 0.9), rgba(201, 216, 232, 0.9));
+  }
+
+  body:not([data-theme="light"]) .imt-workflow-group--gene {
+    background: linear-gradient(180deg, rgba(217, 234, 224, 0.9), rgba(205, 224, 213, 0.9));
+  }
+
+  body:not([data-theme="light"]) .imt-workflow-group--signature {
+    background: linear-gradient(180deg, rgba(236, 225, 213, 0.9), rgba(228, 216, 203, 0.9));
   }
 
   body:not([data-theme="light"]) figure.imt-workflow-story-figure img.imt-workflow-story {
@@ -419,6 +575,14 @@ body[data-theme="dark"] figure.imt-workflow-story-figure img.imt-workflow-story 
 
   .imt-section-intro--reverse {
     flex-direction: column;
+  }
+
+  .imt-workflow-card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .imt-workflow-card-grid--single {
+    max-width: none;
   }
 
   figure.imt-workflow-story-figure {
