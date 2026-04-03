@@ -41,6 +41,10 @@ Workflow-specific outputs
    Writes ``pls_summary.tsv`` plus one ``pls_component_<n>.tsv`` per retained
    component and optional enrichment tables for each component.
 
+``gene``
+   Writes ``gene_expression.tsv``, ``gene_coexpression.tsv``, and
+   ``top_coexpressed_genes.tsv``.
+
 ``gene-pca``
    Writes ``gene_pca_scores.tsv``, ``gene_pca_loadings.tsv``,
    ``gene_pca_variance.tsv``, ``matched_genes.txt``,
@@ -62,6 +66,16 @@ How to read the main tables
 
 ``pls_component_<n>.tsv``
    Gene weights and gene-level statistics for one aligned PLS component.
+
+``gene_expression.tsv``
+   One atlas-aligned regional expression vector for the requested gene.
+
+``gene_coexpression.tsv``
+   Full co-expression table for the requested gene, including correlation,
+   nominal p-value, BH FDR, and selection flags.
+
+``top_coexpressed_genes.tsv``
+   Top positively correlated genes passing the configured BH threshold.
 
 ``gene_pca_scores.tsv``
    Regional PCA component scores for a selected gene list.
@@ -212,6 +226,45 @@ PLS outputs
 ``ora_pls<n>_up.tsv`` and ``ora_pls<n>_down.tsv``
    ORA results for one PLS component, using the same schema as the correlation
    ORA tables.
+
+Single-gene outputs
+~~~~~~~~~~~~~~~~~~~
+
+``gene_expression.tsv``
+   Atlas-aligned regional expression table with:
+
+   - ``id``
+   - ``label``
+   - ``hemisphere``
+   - ``structure``
+   - ``expression_z`` or ``expression``
+
+``gene_coexpression.tsv``
+   Full gene-wise co-expression table with:
+
+   ``gene``
+      Gene symbol.
+
+   ``score``
+      Spearman correlation between the requested gene and every other atlas
+      gene across the selected regions.
+
+   ``p``
+      Asymptotic two-sided p-value derived from the Spearman statistic.
+
+   ``fdr``
+      Benjamini-Hochberg correction across the full co-expression table.
+
+   ``significant``
+      Whether the gene passes the configured BH threshold.
+
+   ``selected``
+      Whether the gene is both significant and positively correlated, making
+      it eligible for the top-N output.
+
+``top_coexpressed_genes.tsv``
+   Top ``N`` positively correlated genes passing the configured BH threshold,
+   sorted by co-expression score.
 
 Gene PCA outputs
 ~~~~~~~~~~~~~~~~

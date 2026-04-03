@@ -13,6 +13,7 @@ Commands
 - ``imt genesets``: inspect packaged and remote geneset resources
 - ``imt corr``: run correlation analysis
 - ``imt pls``: run PLS analysis
+- ``imt gene``: query one gene and return its top co-expressed genes
 - ``imt gene-pca``: run PCA on atlas expression restricted to a gene list
 - ``imt gedar``: run weighted regional GEDAR scoring from a gene-weight table
 
@@ -154,6 +155,33 @@ Pass a comma-separated list directly:
      --ncomp 3 \
      --output /absolute/path/to/out_dir
 
+Single-gene workflow
+--------------------
+
+Query one atlas-aligned gene expression profile and return the top significant
+positively co-expressed genes:
+
+.. code-block:: bash
+
+   imt gene \
+     --gene RELN \
+     --atlas dk \
+     --hemisphere left \
+     --top-n 25 \
+     --output /absolute/path/to/out_dir
+
+Write raw regional expression instead of z-scored regional expression:
+
+.. code-block:: bash
+
+   imt gene \
+     --gene MBP \
+     --atlas schaefer-200 \
+     --hemisphere both \
+     --raw-expression \
+     --fdr-threshold 0.01 \
+     --output /absolute/path/to/out_dir
+
 GEDAR workflow
 --------------
 
@@ -218,6 +246,7 @@ Supported commands:
 - ``imt genesets``
 - ``imt corr``
 - ``imt pls``
+- ``imt gene``
 - ``imt gene-pca``
 - ``imt gedar``
 
@@ -230,6 +259,7 @@ Synopsis
    imt genesets [--packaged-only] [--organism NAME]
    imt corr --input PATH [shared options]
    imt pls --input PATH (--ncomp N | --var FRACTION) [shared options]
+   imt gene --gene SYMBOL [gene options]
    imt gene-pca --genes VALUE [gene-pca options]
    imt gedar --weights PATH [gedar options]
 
@@ -269,6 +299,18 @@ Gene-PCA-specific options
 - ``--atlas`` / ``--hemisphere`` / ``--regions``: same atlas-selection
   semantics as the other workflows
 - ``--ncomp``: maximum number of PCA components to retain
+
+Gene-specific options
+~~~~~~~~~~~~~~~~~~~~~
+
+- ``--gene``: gene symbol to query in the selected atlas
+- ``--atlas`` / ``--hemisphere`` / ``--regions``: same atlas-selection
+  semantics as the other workflows
+- ``--top-n``: maximum number of significant positively co-expressed genes to
+  return
+- ``--fdr-threshold``: BH cutoff used to select the top co-expressed genes
+- ``--raw-expression``: write raw regional expression instead of z-scored
+  regional expression
 
 GEDAR-specific options
 ~~~~~~~~~~~~~~~~~~~~~~

@@ -41,12 +41,19 @@ Run a simple gene-list PCA analysis:
 
     imt gene-pca --genes RELN,GAD1,SLC1A2,SV2A --atlas dk --ncomp 2 --output /path/to/out
 
+Query one gene and return its regional expression plus the top co-expressed genes:
+
+.. code:: bash
+
+    imt gene --gene RELN --atlas dk --top-n 25 --output /path/to/out
+
 Accepted input families
 -----------------------
 
 - regional vectors aligned to an included atlas
 - volumetric NIfTI maps in ``MNI152``
 - supported surface files when ``neuromaps`` support is installed
+- one gene symbol for ``gene``
 - gene lists for ``gene-pca``
 
 What to expect from an output folder
@@ -63,7 +70,7 @@ Documentation map
 -----------------
 
 - :doc:`Installation </chapters/03_installation>`: install options and advanced extras
-- :doc:`Workflow hub </chapters/05_what_to_do>`: choose between correlation, PLS, GEDAR, gene PCA, and enrichment
+- :doc:`Workflow hub </chapters/05_what_to_do>`: choose between correlation, PLS, single-gene queries, GEDAR, gene PCA, and enrichment
 - :doc:`CLI guide </chapters/usage/cli>` and :doc:`Python API guide </chapters/usage/python_api>`: how to run analyses
 - :doc:`Inputs </chapters/usage/inputs>` and :doc:`Outputs </chapters/usage/outputs>`: accepted data and generated files
 - :doc:`Methods </chapters/methods/statistics>`: statistical definitions, null models, and enrichment calculations
