@@ -8,6 +8,14 @@ In imaging transcriptomics, this step is often applied after ``corr`` or
 after each retained PLS component, once the workflow has produced a gene-wise
 score for the phenotype of interest.
 
+Because gene-set interpretation is especially sensitive to null choice and to
+how the gene universe is defined, this page should be read together with the
+more formal :doc:`/chapters/methods/gene_sets` page and, for the broader
+imaging-transcriptomics context, with the practical and review papers by
+`Arnatkeviciute et al. (2019)
+<https://doi.org/10.1016/j.neuroimage.2019.01.011>`_ and
+`Fulcher et al. (2021) <https://doi.org/10.1038/s41467-021-22862-1>`_.
+
 .. figure:: ../images/enrichment_pipeline_story.png
    :alt: Enrichment overview figure showing a brain map, a ranked gene signature, and the three main enrichment families: GSEA, ORA, and ensemble enrichment.
    :class: imt-workflow-story
@@ -84,13 +92,16 @@ Current toolbox status
 
 The toolbox currently supports:
 
+- ``ensemble enrichment`` after ``corr`` and after each retained PLS component
 - ``GSEA`` after ``corr`` and after each retained PLS component
 - ``ORA`` after ``corr`` and after each retained PLS component
 
-The ``ensemble`` section below is included because it is one of the main
-enrichment families used in imaging transcriptomics and is the clearest
-methodological target when the goal is phenotype-null inference rather than
-classic rank-enrichment.
+The default enrichment backend is now ``ensemble``, while ``GSEA`` and ``ORA``
+remain available when you want a more traditional rank-based or thresholded
+interpretation. That default follows the broader argument, emphasized by
+`Fulcher et al. (2021) <https://doi.org/10.1038/s41467-021-22862-1>`_, that
+phenotype-aware nulls are often the most defensible starting point for
+brain-map enrichment.
 
 GSEA
 ----
@@ -292,8 +303,8 @@ A typical ensemble-style output table would contain:
 ``z_score``
    Standardized distance between observed and null category scores.
 
-``p_empirical``
-   Empirical p-value from the null phenotype ensemble.
+``p_val``
+   Empirical sign-aware p-value from the null phenotype ensemble.
 
 ``fdr``
    Multiple-testing correction across terms.
@@ -324,15 +335,21 @@ In many studies, it is reasonable to use more than one family:
 Current toolbox usage
 ---------------------
 
-GSEA is enabled with ``--gsea`` on the CLI or ``run_gsea=True`` in the API.
-It accepts:
+The main shared controls are:
 
 - packaged genesets such as ``lake`` and ``pooled``
 - local ``.gmt`` files
 - remote Enrichr libraries resolved through ``gseapy``
 
-ORA is enabled with ``--ora-p-threshold`` and writes separate ``up`` and
-``down`` tables.
+Choose the backend with ``--enrichment`` on the CLI or ``enrichment_method=``
+in the Python API:
+
+- ``ensemble`` for category scores against phenotype nulls
+- ``gsea`` for preranked GSEA
+- ``ora`` for thresholded over-representation analysis
+
+When ``--enrichment ora`` is selected, ``--ora-p-threshold`` controls the raw
+gene-level threshold used to build the ``up`` and ``down`` hit lists.
 
 Useful commands:
 
@@ -341,7 +358,18 @@ Useful commands:
    imt genesets --packaged-only
    imt genesets --organism Human
 
-Example ``corr`` run with both methods enabled:
+Example ``corr`` runs:
+
+.. code-block:: bash
+
+   imt corr \
+     --input /abs/path/map.nii.gz \
+     --space MNI152 \
+     --atlas dk \
+     --enrichment ensemble \
+     --geneset GO_Biological_Process_2025 \
+     --geneset-organism Human \
+     --output /abs/path/out_dir
 
 .. code-block:: bash
 
@@ -351,6 +379,17 @@ Example ``corr`` run with both methods enabled:
      --atlas dk \
      --geneset GO_Biological_Process_2025 \
      --geneset-organism Human \
+     --enrichment gsea \
+     --output /abs/path/out_dir
+
+.. code-block:: bash
+
+   imt corr \
+     --input /abs/path/map.nii.gz \
+     --space MNI152 \
+     --atlas dk \
+     --geneset GO_Biological_Process_2025 \
+     --geneset-organism Human \
+     --enrichment ora \
      --ora-p-threshold 0.01 \
-     --gsea \
      --output /abs/path/out_dir

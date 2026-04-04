@@ -319,18 +319,33 @@ def _add_component_summary(fig: plt.Figure, rect: list[float]) -> None:
 
 def _add_running_sum_panel(fig: plt.Figure, rect: list[float]) -> None:
     ax = fig.add_axes(rect)
-    x = np.linspace(0, 1, 240)
-    peak = 0.72 * np.exp(-((x - 0.42) ** 2) / 0.018)
-    taper = 0.2 * np.exp(-((x - 0.78) ** 2) / 0.05)
-    baseline = -0.14 * (x - 0.5)
-    y = peak - taper + baseline
-    ax.plot(x, y, color="#1565C0", lw=2.6)
-    hit_positions = np.array([0.06, 0.14, 0.21, 0.33, 0.4, 0.47, 0.66, 0.82])
+    x = np.linspace(0.06, 0.94, 360)
+    y = np.interp(
+        x,
+        [0.06, 0.18, 0.33, 0.46, 0.58, 0.76, 0.94],
+        [0.02, 0.05, 0.24, 0.54, 0.16, -0.18, -0.06],
+    )
+    y = _smooth_profile(y, window=17)
+    ax.fill_between(x, 0, y, where=y >= 0, color="#DCE8F4", alpha=0.95, lw=0)
+    ax.fill_between(x, 0, y, where=y < 0, color="#EEF4FA", alpha=0.85, lw=0)
+    ax.plot(x, y, color="#1565C0", lw=2.25)
+    hit_positions = np.array([0.11, 0.18, 0.29, 0.35, 0.42, 0.51, 0.73, 0.86])
+    rank_strip = np.linspace(1, -1, 300).reshape(1, -1)
+    ax.imshow(
+        rank_strip,
+        extent=(0.08, 0.92, -0.70, -0.57),
+        cmap="RdBu_r",
+        aspect="auto",
+        interpolation="nearest",
+        alpha=0.9,
+        zorder=0,
+    )
     for xpos in hit_positions:
-        ax.vlines(xpos, -0.72, -0.53, color="#8BAED1", lw=1.3)
+        ax.vlines(xpos, -0.79, -0.57, color="#5B6472", lw=1.15, alpha=0.88)
     ax.axhline(0, color="#D7E3F0", lw=1.0)
-    ax.text(0.02, 0.94, "running score", transform=ax.transAxes, ha="left", va="top", fontsize=8.3, color="#5B6472")
-    ax.text(0.96, 0.08, "gene rank", transform=ax.transAxes, ha="right", va="bottom", fontsize=7.8, color="#5B6472")
+    ax.text(0.03, 0.95, "running ES", transform=ax.transAxes, ha="left", va="top", fontsize=8.2, color="#5B6472")
+    ax.text(0.08, -0.52, "pathway hits", ha="left", va="center", fontsize=7.5, color="#5B6472")
+    ax.text(0.92, -0.74, "ranked genes", ha="right", va="center", fontsize=7.5, color="#5B6472")
     ax.set_xticks([])
     ax.set_yticks([])
     for spine in ax.spines.values():

@@ -102,18 +102,21 @@ and developing reproducible imaging transcriptomics workflows.
      <img src="_static/undraw_problem-solving_1kpx_flipped.svg" alt="Illustration for understanding the methods behind the toolbox">
      <div class="imt-section-copy">
        <p class="imt-section-kicker">Methods</p>
-       <h2>Understand the models, nulls, and enrichment logic before you interpret the results</h2>
+       <h2>Understand the field, the models, and the nulls before you interpret the results</h2>
        <p>
-         This section explains how the toolbox computes association scores,
-         generates null maps, and evaluates enrichment so you can understand
-         what each workflow is actually testing.
+         This section starts from the imaging-transcriptomics idea itself and
+         then explains how the toolbox computes association scores, generates
+         null maps, and evaluates enrichment so you can understand what each
+         workflow is actually testing.
        </p>
        <p class="imt-section-links">
+         <a href="chapters/methods/imaging_transcriptomics.html">Imaging transcriptomics</a>
+         <span>•</span>
          <a href="chapters/methods/statistics.html">Statistics</a>
          <span>•</span>
          <a href="chapters/methods/null_models.html">Null models</a>
          <span>•</span>
-         <a href="chapters/methods/gene_sets.html">Gene enrichment</a>
+         <a href="chapters/methods/gene_sets.html">Enrichment methods</a>
        </p>
      </div>
    </section>
@@ -123,6 +126,7 @@ and developing reproducible imaging transcriptomics workflows.
    :maxdepth: 1
    :caption: Methods
 
+   chapters/methods/imaging_transcriptomics
    chapters/methods/statistics
    chapters/methods/null_models
    chapters/methods/gene_sets

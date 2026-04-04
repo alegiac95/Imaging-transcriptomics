@@ -14,9 +14,49 @@ values. If this structure is ignored, gene-map associations can look more
 significant than they really are because the effective number of independent
 observations is smaller than the raw number of regions.
 
+This is one of the main reasons spatially informed null models have become a
+standard methodological concern in imaging transcriptomics and related
+brain-map analyses, as discussed by `Markello and Misic (2021)
+<https://doi.org/10.1016/j.neuroimage.2021.118052>`_.
+
 The toolbox therefore permutes the imaging map rather than the gene-expression
 matrix and, whenever possible, uses cortical null models that preserve spatial
 structure on the cortical surface.
+
+A visual overview
+-----------------
+
+The broader landscape of brain-map null models is useful to keep in mind when
+choosing a strategy for imaging transcriptomics. The schematic below, adapted
+from Markello and Misic, groups the main families into naive shuffles,
+surface-based spatial permutation models, and parameterized data models.
+
+.. figure:: ../images/markello_spatial_nulls_overview.jpg
+   :alt: Overview of empirical brain-map data alongside spatial permutation models, naive nulls, and parameterized data nulls.
+   :align: center
+   :width: 100%
+
+   Adapted from Markello and Misic, `Comparing spatial null models for brain
+   maps <https://doi.org/10.1016/j.neuroimage.2021.118052>`_, *NeuroImage*
+   (2021).
+
+This figure is broader than the current toolbox implementation, but it is a
+helpful visual guide:
+
+- the top row represents surface-based spatial permutation models for cortical
+  data; in this toolbox, ``vasa`` and ``alexander_bloch`` are the closest
+  representatives of this family
+- the bottom-left examples show naive baselines; ``random`` in this toolbox is
+  a grouped non-parametric shuffle and should be treated as an explicit
+  baseline rather than the preferred inferential model
+- the bottom-right examples are parameterized spatial nulls; ``moran`` is the
+  directly exposed representative of that family in this package
+- ``auto`` is not its own null family; it is a convenience selector that
+  prefers surface-based cortical nulls first and otherwise falls back to a
+  simpler grouped shuffle
+
+Not every method shown in the figure is implemented verbatim here, but the
+family structure is still the right way to think about the available choices.
 
 How nulls enter the workflows
 -----------------------------

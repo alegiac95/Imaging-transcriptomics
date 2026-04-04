@@ -13,6 +13,16 @@ It should answer four questions quickly:
 3. what kinds of inputs are accepted
 4. where to look next in the documentation
 
+Imaging transcriptomics links spatially resolved neuroimaging phenotypes to
+regional gene-expression atlases, most often the Allen Human Brain Atlas. In
+practice, that usually means asking whether the spatial pattern in a brain map
+aligns with the spatial pattern of one gene, many genes, or a broader pathway,
+and then checking that alignment against spatially informed null models rather
+than naive shuffles. The overall framing used in this toolbox follows the
+practical guide by `Arnatkeviciute, Fulcher and Fornito (2019)
+<https://doi.org/10.1016/j.neuroimage.2019.01.011>`_ and the broader review by
+`Arnatkeviciute et al. (2022) <https://doi.org/10.1016/j.bpsgos.2021.10.002>`_.
+
 Quick start
 -----------
 
@@ -73,6 +83,6 @@ Documentation map
 - :doc:`Workflow hub </chapters/05_what_to_do>`: choose between correlation, PLS, single-gene queries, GEDAR, gene PCA, and enrichment
 - :doc:`CLI guide </chapters/usage/cli>` and :doc:`Python API guide </chapters/usage/python_api>`: how to run analyses
 - :doc:`Inputs </chapters/usage/inputs>` and :doc:`Outputs </chapters/usage/outputs>`: accepted data and generated files
-- :doc:`Methods </chapters/methods/statistics>`: statistical definitions, null models, and enrichment calculations
+- :doc:`Imaging transcriptomics </chapters/methods/imaging_transcriptomics>`, :doc:`statistics </chapters/methods/statistics>`, :doc:`null models </chapters/methods/null_models>`, and :doc:`enrichment methods </chapters/methods/gene_sets>`: conceptual background and the statistical choices used by the toolbox
 - :doc:`FAQ </chapters/08_faq>` and :doc:`Contact Us </chapters/07_contact_us>`: troubleshooting and support
 - :doc:`Reference </chapters/reference/citations>` and :doc:`Further reading </chapters/reference/further_reading>`: papers to cite and broader imaging transcriptomics resources

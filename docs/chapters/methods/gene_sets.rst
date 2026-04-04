@@ -1,15 +1,104 @@
-=========================
-GSEA and ORA methodology
-=========================
+====================
+Enrichment methods
+====================
 
-The toolbox supports two pathway-level analyses built on top of the gene-level
-outputs:
+This page summarizes the three enrichment families exposed by the toolbox:
 
-- preranked GSEA
-- over-representation analysis (ORA)
+- ``ensemble``
+- ``gsea``
+- ``ora``
 
-They answer related but different questions, so it is often useful to run both
-on the same workflow.
+All three start from a gene-wise signal derived from the imaging analysis, but
+they summarize that signal differently and they use different null models.
+That distinction matters in imaging transcriptomics, where the inferential
+problem is shaped as much by the spatial structure of the phenotype as by the
+gene set itself. For a broader discussion of those concerns, see
+`Fulcher, Arnatkeviciute and Fornito (2021)
+<https://doi.org/10.1038/s41467-021-22862-1>`_.
+
+Overview
+--------
+
+``ensemble``
+   Tests a category-level score directly against category scores obtained from
+   null phenotypes. This is the default enrichment backend in the package.
+
+``gsea``
+   Tests whether genes from a category accumulate near one end of a ranked gene
+   list by using a running enrichment score.
+
+``ora``
+   Tests whether a category is over-represented among a thresholded subset of
+   selected genes.
+
+The workflow-facing explanation lives in :doc:`/chapters/workflows/enrichment`.
+This page instead focuses on the statistical objects that each method computes.
+
+Ensemble
+--------
+
+Category score
+~~~~~~~~~~~~~~
+
+Ensemble enrichment starts from one observed gene-wise score vector. In
+practice, that score is:
+
+- a gene-map association score for ``corr``
+- a component-specific gene weight or aligned component score for ``pls``
+
+For a term :math:`t` with member genes :math:`G_t`, the toolbox computes a
+category score as the mean gene score over the genes in that term:
+
+.. math::
+
+   S_t = \frac{1}{|G_t|} \sum_{g \in G_t} s_g
+
+where :math:`s_g` is the observed gene-wise score.
+
+Null calibration
+~~~~~~~~~~~~~~~~
+
+The same category score is recomputed across the null phenotype ensemble. If
+:math:`s_g^{(b)}` is the gene-wise score from null phenotype :math:`b`, then:
+
+.. math::
+
+   S_t^{(b)} = \frac{1}{|G_t|} \sum_{g \in G_t} s_g^{(b)}
+
+This yields one null distribution per term. The important point is that the
+null is defined on the phenotype side, not by randomizing gene membership.
+
+Empirical p-value
+~~~~~~~~~~~~~~~~~
+
+The exported empirical p-value is sign-aware:
+
+.. math::
+
+   p_t =
+   \begin{cases}
+   \frac{1 + \sum_{b=1}^{B} I(S_t^{(b)} \ge S_t)}{B + 1}, & S_t \ge 0 \\
+   \frac{1 + \sum_{b=1}^{B} I(S_t^{(b)} \le S_t)}{B + 1}, & S_t < 0
+   \end{cases}
+
+The table also reports:
+
+- ``category_score``
+- ``null_mean``
+- ``null_sd``
+- ``z_score``
+- ``p_value``
+- ``fdr``
+
+where ``fdr`` is the Benjamini-Hochberg correction across terms in the current
+run.
+
+Interpretation
+~~~~~~~~~~~~~~
+
+This method is often the most natural fit for imaging transcriptomics because
+it carries the phenotype null all the way through to the pathway level. That
+is why it is the package default.
 
 GSEA
 ----
@@ -19,7 +108,7 @@ What is ranked
 
 GSEA uses the full ranked gene list rather than a hard threshold.
 
-- in ``corr``, genes are ranked by the correlation ``score``
+- in ``corr``, genes are ranked by the gene-level association ``score``
 - in ``pls``, genes are ranked component by component using the aligned
   component ``zscore``
 
@@ -29,16 +118,15 @@ Observed enrichment score
 The observed enrichment score (``es``) is computed with ``gseapy`` on a
 deterministic preranked table. When exact tied gene scores occur, the toolbox
 adds extremely small stable offsets within the tied groups so that the ranking
-order is reproducible and the noisy duplicate-score warning is avoided.
+order is reproducible and duplicate-score warnings are avoided.
 
 External-null calibration
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The toolbox does not use GSEApy's internal permutation engine for the final
-reported significance. Instead it recomputes enrichment on external null gene
-rankings derived from the same imaging permutations used by the main workflow.
-
-This matters because the reported:
+The reported significance is not taken from GSEApy's internal permutations.
+Instead, the toolbox evaluates enrichment against null gene rankings derived
+from the same imaging permutations used by the main workflow. That means the
+reported:
 
 - ``nes``
 - ``p_val``
@@ -50,7 +138,7 @@ Normalized enrichment score
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Observed enrichment scores are normalized with the same-sign rule used by
-classic GSEA and GSEApy:
+classic GSEA:
 
 .. math::
 
@@ -60,17 +148,12 @@ classic GSEA and GSEApy:
    -ES_t / \mathrm{mean}(ES_{t,\mathrm{null}}^{-}), & ES_t < 0
    \end{cases}
 
-where:
+where :math:`ES_t` is the observed enrichment score for term :math:`t`, and
+:math:`ES_{t,\mathrm{null}}^{+}` and :math:`ES_{t,\mathrm{null}}^{-}` are the
+same-sign null enrichment scores for that term.
 
-- :math:`ES_t` is the observed enrichment score for term :math:`t`
-- :math:`ES_{t,\mathrm{null}}^{+}` are positive null enrichment scores for the same term
-- :math:`ES_{t,\mathrm{null}}^{-}` are negative null enrichment scores for the same term
-
-The sign-specific mean prevents positive and negative terms from being
-normalized against incompatible null tails.
-
-Nominal GSEA p-value
-~~~~~~~~~~~~~~~~~~~~
+Nominal p-value
+~~~~~~~~~~~~~~~
 
 The nominal ``p_val`` is computed from the external enrichment-score nulls:
 
@@ -82,8 +165,6 @@ The nominal ``p_val`` is computed from the external enrichment-score nulls:
    \frac{1 + \sum_{b=1}^{B} I(ES_t^{(b)} \le ES_t)}{B + 1}, & ES_t < 0
    \end{cases}
 
-So the tail direction follows the sign of the observed enrichment score.
-
 GSEA-style FDR
 ~~~~~~~~~~~~~~
 
@@ -91,17 +172,15 @@ The reported GSEA ``fdr`` is not a Benjamini-Hochberg correction on pathway
 p-values. It is a GSEA-style q-value computed from the observed NES values and
 the pooled null NES values.
 
-Conceptually, for one observed term:
+This is why the GSEA ``fdr`` column and the ORA or ensemble ``fdr`` columns
+should not be interpreted as the same quantity.
 
-.. math::
+Interpretation
+~~~~~~~~~~~~~~
 
-   FDR(\mathrm{NES}) =
-   \frac{P(\mathrm{null\ NES} \ge \mathrm{NES})}{P(\mathrm{observed\ NES} \ge \mathrm{NES})}
-
-for positive scores, with the symmetric left-tail version for negative scores.
-
-This is why the GSEA ``fdr`` column and the ORA ``fdr`` column should not be
-interpreted as the same quantity.
+GSEA is most useful when the full gene ordering matters and you do not want to
+choose a hard selection threshold. It is a ranking-based enrichment test, not
+a direct phenotype-ensemble test.
 
 ORA
 ---
@@ -117,8 +196,8 @@ The current rule is:
 2. split them into ``up`` and ``down`` according to the sign of the gene score
 3. run enrichment separately for the positive and negative sets
 
-Important: ORA currently thresholds on the raw gene p-value, not on gene-level
-``fdr`` or ``maxT``.
+Important: ORA currently thresholds on the raw gene ``p`` value, not on
+gene-level ``fdr`` or ``maxT``.
 
 Hypergeometric test
 ~~~~~~~~~~~~~~~~~~~
@@ -131,17 +210,7 @@ For one pathway, ORA defines a standard contingency table with:
 - unselected genes outside the pathway
 
 The reported ``p_value`` is the upper-tail hypergeometric probability of
-observing at least the observed overlap:
-
-.. math::
-
-   p = P(X \ge k)
-
-where:
-
-- ``k`` is the observed overlap
-- ``X`` follows a hypergeometric distribution with the current universe,
-  pathway size, and selected-gene count
+observing at least the observed overlap.
 
 Odds ratio and confidence interval
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -164,28 +233,31 @@ ORA FDR
 Unlike GSEA, ORA ``fdr`` is a standard Benjamini-Hochberg correction applied to
 the ORA pathway p-values within the current ``up`` or ``down`` analysis.
 
-So:
+Interpretation
+~~~~~~~~~~~~~~
 
-- GSEA ``fdr`` = GSEA-style NES-based q-value from external nulls
-- ORA ``fdr`` = BH-adjusted hypergeometric p-value
+ORA is the easiest enrichment family to explain because it works on a discrete
+hit list. It is most useful when you want overlap counts and direction-specific
+tables, but it is also the method that depends most strongly on the chosen
+threshold and on the chosen gene universe.
 
-Choosing between GSEA and ORA
------------------------------
+Choosing between methods
+------------------------
 
-Use GSEA when:
+Use ``ensemble`` when:
+
+- you want the enrichment null to inherit the phenotype null
+- spatial autocorrelation is the main inferential concern
+- you want the most direct category-score interpretation
+
+Use ``gsea`` when:
 
 - you want a threshold-free ranking-based test
-- you do not want to choose a hard gene cutoff
-- you care about coordinated weak-to-moderate shifts across many genes
+- you care about the ordering of all genes, not just the strongest hits
+- you want classic GSEA quantities such as ``es`` and ``nes``
 
-Use ORA when:
+Use ``ora`` when:
 
-- you want a discrete hit list
-- you want pathway odds ratios and overlap genes
-- you want separate positive and negative subsets with a clear selection rule
-
-Use both when:
-
-- you want a threshold-free and a thresholded view of the same result
-- you want to compare broad ranked enrichment with more selective hit-based
-  enrichment
+- you want a discrete hit-list view
+- you want overlap counts and odds ratios
+- you want separate positive and negative pathway tables

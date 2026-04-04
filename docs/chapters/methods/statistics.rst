@@ -7,6 +7,9 @@ workflows. It is written to match the current implementation in the toolbox,
 so the formulas below describe what the package actually computes rather than
 an idealized textbook version.
 
+If you want the broader conceptual framing first, start with
+:doc:`imaging_transcriptomics`.
+
 .. admonition:: Notation
 
    Throughout this page:
