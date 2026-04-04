@@ -317,6 +317,68 @@ def _add_component_summary(fig: plt.Figure, rect: list[float]) -> None:
     ax.set_facecolor("none")
 
 
+def _add_running_sum_panel(fig: plt.Figure, rect: list[float]) -> None:
+    ax = fig.add_axes(rect)
+    x = np.linspace(0, 1, 240)
+    peak = 0.72 * np.exp(-((x - 0.42) ** 2) / 0.018)
+    taper = 0.2 * np.exp(-((x - 0.78) ** 2) / 0.05)
+    baseline = -0.14 * (x - 0.5)
+    y = peak - taper + baseline
+    ax.plot(x, y, color="#1565C0", lw=2.6)
+    hit_positions = np.array([0.06, 0.14, 0.21, 0.33, 0.4, 0.47, 0.66, 0.82])
+    for xpos in hit_positions:
+        ax.vlines(xpos, -0.72, -0.53, color="#8BAED1", lw=1.3)
+    ax.axhline(0, color="#D7E3F0", lw=1.0)
+    ax.text(0.02, 0.94, "running score", transform=ax.transAxes, ha="left", va="top", fontsize=8.3, color="#5B6472")
+    ax.text(0.96, 0.08, "gene rank", transform=ax.transAxes, ha="right", va="bottom", fontsize=7.8, color="#5B6472")
+    ax.set_xticks([])
+    ax.set_yticks([])
+    for spine in ax.spines.values():
+        spine.set_visible(False)
+    ax.set_facecolor("none")
+
+
+def _add_ranked_hits_panel(fig: plt.Figure, rect: list[float]) -> None:
+    ax = fig.add_axes(rect)
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    ax.axis("off")
+    ax.text(0.22, 0.96, "up", ha="center", va="top", fontsize=8.3, color="#5B6472")
+    ax.text(0.78, 0.96, "down", ha="center", va="top", fontsize=8.3, color="#5B6472")
+    up_genes = ["RELN", "GAD1", "PVALB", "..."]
+    down_genes = ["MBP", "GFAP", "MOG", "..."]
+    up_vals = [1.8, 1.2, 0.8, 0.0]
+    down_vals = [-1.7, -1.1, -0.8, 0.0]
+    cmap = colormaps["RdBu_r"]
+    norm = Normalize(vmin=-2, vmax=2)
+    y_positions = [0.78, 0.58, 0.38, 0.19]
+    for gene, score, y in zip(up_genes, up_vals, y_positions):
+        color = "#7E8EA7" if gene == "..." else cmap(norm(score))
+        ax.text(0.22, y, gene, ha="center", va="center", fontsize=10.1 if gene != "..." else 13, fontweight="bold" if gene != "..." else None, color=color)
+    for gene, score, y in zip(down_genes, down_vals, y_positions):
+        color = "#7E8EA7" if gene == "..." else cmap(norm(score))
+        ax.text(0.78, y, gene, ha="center", va="center", fontsize=10.1 if gene != "..." else 13, fontweight="bold" if gene != "..." else None, color=color)
+
+
+def _add_term_score_bars(fig: plt.Figure, rect: list[float], *, title: str = "category score") -> None:
+    ax = fig.add_axes(rect)
+    terms = ["Synapse", "Interneuron", "Myelin", "Stress"]
+    scores = np.array([1.9, 1.15, -0.85, -1.35])
+    colors = ["#1565C0" if value >= 0 else "#E67E5F" for value in scores]
+    y = np.arange(len(terms))
+    ax.barh(y, scores, color=colors, height=0.56)
+    ax.axvline(0, color="#D7E3F0", lw=1.0)
+    ax.set_yticks(y)
+    ax.set_yticklabels(terms, fontsize=8.1, color="#3F4B5C")
+    ax.set_xticks([])
+    ax.invert_yaxis()
+    ax.set_title(title, fontsize=8.5, color="#5B6472", pad=4.0)
+    ax.tick_params(axis="y", length=0)
+    for spine in ax.spines.values():
+        spine.set_visible(False)
+    ax.set_facecolor("none")
+
+
 def _add_weighted_strip(
     fig: plt.Figure,
     rect: list[float],
@@ -516,20 +578,80 @@ def render_gene() -> None:
 def render_enrichment() -> None:
     fig = _setup_canvas()
     brain = _render_brain_png("enrichment_input", _brain_values(19))
-    _add_stage_title(fig, 0.13, "Regional map", "Output from corr or PLS")
-    _add_stage_title(fig, 0.39, "Ranked genes", "Positive and negative tails")
-    _add_stage_title(fig, 0.67, "GSEA", "Pathways across the whole list")
-    _add_stage_title(fig, 0.89, "ORA", "Hits among thresholded genes")
+    _add_stage_title(fig, 0.105, "Regional map", "Output from corr or PLS")
+    _add_stage_title(fig, 0.31, "Gene signature", "Continuous scores or hit lists")
+    _add_stage_title(fig, 0.54, "GSEA", "Rank-based pathway shifts")
+    _add_stage_title(fig, 0.73, "ORA", "Thresholded overlap tests")
+    _add_stage_title(fig, 0.90, "Ensemble", "Category scores under null phenotypes")
+
+    _add_image(fig, brain, [0.025, 0.22, 0.16, 0.48])
+    _add_gene_column(fig, [0.215, 0.18, 0.12, 0.56], ["RELN", "CAMK2A", "GAD1", "...", "GFAP", "MBP", "PDYN"], [1.8, 1.2, 0.7, 0.0, -0.6, -1.1, -1.7], heading="ranked genes")
+    _add_running_sum_panel(fig, [0.45, 0.25, 0.12, 0.36])
+    _add_heatmap(fig, [0.66, 0.30, 0.10, 0.28], _blocky_matrix(2, 4, 71, scale=1.2), cmap="RdBu_r", title="up / down")
+    _add_term_score_bars(fig, [0.835, 0.24, 0.12, 0.40], title="null-aware terms")
+
+    _add_arrow(fig, 0.185, 0.215, width=0.06)
+    _add_arrow(fig, 0.335, 0.45, width=0.06)
+    _add_arrow(fig, 0.57, 0.66, width=0.058)
+    _add_arrow(fig, 0.765, 0.835, width=0.058)
+    _save(fig, "enrichment_pipeline_story.png")
+
+
+def render_enrichment_gsea() -> None:
+    fig = _setup_canvas()
+    brain = _render_brain_png("enrichment_gsea_input", _brain_values(25))
+    _add_stage_title(fig, 0.13, "Regional map", "Observed corr or PLS output")
+    _add_stage_title(fig, 0.39, "Ranked genes", "Use the whole continuous signature")
+    _add_stage_title(fig, 0.66, "Running-sum test", "Track where pathway genes fall")
+    _add_stage_title(fig, 0.88, "Pathway table", "ES, NES, p, and q")
 
     _add_image(fig, brain, [0.035, 0.22, 0.195, 0.48])
-    _add_gene_column(fig, [0.29, 0.17, 0.17, 0.58], ["RELN", "CAMK2A", "GAD1", "...", "GFAP", "MBP", "PDYN"], [1.8, 1.2, 0.7, 0.0, -0.6, -1.1, -1.7], heading="ranked signal")
-    _add_dotplot(fig, [0.605, 0.22, 0.145, 0.48], ["Synapse", "Interneuron", "Glutamate", "Myelin"], [1.7, 1.0, -0.9, -1.4], [5, 4, 3, 2])
-    _add_heatmap(fig, [0.815, 0.28, 0.12, 0.34], _blocky_matrix(2, 4, 71, scale=1.2), cmap="RdBu_r", title="up / down")
+    _add_gene_column(fig, [0.285, 0.17, 0.165, 0.58], ["RELN", "GAD1", "SLC1A2", "...", "GFAP", "MBP", "PDYN"], [1.8, 1.2, 0.8, 0.0, -0.6, -1.1, -1.7], heading="full ranking")
+    _add_running_sum_panel(fig, [0.57, 0.24, 0.13, 0.38])
+    _add_dotplot(fig, [0.82, 0.22, 0.14, 0.48], ["Synapse", "Interneuron", "Glutamate", "Myelin"], [1.7, 1.0, -0.9, -1.4], [5, 4, 3, 2])
 
-    _add_arrow(fig, 0.23, 0.29)
-    _add_arrow(fig, 0.46, 0.605, y=0.595)
-    _add_arrow(fig, 0.75, 0.815)
-    _save(fig, "enrichment_pipeline_story.png")
+    _add_arrow(fig, 0.23, 0.285)
+    _add_arrow(fig, 0.45, 0.57)
+    _add_arrow(fig, 0.70, 0.82)
+    _save(fig, "enrichment_gsea_story.png")
+
+
+def render_enrichment_ora() -> None:
+    fig = _setup_canvas()
+    brain = _render_brain_png("enrichment_ora_input", _brain_values(27))
+    _add_stage_title(fig, 0.13, "Regional map", "Observed corr or PLS output")
+    _add_stage_title(fig, 0.39, "Significant genes", "Threshold positive and negative tails")
+    _add_stage_title(fig, 0.66, "Set overlap", "Count hits against each pathway")
+    _add_stage_title(fig, 0.88, "ORA summary", "Odds ratios and BH-FDR")
+
+    _add_image(fig, brain, [0.035, 0.22, 0.195, 0.48])
+    _add_ranked_hits_panel(fig, [0.28, 0.18, 0.17, 0.56])
+    _add_heatmap(fig, [0.56, 0.24, 0.13, 0.38], _blocky_matrix(3, 4, 73, scale=1.2), cmap="RdBu_r", title="overlap counts", left_label="terms")
+    _add_heatmap(fig, [0.81, 0.28, 0.13, 0.30], _blocky_matrix(2, 4, 74, scale=1.2), cmap="RdBu_r", title="up / down")
+
+    _add_arrow(fig, 0.23, 0.28)
+    _add_arrow(fig, 0.45, 0.56)
+    _add_arrow(fig, 0.69, 0.81)
+    _save(fig, "enrichment_ora_story.png")
+
+
+def render_enrichment_ensemble() -> None:
+    fig = _setup_canvas()
+    brain = _render_brain_png("enrichment_ensemble_input", _brain_values(29))
+    _add_stage_title(fig, 0.13, "Regional map", "Observed phenotype of interest")
+    _add_stage_title(fig, 0.39, "Gene scores", "Correlate or weight genes once")
+    _add_stage_title(fig, 0.66, "Null ensemble", "Recompute category scores on null phenotypes")
+    _add_stage_title(fig, 0.88, "Category table", "Empirical p and FDR")
+
+    _add_image(fig, brain, [0.035, 0.22, 0.195, 0.48])
+    _add_gene_column(fig, [0.285, 0.17, 0.155, 0.58], ["RELN", "CAMK2A", "GAD1", "...", "GFAP", "MBP", "PDYN"], [1.8, 1.2, 0.7, 0.0, -0.6, -1.1, -1.7], heading="gene scores")
+    _add_null_panel(fig, [0.545, 0.23, 0.155, 0.43])
+    _add_term_score_bars(fig, [0.81, 0.22, 0.15, 0.42], title="term score")
+
+    _add_arrow(fig, 0.23, 0.285)
+    _add_arrow(fig, 0.44, 0.545)
+    _add_arrow(fig, 0.70, 0.81)
+    _save(fig, "enrichment_ensemble_story.png")
 
 
 def main() -> None:
@@ -539,6 +661,9 @@ def main() -> None:
     render_gedar()
     render_gene_pca()
     render_enrichment()
+    render_enrichment_gsea()
+    render_enrichment_ora()
+    render_enrichment_ensemble()
 
 
 if __name__ == "__main__":

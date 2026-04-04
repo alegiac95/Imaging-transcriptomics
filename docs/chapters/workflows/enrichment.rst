@@ -2,74 +2,346 @@
 Enrichment workflows
 =====================
 
-This page unifies user guidance for GSEA and ORA across the correlation and
-PLS workflows.
+Enrichment moves the interpretation from single genes to broader biological
+themes such as pathways, cell types, or curated disease-relevant signatures.
+In imaging transcriptomics, this step is often applied after ``corr`` or
+after each retained PLS component, once the workflow has produced a gene-wise
+score for the phenotype of interest.
 
 .. figure:: ../images/enrichment_pipeline_story.png
-   :alt: Enrichment story figure showing an aparc brain map, a ranked gene signature, GSEA pathway summaries, and ORA hit tables.
+   :alt: Enrichment overview figure showing a brain map, a ranked gene signature, and the three main enrichment families: GSEA, ORA, and ensemble enrichment.
    :class: imt-workflow-story
    :figclass: imt-workflow-story-figure
 
-   Enrichment sits downstream of the brain-based workflows: move from a regional map to a ranked gene signature, then test it with GSEA and ORA.
+   A single ranked gene signature can be summarized in several different ways:
+   GSEA uses the full ranking, ORA focuses on thresholded gene tails, and
+   ensemble enrichment compares category scores against null phenotypes.
 
 What the workflow answers
 -------------------------
 
 The enrichment workflows ask:
 
-*Given a ranked gene signature, which pathways are enriched across the full
-ranking (GSEA), and which are overrepresented among the strongest positive or
-negative gene hits (ORA)?*
+*Given a gene signature derived from a brain phenotype, which pathways,
+cell-type signatures, or gene categories show the most coherent signal, and
+how does that answer depend on the enrichment method used?*
 
-Use enrichment when you want to move from individual genes to pathway-level or
-cell-type-level interpretation of the ranked outputs produced by the main
-imaging-transcriptomic workflows.
+General introduction
+--------------------
 
-Overview
---------
+All enrichment methods start from the same broad idea:
 
-The toolbox offers two enrichment styles:
+- derive a gene-level statistic from the imaging-transcriptomic workflow
+- map those genes to pathways or other gene categories
+- summarize the signal at the category level
+- assess whether the observed category signal is stronger than expected
 
-- GSEA, which uses the full ranked gene list
-- ORA, which uses a thresholded subset of genes
+The main difference between enrichment families is *what they summarize* and
+*what they treat as the null model*.
 
-Both are available:
+In practice, the three main families are:
 
-- after ``corr``
-- after each retained PLS component
+- ``GSEA``: ranking-based enrichment across the full ordered gene list
+- ``ORA``: over-representation among thresholded positive or negative hits
+- ``ensemble enrichment``: category scores tested against null phenotypes
 
-How to enable them
-------------------
+Method comparison
+-----------------
+
+.. list-table:: Main enrichment families in imaging transcriptomics
+   :header-rows: 1
+   :widths: 16 22 20 20 22
+
+   * - Method
+     - Starts from
+     - Core statistic
+     - Typical null
+     - Best use case
+   * - ``GSEA``
+     - A full ranked gene list
+     - Running-sum enrichment score across the ranking
+     - Rank-based or phenotype-derived enrichment nulls
+     - When the continuous ordering of all genes is important
+   * - ``ORA``
+     - A selected subset of significant genes
+     - Overlap count, enrichment ratio, or odds ratio
+     - Hypergeometric overlap against a gene background
+     - When you want a simple hit-list interpretation
+   * - ``Ensemble``
+     - A gene-wise score derived from the observed phenotype
+     - Category score, often the mean gene score in the set
+     - Null phenotypes or spatially matched phenotype ensembles
+     - When you want imaging-transcriptomics enrichment tied directly to phenotype nulls
+
+One practical way to think about them is:
+
+- ``GSEA`` asks whether category members cluster near the top or bottom of a ranking
+- ``ORA`` asks whether category members are over-represented among selected hits
+- ``ensemble enrichment`` asks whether a category score is unusually strong under null phenotypes
+
+Current toolbox status
+----------------------
+
+The toolbox currently supports:
+
+- ``GSEA`` after ``corr`` and after each retained PLS component
+- ``ORA`` after ``corr`` and after each retained PLS component
+
+The ``ensemble`` section below is included because it is one of the main
+enrichment families used in imaging transcriptomics and is the clearest
+methodological target when the goal is phenotype-null inference rather than
+classic rank-enrichment.
 
 GSEA
-~~~~
+----
+
+.. figure:: ../images/enrichment_gsea_story.png
+   :alt: GSEA workflow figure showing a brain map, a ranked gene list, a running enrichment score, and a pathway-level summary table.
+   :class: imt-workflow-story
+   :figclass: imt-workflow-story-figure
+
+   GSEA keeps the whole ranked signature and asks whether genes from a category
+   tend to appear preferentially near the top or bottom of that ranking.
+
+What GSEA tests
+~~~~~~~~~~~~~~~
+
+GSEA starts from a continuous ranked gene list. Instead of discarding genes
+below an arbitrary threshold, it scans through the whole ranking and tracks
+whether the members of a pathway accumulate near one end of the list more than
+expected by chance.
+
+That makes it useful when:
+
+- the gene scores form a graded spectrum rather than a clean hit list
+- positive and negative extremes are both biologically meaningful
+- you want to preserve ordering information across the entire signature
+
+Simple example
+~~~~~~~~~~~~~~
+
+Imagine the top of the ranked list contains:
+
+- ``RELN``
+- ``GAD1``
+- ``PVALB``
+- ``SLC1A2``
+
+and a pathway such as ``interneuron markers`` contains several of those genes.
+GSEA will score that pathway highly because its members concentrate near the
+upper tail of the ranking, even if many other pathway genes are only moderately
+positive and never cross a hard significance cutoff.
+
+How to read the result
+~~~~~~~~~~~~~~~~~~~~~~
+
+The most important GSEA outputs are:
+
+``Term``
+   Pathway or gene-category name.
+
+``es``
+   Observed enrichment score from the running-sum statistic.
+
+``nes``
+   Normalized enrichment score.
+
+``p_val``
+   Nominal p-value for the enrichment score.
+
+``fdr``
+   GSEA-style multiple-testing summary across terms.
+
+Important caveat
+~~~~~~~~~~~~~~~~
+
+GSEA is a ranking-based method. It is not the same as testing category scores
+directly against null phenotypes. In other words, it is excellent for
+describing how a pathway sits inside a ranked signature, but it is not the
+same inferential object as phenotype-ensemble enrichment.
+
+ORA
+---
+
+.. figure:: ../images/enrichment_ora_story.png
+   :alt: ORA workflow figure showing a brain map, thresholded positive and negative genes, set overlap counting, and an ORA summary panel.
+   :class: imt-workflow-story
+   :figclass: imt-workflow-story-figure
+
+   ORA turns the ranked signature into positive and negative hit lists, then
+   asks whether each pathway is over-represented in those selected genes.
+
+What ORA tests
+~~~~~~~~~~~~~~
+
+ORA is a thresholded enrichment method. You first choose a subset of genes,
+for example those with raw gene-level ``p <= 0.01`` or the strongest positive
+and negative tails, and then test whether a pathway contains more of those hits
+than expected given the background gene universe.
+
+That makes it useful when:
+
+- you want a simple, easy-to-explain enrichment table
+- your interpretation focuses on the strongest positive and negative hits
+- you want separate ``up`` and ``down`` pathway summaries
+
+Simple example
+~~~~~~~~~~~~~~
+
+Suppose only the top positive genes are retained:
+
+- ``RELN``
+- ``GAD1``
+- ``PVALB``
+
+If a pathway such as ``interneuron markers`` contains two of those three hits,
+ORA may report that the pathway is over-represented in the positive tail.
+However, genes ranked just below the threshold no longer contribute to the test.
+
+How to read the result
+~~~~~~~~~~~~~~~~~~~~~~
+
+ORA writes separate ``up`` and ``down`` tables. The most useful columns are:
+
+``overlap_size``
+   Number of selected genes that overlap the term.
+
+``selected_size``
+   Number of genes in the tested tail.
+
+``enrichment_ratio``
+   Observed overlap divided by expected overlap.
+
+``odds_ratio``
+   Strength of enrichment in the contingency table.
+
+``p_value``
+   Hypergeometric enrichment p-value.
+
+``fdr``
+   Benjamini-Hochberg correction across ORA terms within that direction.
+
+Important caveat
+~~~~~~~~~~~~~~~~
+
+ORA depends strongly on the threshold and on the chosen background universe.
+In imaging transcriptomics, the most defensible background is usually the set
+of genes that were actually tested in the atlas expression matrix, not the full
+human transcriptome.
+
+Ensemble enrichment
+-------------------
+
+.. figure:: ../images/enrichment_ensemble_story.png
+   :alt: Ensemble enrichment workflow figure showing a brain map, gene-wise scores, null phenotype distributions, and a category-score table.
+   :class: imt-workflow-story
+   :figclass: imt-workflow-story-figure
+
+   Ensemble enrichment shifts the question from ranking position to category
+   score, and evaluates that score against a phenotype-null ensemble.
+
+What ensemble enrichment tests
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Ensemble enrichment starts from the observed phenotype and computes a gene-wise
+score, for example:
+
+- gene-map correlation in ``corr``
+- component weights or related gene scores in ``PLS``
+
+Then, for each pathway, it computes a category-level summary statistic, often
+the mean gene score across all genes annotated to that pathway. The same
+category score is recomputed across many null phenotypes, and significance is
+assessed relative to that null distribution.
+
+That makes it useful when:
+
+- phenotype nulls are the main inferential concern
+- spatial autocorrelation must be propagated all the way to enrichment
+- you want category-level inference rather than rank-position inference
+
+Simple example
+~~~~~~~~~~~~~~
+
+Imagine a pathway contains four genes with scores:
+
+- ``0.90``
+- ``0.78``
+- ``0.10``
+- ``0.05``
+
+The pathway mean is still clearly positive, even if only two genes sit near the
+top of the ranking. Ensemble enrichment compares that observed pathway score to
+the same pathway score computed from null phenotypes. If the null category
+means are usually much smaller, the pathway is significant.
+
+How to read the result
+~~~~~~~~~~~~~~~~~~~~~~
+
+A typical ensemble-style output table would contain:
+
+``Term``
+   Pathway or gene-category name.
+
+``category_score``
+   Observed pathway score, often the mean gene score.
+
+``null_mean`` / ``null_sd``
+   Summary of the category score under the null phenotype ensemble.
+
+``z_score``
+   Standardized distance between observed and null category scores.
+
+``p_empirical``
+   Empirical p-value from the null phenotype ensemble.
+
+``fdr``
+   Multiple-testing correction across terms.
+
+Important caveat
+~~~~~~~~~~~~~~~~
+
+This is not simply a faster or slower version of GSEA. It is a different
+methodological family, with a different test statistic and a different null.
+For imaging transcriptomics, it is often the most natural way to align
+enrichment with spatially constrained null phenotypes.
+
+Choosing between methods
+------------------------
+
+If you are unsure which family to use, a practical rule of thumb is:
+
+- choose ``GSEA`` when the full ranking is the main object of interest
+- choose ``ORA`` when you want a simple hit-list summary and are comfortable with a threshold
+- choose ``ensemble enrichment`` when the scientific question is explicitly about category scores under phenotype nulls
+
+In many studies, it is reasonable to use more than one family:
+
+- ``GSEA`` for a broad ranked overview
+- ``ORA`` for a compact hit-list interpretation
+- ``ensemble`` for the strongest phenotype-null inference
+
+Current toolbox usage
+---------------------
 
 GSEA is enabled with ``--gsea`` on the CLI or ``run_gsea=True`` in the API.
-It can be used with:
+It accepts:
 
 - packaged genesets such as ``lake`` and ``pooled``
 - local ``.gmt`` files
 - remote Enrichr libraries resolved through ``gseapy``
 
-ORA
-~~~
+ORA is enabled with ``--ora-p-threshold`` and writes separate ``up`` and
+``down`` tables.
 
-ORA is enabled by giving a threshold with ``--ora-p-threshold``. The threshold
-is applied to the raw gene-level p-values produced by the main workflow.
-
-For example:
+Useful commands:
 
 .. code-block:: bash
 
-   imt corr \
-     --input /abs/path/map.nii.gz \
-     --space MNI152 \
-     --atlas dk \
-     --geneset lake \
-     --ora-p-threshold 0.01 \
-     --output /abs/path/out_dir
+   imt genesets --packaged-only
+   imt genesets --organism Human
 
-and for both ORA and GSEA:
+Example ``corr`` run with both methods enabled:
 
 .. code-block:: bash
 
@@ -82,117 +354,3 @@ and for both ORA and GSEA:
      --ora-p-threshold 0.01 \
      --gsea \
      --output /abs/path/out_dir
-
-Choosing a geneset resource
----------------------------
-
-The ``--geneset`` argument accepts:
-
-- packaged entries such as ``lake`` and ``pooled``
-- a local GMT file
-- a remote Enrichr/GSEApy library name
-
-Useful commands:
-
-.. code-block:: bash
-
-   imt genesets --packaged-only
-   imt genesets --organism Human
-
-Interpreting GSEA outputs
--------------------------
-
-The main GSEA columns are:
-
-``Term``
-   Pathway or geneset name.
-
-``es``
-   Observed enrichment score.
-
-``nes``
-   Same-sign normalized enrichment score calibrated to the external nulls used
-   by the package.
-
-``p_val``
-   Sign-aware nominal enrichment p-value from the external null enrichment
-   scores.
-
-``fdr``
-   GSEA-style q-value derived from observed and null normalized enrichment
-   scores.
-
-The most important practical point is that GSEA ``fdr`` is not a BH correction
-on pathway p-values. It is a GSEA-style quantity and should be interpreted as
-such.
-
-Interpreting ORA outputs
-------------------------
-
-ORA writes separate ``up`` and ``down`` tables.
-
-Important columns:
-
-``overlap_size``
-   Number of selected genes that fall in the pathway.
-
-``selected_size``
-   Number of genes that passed the raw gene-p threshold in that direction.
-
-``enrichment_ratio``
-   Observed overlap divided by expected overlap.
-
-``odds_ratio``
-   Contingency-table odds ratio.
-
-``odds_ratio_ci_low`` / ``odds_ratio_ci_high``
-   95 percent confidence interval for the odds ratio.
-
-``p_value``
-   Hypergeometric enrichment p-value.
-
-``fdr``
-   Benjamini-Hochberg correction across ORA terms within that direction.
-
-So ORA ``fdr`` and GSEA ``fdr`` are not the same kind of quantity.
-
-Plots
------
-
-GSEA plots
-~~~~~~~~~~
-
-The package writes dotplots of the top GSEA terms. These are useful for a fast
-overview of the strongest enriched terms.
-
-ORA plots
-~~~~~~~~~
-
-The package writes a two-row heatmap:
-
-- one row for ``up``
-- one row for ``down``
-
-Cells are colored by enrichment significance and annotated with the odds ratio
-plus significance stars. The heatmap is intentionally capped to a limited
-number of terms so very large libraries such as GO biological process remain
-readable.
-
-Common reasons for weak or flat results
----------------------------------------
-
-Flat GSEA ``fdr``
-   Often means the library is large, the null is broad, or the enrichment is
-   modest rather than that the code failed.
-
-Nearly empty ORA
-   Usually means the raw gene-p threshold is too strict or the selected
-   pathway library has little overlap with the selected genes.
-
-Huge GSEA runtime
-   Usually comes from large remote libraries and repeated external-null
-   enrichment calculations, not from the correlation step itself.
-
-Large ORA tables but unreadable plots
-   Usually happens with very large libraries. The plot now caps the number of
-   displayed terms, but the TSV will still contain the full result table.
