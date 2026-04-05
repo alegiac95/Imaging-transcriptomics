@@ -129,12 +129,14 @@ The exported columns in ``pls_component_<n>.tsv`` are:
    Family-wise correction from the largest absolute null weight in each
    permutation.
 
-Two important interpretation points:
+.. important::
 
-- ``zscore`` is descriptive; inference comes from ``p``, ``fdr``, and
-  ``maxT``
-- ``maxT`` is much stricter than ``fdr`` and will often remain large when
-  nominal ``p`` is small
+   Two interpretation points matter here:
+
+   - ``zscore`` is descriptive; inference comes from ``p``, ``fdr``, and
+     ``maxT``
+   - ``maxT`` is much stricter than ``fdr`` and will often remain large when
+     nominal ``p`` is small
 
 CLI examples
 ------------
@@ -244,17 +246,20 @@ The main levers are:
 - ``--jobs`` for parallel permutation fitting
 - whether GSEA is enabled
 
-Practical advice:
+.. tip::
 
-- use ``--jobs`` on large runs
-- use ORA only when you want quick pathway summaries
-- expect GSEA on large libraries to add noticeable runtime
+   Practical advice:
 
-Common pitfalls
----------------
+   - use ``--jobs`` on large runs
+   - use ORA only when you want quick pathway summaries
+   - expect GSEA on large libraries to add noticeable runtime
 
-- over-interpreting weak later components with large component p-values
-- reading component signs as biologically fixed before remembering that the
-  signs are aligned for convenience
-- assuming the component p-value is about the marginal variance added by that
-  one component rather than the cumulative model
+.. caution::
+
+   Common pitfalls:
+
+   - over-interpreting weak later components with large component p-values
+   - reading component signs as biologically fixed before remembering that the
+     signs are aligned for convenience
+   - assuming the component p-value is about the marginal variance added by that
+     one component rather than the cumulative model

@@ -203,9 +203,13 @@ The correlation workflow supports both enrichment modes:
 
 Good practical defaults:
 
-- GSEA when you want a threshold-free pathway analysis
-- ORA when you want hit lists, odds ratios, and overlap genes
-- both when you want complementary views of the same result
+.. tip::
+
+   Good practical defaults:
+
+   - GSEA when you want a threshold-free pathway analysis
+   - ORA when you want hit lists, odds ratios, and overlap genes
+   - both when you want complementary views of the same result
 
 See the enrichment workflow page and the gene-set methodology page for the
 exact formulas used for ``NES``, ORA odds ratios, and enrichment ``fdr``.
@@ -226,18 +230,21 @@ Two common patterns:
 - large GSEA libraries can dominate runtime even when the correlation step is
   fast
 
-Practical advice:
+.. tip::
 
-- use ``--no-gsea`` when you only want genes or ORA
-- use a modest library such as ``lake`` for quick enrichment smoke tests
-- increase permutations substantially if gene-level ``fdr`` matters
+   Practical advice:
 
-Common pitfalls
----------------
+   - use ``--no-gsea`` when you only want genes or ORA
+   - use a modest library such as ``lake`` for quick enrichment smoke tests
+   - increase permutations substantially if gene-level ``fdr`` matters
 
-- using a native-space subject T1w scan directly as the input map
-- forgetting ``--space MNI152`` when the input is already in standard space
-- interpreting a flat gene-level ``fdr`` column as a bug when the real problem
-  is low permutation resolution
-- assuming ORA thresholds on gene ``fdr``; it currently thresholds on raw gene
-  ``p``
+.. caution::
+
+   Common pitfalls:
+
+   - using a native-space subject T1w scan directly as the input map
+   - forgetting ``--space MNI152`` when the input is already in standard space
+   - interpreting a flat gene-level ``fdr`` column as a bug when the real problem
+     is low permutation resolution
+   - assuming ORA thresholds on gene ``fdr``; it currently thresholds on raw gene
+     ``p``

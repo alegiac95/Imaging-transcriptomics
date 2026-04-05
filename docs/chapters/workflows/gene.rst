@@ -157,12 +157,13 @@ The co-expression matrix is helpful when you want to see whether the top hits
 form a single coherent module or break into smaller positive and negative
 sub-groups.
 
-Common pitfalls
----------------
+.. caution::
 
-- using a gene symbol that is not present in the selected atlas expression
-  matrix
-- expecting this workflow to test an imaging phenotype rather than to summarize
-  atlas expression
-- over-interpreting very small co-expression tails when the selected atlas
-  subset is tiny
+   Common pitfalls:
+
+   - using a gene symbol that is not present in the selected atlas expression
+     matrix
+   - expecting this workflow to test an imaging phenotype rather than to summarize
+     atlas expression
+   - over-interpreting very small co-expression tails when the selected atlas
+     subset is tiny

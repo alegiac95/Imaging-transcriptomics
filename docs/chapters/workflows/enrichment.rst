@@ -163,13 +163,12 @@ The most important GSEA outputs are:
 ``fdr``
    GSEA-style multiple-testing summary across terms.
 
-Important caveat
-~~~~~~~~~~~~~~~~
+.. important::
 
-GSEA is a ranking-based method. It is not the same as testing category scores
-directly against null phenotypes. In other words, it is excellent for
-describing how a pathway sits inside a ranked signature, but it is not the
-same inferential object as ensemble-GCEA.
+   GSEA is a ranking-based method. It is not the same as testing category
+   scores directly against null phenotypes. In other words, it is excellent
+   for describing how a pathway sits inside a ranked signature, but it is not
+   the same inferential object as ensemble-GCEA.
 
 ORA
 ---
@@ -232,13 +231,12 @@ ORA writes separate ``up`` and ``down`` tables. The most useful columns are:
 ``fdr``
    Benjamini-Hochberg correction across ORA terms within that direction.
 
-Important caveat
-~~~~~~~~~~~~~~~~
+.. important::
 
-ORA depends strongly on the threshold and on the chosen background universe.
-In imaging transcriptomics, the most defensible background is usually the set
-of genes that were actually tested in the atlas expression matrix, not the full
-human transcriptome.
+   ORA depends strongly on the threshold and on the chosen background
+   universe. In imaging transcriptomics, the most defensible background is
+   usually the set of genes that were actually tested in the atlas expression
+   matrix, not the full human transcriptome.
 
 Ensemble-GCEA
 -------------
@@ -309,28 +307,31 @@ A typical ensemble-GCEA output table would contain:
 ``fdr``
    Multiple-testing correction across terms.
 
-Important caveat
-~~~~~~~~~~~~~~~~
+.. important::
 
-This is not simply a faster or slower version of GSEA. It is a different
-methodological family, with a different test statistic and a different null.
-For imaging transcriptomics, it is often the most natural way to align
-enrichment with spatially constrained null phenotypes.
+   This is not simply a faster or slower version of GSEA. It is a different
+   methodological family, with a different test statistic and a different
+   null. For imaging transcriptomics, it is often the most natural way to
+   align enrichment with spatially constrained null phenotypes.
 
 Choosing between methods
 ------------------------
 
-If you are unsure which family to use, a practical rule of thumb is:
+.. tip::
 
-- choose ``GSEA`` when the full ranking is the main object of interest
-- choose ``ORA`` when you want a simple hit-list summary and are comfortable with a threshold
-- choose ``ensemble-GCEA`` when the scientific question is explicitly about category scores under phenotype nulls
+   If you are unsure which family to use, a practical rule of thumb is:
 
-In many studies, it is reasonable to use more than one family:
+   - choose ``GSEA`` when the full ranking is the main object of interest
+   - choose ``ORA`` when you want a simple hit-list summary and are comfortable with a threshold
+   - choose ``ensemble-GCEA`` when the scientific question is explicitly about category scores under phenotype nulls
 
-- ``GSEA`` for a broad ranked overview
-- ``ORA`` for a compact hit-list interpretation
-- ``ensemble`` for ensemble-GCEA and the strongest phenotype-null inference
+.. tip::
+
+   In many studies, it is reasonable to use more than one family:
+
+   - ``GSEA`` for a broad ranked overview
+   - ``ORA`` for a compact hit-list interpretation
+   - ``ensemble`` for ensemble-GCEA and the strongest phenotype-null inference
 
 Current toolbox usage
 ---------------------

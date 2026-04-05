@@ -163,10 +163,11 @@ The most useful first combination is usually:
 - the matching loadings from ``gene_pca_loadings.tsv``
 - the explained variance from ``gene_pca_variance.tsv``
 
-Common pitfalls
----------------
+.. caution::
 
-- treating PCA as a significance test rather than as a descriptive reduction
-- ignoring the brain-gene filter and then being surprised by genes in
-  ``brain_filtered_genes.txt``
-- interpreting the sign of a component as fixed rather than arbitrary
+   Common pitfalls:
+
+   - treating PCA as a significance test rather than as a descriptive reduction
+   - ignoring the brain-gene filter and then being surprised by genes in
+     ``brain_filtered_genes.txt``
+   - interpreting the sign of a component as fixed rather than arbitrary

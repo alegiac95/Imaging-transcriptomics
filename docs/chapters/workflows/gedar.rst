@@ -201,11 +201,12 @@ Reading the outputs
    Simple audit files for gene matching.
 
 
-Common pitfalls
----------------
+.. caution::
 
-- forgetting to set the correct gene column or weight column
-- using a rank column without thinking about whether lower or higher values
-  should be considered better
-- being surprised by missing genes when they were actually removed by the
-  packaged brain-gene filter and recorded in ``gedar_excluded.tsv``
+   Common pitfalls:
+
+   - forgetting to set the correct gene column or weight column
+   - using a rank column without thinking about whether lower or higher values
+     should be considered better
+   - being surprised by missing genes when they were actually removed by the
+     packaged brain-gene filter and recorded in ``gedar_excluded.tsv``
