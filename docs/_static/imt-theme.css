@@ -447,6 +447,17 @@ body[data-theme="dark"] .sidebar-logo {
   border-color: rgba(201, 110, 18, 0.32);
 }
 
+.imt-atlas-gallery .sd-card-img-top {
+  width: 64%;
+  max-height: 104px;
+  object-fit: contain;
+  margin: 0.85rem auto 0.15rem;
+}
+
+.imt-atlas-gallery .sd-card .sd-card-body {
+  padding-top: 0.8rem;
+}
+
 figure.imt-workflow-story-figure {
   margin: 1rem 0 1.5rem;
   padding: 0 !important;

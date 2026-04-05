@@ -30,8 +30,8 @@ Quick start
 
 If you only want the shortest route through the docs:
 
-1. :doc:`Install the package </chapters/03_installation>`
-2. :doc:`Choose one workflow </chapters/05_what_to_do>`
+1. :doc:`install the package </chapters/03_installation>`
+2. :doc:`choose one workflow </chapters/05_what_to_do>`
 3. run a small example
 4. use the workflow guide to interpret the outputs
 

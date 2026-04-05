@@ -16,68 +16,70 @@ IDs below now use the same simple interface: ``regions="default"`` or
 ``regions="cort"`` keeps the cortical atlas, while ``regions="all"`` or
 ``regions="cort+sub"`` appends the packaged ``aseg`` subcortical add-on.
 
-.. grid:: 1 1 2 2
-   :gutter: 2
+.. container:: imt-atlas-gallery
 
-   .. grid-item-card:: ``dk``
-      :img-top: ../images/atlases/dk_gallery.png
+   .. grid:: 1 1 2 2
+      :gutter: 2
 
-      Legacy-compatible Desikan-Killiany atlas. ``default`` returns the
-      cortical parcels; ``all`` appends the packaged ``aseg`` subcortical
-      add-on, for ``83`` bilateral regions total.
+      .. grid-item-card:: ``dk``
+         :img-top: ../images/atlases/dk_gallery.png
 
-      - Coverage: cortex by default, optional ``aseg`` add-on
-      - Spaces: ``MNI152``, ``fsaverage``
+         Legacy-compatible Desikan-Killiany atlas. ``default`` returns the
+         cortical parcels; ``all`` appends the packaged ``aseg`` subcortical
+         add-on, for ``83`` bilateral regions total.
 
-   .. grid-item-card:: ``schaefer-100``
-      :img-top: ../images/atlases/schaefer-100_gallery.png
+         - Coverage: cortex by default, optional ``aseg`` add-on
+         - Spaces: ``MNI152``, ``fsaverage``
 
-      Coarse Schaefer parcellation with ``100`` bilateral cortical parcels.
-      ``all`` appends the shared ``aseg`` subcortical add-on for ``115``
-      bilateral regions total.
+      .. grid-item-card:: ``schaefer-100``
+         :img-top: ../images/atlases/schaefer-100_gallery.png
 
-      - Coverage: cortex by default, optional ``aseg`` add-on
-      - Spaces: ``MNI152``, ``fsaverage``
+         Coarse Schaefer parcellation with ``100`` bilateral cortical parcels.
+         ``all`` appends the shared ``aseg`` subcortical add-on for ``115``
+         bilateral regions total.
 
-   .. grid-item-card:: ``schaefer-200``
-      :img-top: ../images/atlases/schaefer-200_gallery.png
+         - Coverage: cortex by default, optional ``aseg`` add-on
+         - Spaces: ``MNI152``, ``fsaverage``
 
-      Mid-resolution Schaefer preset with ``200`` bilateral cortical parcels.
-      ``all`` appends the shared ``aseg`` subcortical add-on for ``215``
-      bilateral regions total.
+      .. grid-item-card:: ``schaefer-200``
+         :img-top: ../images/atlases/schaefer-200_gallery.png
 
-      - Coverage: cortex by default, optional ``aseg`` add-on
-      - Spaces: ``MNI152``, ``fsaverage``, ``fsLR``
+         Mid-resolution Schaefer preset with ``200`` bilateral cortical parcels.
+         ``all`` appends the shared ``aseg`` subcortical add-on for ``215``
+         bilateral regions total.
 
-   .. grid-item-card:: ``schaefer-400``
-      :img-top: ../images/atlases/schaefer-400_gallery.png
+         - Coverage: cortex by default, optional ``aseg`` add-on
+         - Spaces: ``MNI152``, ``fsaverage``, ``fsLR``
 
-      Fine Schaefer preset with ``400`` bilateral cortical parcels. ``all``
-      appends the shared ``aseg`` subcortical add-on for ``415`` bilateral
-      regions total.
+      .. grid-item-card:: ``schaefer-400``
+         :img-top: ../images/atlases/schaefer-400_gallery.png
 
-      - Coverage: cortex by default, optional ``aseg`` add-on
-      - Spaces: ``MNI152``, ``fsaverage``, ``fsLR``
+         Fine Schaefer preset with ``400`` bilateral cortical parcels. ``all``
+         appends the shared ``aseg`` subcortical add-on for ``415`` bilateral
+         regions total.
 
-   .. grid-item-card:: ``destrieux``
-      :img-top: ../images/atlases/destrieux_gallery.png
+         - Coverage: cortex by default, optional ``aseg`` add-on
+         - Spaces: ``MNI152``, ``fsaverage``, ``fsLR``
 
-      Destrieux cortical atlas with ``148`` bilateral regions (``74`` left-only).
-      ``all`` appends the shared ``aseg`` subcortical add-on for ``163``
-      bilateral regions total.
+      .. grid-item-card:: ``destrieux``
+         :img-top: ../images/atlases/destrieux_gallery.png
 
-      - Coverage: cortex by default, optional ``aseg`` add-on
-      - Spaces: ``MNI152``, ``fsaverage``
+         Destrieux cortical atlas with ``148`` bilateral regions (``74`` left-only).
+         ``all`` appends the shared ``aseg`` subcortical add-on for ``163``
+         bilateral regions total.
 
-   .. grid-item-card:: ``glasser-360``
-      :img-top: ../images/atlases/glasser-360_gallery.png
+         - Coverage: cortex by default, optional ``aseg`` add-on
+         - Spaces: ``MNI152``, ``fsaverage``
 
-      Surface-oriented multimodal atlas with ``360`` bilateral cortical
-      parcels. ``all`` appends the shared ``aseg`` subcortical add-on for
-      ``375`` bilateral regions total.
+      .. grid-item-card:: ``glasser-360``
+         :img-top: ../images/atlases/glasser-360_gallery.png
 
-      - Coverage: cortex by default, optional ``aseg`` add-on
-      - Spaces: ``fsLR``, ``fsaverage``, ``MNI152``
+         Surface-oriented multimodal atlas with ``360`` bilateral cortical
+         parcels. ``all`` appends the shared ``aseg`` subcortical add-on for
+         ``375`` bilateral regions total.
+
+         - Coverage: cortex by default, optional ``aseg`` add-on
+         - Spaces: ``fsLR``, ``fsaverage``, ``MNI152``
 
 Hemisphere modes
 ----------------
