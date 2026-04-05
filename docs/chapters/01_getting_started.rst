@@ -4,15 +4,6 @@
 Quickstart
 ==========
 
-This page is the fast-entry guide for new users.
-
-It should answer four questions quickly:
-
-1. what the toolbox does
-2. which command to run first
-3. what kinds of inputs are accepted
-4. where to look next in the documentation
-
 Imaging transcriptomics links spatially resolved neuroimaging phenotypes to
 regional gene-expression atlases, most often the Allen Human Brain Atlas. In
 practice, that usually means asking whether the spatial pattern in a brain map
@@ -23,13 +14,24 @@ practical guide by `Arnatkeviciute, Fulcher and Fornito (2019)
 <https://doi.org/10.1016/j.neuroimage.2019.01.011>`_ and the broader review by
 `Arnatkeviciute et al. (2022) <https://doi.org/10.1016/j.bpsgos.2021.10.002>`_.
 
+This page is the fast-entry guide for new users.
+
+It should answer four questions quickly:
+
+1. what the toolbox does
+2. which command to run first
+3. what kinds of inputs are accepted
+4. where to look next in the documentation
+
+
+
 Quick start
 -----------
 
 If you only want the shortest route through the docs:
 
-1. install the package
-2. choose one workflow
+1. :doc:`Install the package </chapters/03_installation>`
+2. :doc:`Choose one workflow </chapters/05_what_to_do>`
 3. run a small example
 4. use the workflow guide to interpret the outputs
 
