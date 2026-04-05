@@ -35,6 +35,13 @@ def default_gedar_output_dir(weights_arg: str, atlas: str) -> Path:
     return Path.cwd() / f"Imt_gedar_{atlas}"
 
 
+def default_gene_output_dir(gene: str, atlas: str) -> Path:
+    """Return the default output directory for one single-gene query."""
+
+    gene_name = str(gene).strip().upper() or "GENE"
+    return Path.cwd() / f"Imt_gene_{gene_name}_{atlas}"
+
+
 def make_shared_analysis_parent() -> argparse.ArgumentParser:
     """Build the common argument group shared by correlation and PLS runs."""
 
@@ -122,10 +129,19 @@ def make_shared_analysis_parent() -> argparse.ArgumentParser:
         help="Organism used when --geneset is a GSEApy/Enrichr library name.",
     )
     shared.add_argument(
+        "--enrichment",
+        choices=["ensemble", "gsea", "ora", "none"],
+        default=None,
+        help=(
+            "Which enrichment backend to run. `ensemble` performs phenotype-null category enrichment, "
+            "`gsea` runs preranked GSEA, `ora` performs over-representation analysis, and `none` skips enrichment."
+        ),
+    )
+    shared.add_argument(
         "--ora-p-threshold",
         type=float,
         default=None,
-        help="Run ORA on genes with raw p-values at or below this threshold, separately for positive and negative scores.",
+        help="Raw gene-level p-value threshold used when --enrichment ora is selected. Defaults to 0.05 in ORA mode.",
     )
     gsea_group = shared.add_mutually_exclusive_group()
     gsea_group.add_argument(
@@ -133,14 +149,14 @@ def make_shared_analysis_parent() -> argparse.ArgumentParser:
         dest="run_gsea",
         action="store_true",
         default=None,
-        help="Force GSEA on. Useful when you also request ORA and want both analyses.",
+        help="Legacy compatibility flag equivalent to `--enrichment gsea`.",
     )
     gsea_group.add_argument(
         "--no-gsea",
         dest="run_gsea",
         action="store_false",
         default=None,
-        help="Skip GSEA and only write the regional, gene, and ORA outputs.",
+        help="Legacy compatibility flag that disables GSEA selection. Use `--enrichment none` to skip all enrichment.",
     )
     return shared
 
@@ -179,5 +195,60 @@ def make_gene_pca_parent() -> argparse.ArgumentParser:
         choices=["default", "all", "cort+sub", "cort"],
         default="default",
         help="Which atlas regions to analyze. `default` and `cort` are cortex only; `all` and `cort+sub` include the packaged aseg add-on.",
+    )
+    return parser
+
+
+def make_gene_query_parent() -> argparse.ArgumentParser:
+    """Build the shared parser used by the single-gene query subcommand."""
+
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument(
+        "-g",
+        "--gene",
+        required=True,
+        help="Gene symbol to query in the selected atlas expression matrix.",
+    )
+    parser.add_argument(
+        "-o",
+        "--output",
+        default=None,
+        help="Output directory for tables, plots, and README.txt. Defaults to a gene-specific folder in the current directory.",
+    )
+    parser.add_argument(
+        "-a",
+        "--atlas",
+        default="dk",
+        help="Atlas preset to use. Examples: dk, schaefer-100, schaefer-200, schaefer-400, destrieux, glasser-360.",
+    )
+    parser.add_argument(
+        "--hemisphere",
+        choices=["left", "both"],
+        default="left",
+        help="Use the left side only, or both sides.",
+    )
+    parser.add_argument(
+        "-r",
+        "--regions",
+        choices=["default", "all", "cort+sub", "cort"],
+        default="default",
+        help="Which atlas regions to analyze. `default` and `cort` are cortex only; `all` and `cort+sub` include the packaged aseg add-on.",
+    )
+    parser.add_argument(
+        "--raw-expression",
+        action="store_true",
+        help="Use atlas expression values as stored instead of z-scoring the gene across regions.",
+    )
+    parser.add_argument(
+        "--top-n",
+        type=int,
+        default=25,
+        help="Maximum number of significantly positively co-expressed genes to return.",
+    )
+    parser.add_argument(
+        "--fdr-threshold",
+        type=float,
+        default=0.05,
+        help="Benjamini-Hochberg threshold used to define significant co-expression.",
     )
     return parser

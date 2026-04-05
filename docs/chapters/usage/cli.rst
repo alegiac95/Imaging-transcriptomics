@@ -216,15 +216,15 @@ Return separate up and down GEDAR scores:
 GSEA and ORA behavior
 ---------------------
 
-The enrichment defaults are intentionally simple:
+The enrichment defaults are workflow-specific:
 
-- if you do not pass ``--ora-p-threshold``, the CLI runs GSEA only when
-  ``--gsea`` is on or when the workflow defaults require it
-- if you pass ``--ora-p-threshold`` and do nothing else, the CLI runs ORA
-  only
-- if you want both ORA and GSEA, combine ``--ora-p-threshold`` with
-  ``--gsea``
-- ``--no-gsea`` forces the workflow to skip GSEA
+- ``corr`` and ``pls`` default to ``ensemble`` unless you request another
+  backend
+- ``gedar`` defaults to ``none`` and only runs enrichment when you request
+  ``--enrichment gsea`` or ``--enrichment ora``
+- ``--gsea`` remains as a legacy shortcut for ``--enrichment gsea``
+- ``--no-gsea`` disables the legacy GSEA shortcut and leaves the workflow on
+  its default or explicit ``--enrichment`` choice
 
 Performance notes
 -----------------
@@ -325,11 +325,13 @@ GEDAR-specific options
 - ``--direction``: ``combined``, ``up``, ``down``, or ``split``
 - ``--normalize-expression``: ``zscore`` or ``none``
 - ``--normalize-weights``: ``none``, ``zscore``, or ``unit``
+- ``--enrichment``: ``gsea``, ``ora``, or ``none``. GEDAR does not run
+  enrichment unless you request it
+- ``--geneset`` / ``--geneset-organism``: enrichment resource for GEDAR GSEA
+  or ORA
 
 Reference notes
 ~~~~~~~~~~~~~~~
 
-- when ``--ora-p-threshold`` is given and neither ``--gsea`` nor ``--no-gsea``
-  is provided, the CLI runs ORA only
 - ``imagingtranscriptomics`` is still available as a long-form alias for
   ``imt``

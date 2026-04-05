@@ -7,6 +7,7 @@ import pandas as pd
 
 from imaging_transcriptomics import load_gene_labels, run_gedar, select_atlas_data
 from imaging_transcriptomics.gene_expression import load_brain_gene_symbols
+from imaging_transcriptomics.workflows import gedar as gedar_workflow
 
 
 def _genes_in_brain_filter(n: int) -> list[str]:
@@ -16,6 +17,15 @@ def _genes_in_brain_filter(n: int) -> list[str]:
     if len(selected) < n:
         raise AssertionError("Not enough DK genes were found in the packaged brain gene filter.")
     return selected[:n]
+
+
+def _write_test_gmt(path: Path, rows: dict[str, list[str]]) -> Path:
+    lines = [
+        "\t".join([term, "na", *genes])
+        for term, genes in rows.items()
+    ]
+    path.write_text("\n".join(lines) + "\n")
+    return path
 
 
 def test_run_gedar_matches_manual_weighted_average():
@@ -213,3 +223,110 @@ def test_run_gedar_writes_expected_outputs(tmp_path: Path):
     assert (tmp_path / "missing_genes.txt").exists()
     assert (tmp_path / "plots" / "gedar_scores.png").exists()
     assert (tmp_path / "plots" / "gedar_brain.png").exists()
+
+
+def test_run_gedar_defaults_to_no_enrichment():
+    genes = _genes_in_brain_filter(4)
+    weights = pd.DataFrame(
+        {
+            "gene": genes,
+            "weight": [1.0, -2.0, 0.5, 0.2],
+        }
+    )
+
+    result = run_gedar(
+        weights,
+        atlas="dk",
+        hemisphere="left",
+        regions="all",
+    )
+
+    assert result.enrichment_method == "none"
+    assert result.gsea_table is None
+    assert result.ora_tables is None
+
+
+def test_run_gedar_gsea_uses_full_matched_gene_ranking(monkeypatch):
+    genes = _genes_in_brain_filter(4)
+    weights = pd.DataFrame(
+        {
+            "gene": genes,
+            "weight": [1.0, -2.0, 0.5, 0.2],
+            "rank": [0.01, 0.02, 0.03, 0.50],
+        }
+    )
+    captured: dict[str, object] = {}
+
+    def _fake_gsea(gene_table, *, gene_set, geneset_organism, gene_limit=1500, n_perm=1000):
+        captured["genes"] = gene_table["gene"].tolist()
+        captured["selected"] = int(gene_table["selected"].astype(bool).sum())
+        captured["gene_set"] = gene_set
+        captured["geneset_organism"] = geneset_organism
+        return pd.DataFrame(
+            {
+                "Term": ["TEST_TERM"],
+                "es": [0.5],
+                "nes": [1.2],
+                "p_val": [0.03],
+                "fdr": [0.05],
+            }
+        )
+
+    monkeypatch.setattr(gedar_workflow, "_run_gedar_gsea", _fake_gsea)
+
+    result = run_gedar(
+        weights,
+        atlas="dk",
+        hemisphere="left",
+        regions="all",
+        rank_column="rank",
+        top_n=2,
+        enrichment_method="gsea",
+        gene_set="pooled",
+        geneset_organism="Human",
+    )
+
+    assert captured["genes"] == genes
+    assert captured["selected"] == 2
+    assert captured["gene_set"] == "pooled"
+    assert result.enrichment_method == "gsea"
+    assert result.gsea_table is not None
+    assert result.gsea_table.loc[0, "Term"] == "TEST_TERM"
+
+
+def test_run_gedar_ora_splits_selected_up_and_down_genes(tmp_path: Path):
+    genes = _genes_in_brain_filter(5)
+    geneset_path = _write_test_gmt(
+        tmp_path / "gedar_test.gmt",
+        {
+            "UP_TERM": [genes[0], genes[2]],
+            "DOWN_TERM": [genes[1]],
+        },
+    )
+    weights = pd.DataFrame(
+        {
+            "gene": genes,
+            "weight": [1.0, -2.0, 0.5, -0.2, 0.1],
+            "rank": [0.01, 0.02, 0.03, 0.5, 0.6],
+        }
+    )
+
+    result = run_gedar(
+        weights,
+        atlas="dk",
+        hemisphere="left",
+        regions="all",
+        rank_column="rank",
+        top_n=3,
+        enrichment_method="ora",
+        gene_set=str(geneset_path),
+        output_dir=tmp_path,
+    )
+
+    assert result.enrichment_method == "ora"
+    assert result.ora_tables is not None
+    assert "UP_TERM" in result.ora_tables["up"]["Term"].tolist()
+    assert "DOWN_TERM" in result.ora_tables["down"]["Term"].tolist()
+    assert (tmp_path / "ora_gedar_up.tsv").exists()
+    assert (tmp_path / "ora_gedar_down.tsv").exists()
+    assert (tmp_path / "plots" / "ora_gedar_heatmap.png").exists()

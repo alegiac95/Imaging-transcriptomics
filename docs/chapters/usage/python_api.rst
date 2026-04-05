@@ -158,7 +158,8 @@ Result structure
   ``regional_scores``, ``gene_loadings``, ``variance_table``,
   ``matched_genes``, ``brain_filtered_genes``, and ``missing_genes``
 - ``GEDARResult`` stores ``regional_scores``, ``gene_table``,
-  ``excluded_table``, ``matched_genes``, and ``missing_genes``
+  ``excluded_table``, optional ``gsea_table`` / ``ora_tables``,
+  ``matched_genes``, and ``missing_genes``
 
 Stability guidance
 ------------------
@@ -178,7 +179,7 @@ Stable workflow functions
 - ``run_pls(data, *, atlas="dk", hemisphere="left", regions="default", source_space=None, input_rh=None, n_components=None, var=None, n_permutations=1000, null_method="auto", output_dir=None, run_gsea=False, gene_set="lake", ora_p_threshold=None, seed=1234, n_jobs=1)``
 - ``run_gene(gene, *, atlas="dk", hemisphere="left", regions="default", zscore_expression=True, top_n=25, fdr_threshold=0.05, output_dir=None)``
 - ``run_gene_pca(genes, *, atlas="dk", hemisphere="left", regions="default", n_components=3, output_dir=None)``
-- ``run_gedar(weights, *, atlas="dk", hemisphere="both", regions="default", gene_column="gene", weight_column="weight", rank_column=None, rank_mode="ascending", top_percent=None, top_n=None, p_threshold=None, direction="combined", normalize_expression="zscore", normalize_weights="none", output_dir=None)``
+- ``run_gedar(weights, *, atlas="dk", hemisphere="both", regions="default", gene_column="gene", weight_column="weight", rank_column=None, rank_mode="ascending", top_percent=None, top_n=None, p_threshold=None, direction="combined", normalize_expression="zscore", normalize_weights="none", enrichment_method=None, run_gsea=False, gene_set="lake", geneset_organism="Human", output_dir=None)``
 - ``run_analysis(data, config, *, input_rh=None)``
 
 Configuration and selection helpers
@@ -206,7 +207,8 @@ Return types
 - ``GenePCAResult``: PCA scores, gene loadings, variance table, and matched
   or missing genes
 - ``GEDARResult``: regional weighted-expression scores, matched gene table,
-  excluded rows, and gene bookkeeping
+  excluded rows, optional GEDAR GSEA or split ORA outputs, and gene
+  bookkeeping
 
 Quick reference
 ~~~~~~~~~~~~~~~
@@ -229,7 +231,8 @@ Quick reference
 
 ``run_gedar()``
    Use when you have a weighted gene table, such as a TWAS-like result, and
-   want a regional weighted-expression score on one atlas.
+   want a regional weighted-expression score on one atlas. GEDAR enrichment is
+   opt-in; by default it returns the score only.
 
 ``run_analysis()``
    Use when your code constructs a validated ``RunConfig`` separately and

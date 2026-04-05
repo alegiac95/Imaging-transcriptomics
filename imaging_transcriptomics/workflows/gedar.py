@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+from collections import OrderedDict
 from pathlib import Path
 from typing import Callable
 
 import numpy as np
+import pandas as pd
 
 from ..exceptions import ConfigurationError
+from ..gsea_utils import make_prerank_table, result_column, result_terms, run_prerank
 from ..models import (
     AtlasSelection,
     ExpressionNormalization,
@@ -18,6 +21,8 @@ from ..models import (
     RegionScope,
     WeightNormalization,
 )
+from ..genesets import resolve_geneset_resource
+from ..ora import ora_from_gene_table
 from ..preprocessing.gene_weights import (
     apply_brain_gene_filter_to_weights,
     apply_rank_selection_mask,
@@ -27,6 +32,96 @@ from ..preprocessing.gene_weights import (
     validate_rank_selection_args,
 )
 from ..scoring.weighted_expression import direction_mask, direction_modes, project_weighted_expression
+
+
+def _resolve_gedar_enrichment_method(
+    enrichment_method: str | None,
+    *,
+    run_gsea: bool,
+) -> str:
+    """Resolve the requested GEDAR enrichment mode.
+
+    GEDAR keeps enrichment disabled by default. Users must explicitly request
+    ``gsea`` or ``ora``.
+    """
+
+    if enrichment_method is not None:
+        if enrichment_method not in {"gsea", "ora", "none"}:
+            raise ConfigurationError(
+                "GEDAR only supports enrichment_method='gsea', 'ora', or 'none'."
+            )
+        return enrichment_method
+    if run_gsea:
+        return "gsea"
+    return "none"
+
+
+def _run_gedar_gsea(
+    gene_table: pd.DataFrame,
+    *,
+    gene_set: str,
+    geneset_organism: str,
+    gene_limit: int = 1500,
+    n_perm: int = 1_000,
+) -> pd.DataFrame:
+    """Run preranked GSEA on the full matched signed GEDAR gene table."""
+
+    try:
+        import gseapy
+    except ImportError as exc:  # pragma: no cover - optional dependency
+        raise ImportError("gseapy is required to run GSEA analyses.") from exc
+
+    resource = resolve_geneset_resource(gene_set, organism=geneset_organism)
+    ranking = make_prerank_table(
+        gene_table["gene"].astype(str).tolist(),
+        gene_table["input_weight"].to_numpy(dtype=float),
+    )
+    results = run_prerank(
+        gseapy,
+        ranking,
+        resource,
+        max_size=gene_limit,
+        outdir=None,
+        permutation_num=n_perm,
+        seed=1234,
+    )
+    return pd.DataFrame.from_dict(
+        OrderedDict(
+            Term=result_terms(results.res2d),
+            es=result_column(results.res2d, "ES", "es").astype(float),
+            nes=result_column(results.res2d, "NES", "nes").astype(float),
+            p_val=result_column(results.res2d, "NOM p-val", "pval", "p_val").astype(float),
+            fdr=result_column(results.res2d, "FDR q-val", "fdr").astype(float),
+        )
+    )
+
+
+def _run_gedar_ora(
+    gene_table: pd.DataFrame,
+    *,
+    direction: GEDARDirection,
+    gene_set: str,
+    geneset_organism: str,
+) -> dict[str, pd.DataFrame]:
+    """Run ORA on the genes selected by GEDAR, split into up and down sets."""
+
+    if direction == "split":
+        selected = (
+            gene_table["selected_up"].astype(bool).to_numpy(copy=False)
+            | gene_table["selected_down"].astype(bool).to_numpy(copy=False)
+        )
+    else:
+        selected = gene_table["selected"].astype(bool).to_numpy(copy=False)
+
+    ora_table = gene_table.loc[:, ["gene", "input_weight"]].copy()
+    ora_table["p_value"] = np.where(selected, 0.0, 1.0)
+    return ora_from_gene_table(
+        ora_table,
+        gene_set=gene_set,
+        geneset_organism=geneset_organism,
+        score_column="input_weight",
+        p_threshold=0.5,
+    )
 
 
 def run_gedar(
@@ -45,6 +140,10 @@ def run_gedar(
     direction: GEDARDirection = "combined",
     normalize_expression: ExpressionNormalization = "zscore",
     normalize_weights: WeightNormalization = "none",
+    enrichment_method: str | None = None,
+    run_gsea: bool = False,
+    gene_set: str = "lake",
+    geneset_organism: str = "Human",
     output_dir: str | Path | None = None,
     select_atlas_data_fn: Callable[..., AtlasSelection],
     load_brain_gene_symbols_fn: Callable[[], tuple[str, ...]],
@@ -60,6 +159,10 @@ def run_gedar(
     )
     if normalize_expression not in {"zscore", "none"}:
         raise ConfigurationError("normalize_expression must be either 'zscore' or 'none'.")
+    resolved_enrichment_method = _resolve_gedar_enrichment_method(
+        enrichment_method,
+        run_gsea=run_gsea,
+    )
 
     weight_table, weights_source = load_weights_table(weights)
     if gene_column not in weight_table.columns:
@@ -158,6 +261,21 @@ def run_gedar(
     ordered_columns.extend(direction_columns)
     ordered_columns.append("direction")
     gene_table = matched.table.loc[:, ordered_columns].copy()
+    gsea_table = None
+    ora_tables = None
+    if resolved_enrichment_method == "gsea":
+        gsea_table = _run_gedar_gsea(
+            gene_table,
+            gene_set=gene_set,
+            geneset_organism=geneset_organism,
+        )
+    elif resolved_enrichment_method == "ora":
+        ora_tables = _run_gedar_ora(
+            gene_table,
+            direction=direction,
+            gene_set=gene_set,
+            geneset_organism=geneset_organism,
+        )
 
     result = GEDARResult(
         atlas_id=selection.atlas.id,
@@ -168,6 +286,8 @@ def run_gedar(
         regional_scores=regional_scores,
         gene_table=gene_table,
         excluded_table=filtered.excluded_table,
+        gsea_table=gsea_table,
+        ora_tables=ora_tables,
         matched_genes=matched.matched_genes,
         missing_genes=matched.missing_genes,
         weights_source=weights_source,
@@ -181,6 +301,9 @@ def run_gedar(
         top_percent=top_percent,
         top_n=top_n,
         p_threshold=p_threshold,
+        enrichment_method=resolved_enrichment_method,
+        geneset=gene_set if resolved_enrichment_method != "none" else None,
+        geneset_organism=geneset_organism if resolved_enrichment_method != "none" else None,
         output_dir=None if output_dir is None else Path(output_dir),
     )
     if output_dir is not None and write_result_bundle_fn is not None:

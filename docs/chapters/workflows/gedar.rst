@@ -36,10 +36,30 @@ At a high level, the workflow:
 4. matches the remaining genes to the atlas expression matrix
 5. optionally selects a top subset of genes by rank
 6. computes a weighted regional average
+7. optionally runs GSEA or split ORA on the resulting matched signature
 
 This makes GEDAR useful for TWAS-style or other ranked gene-weight analyses
 where the end goal is a regional transcriptomic score rather than a gene-level
 association test.
+
+Optional enrichment
+-------------------
+
+GEDAR does not run enrichment unless you request it explicitly.
+
+Two enrichment modes are currently available:
+
+- ``gsea``: preranked GSEA on the full matched signed gene table, using
+  ``input_weight`` as the ranking value
+- ``ora``: over-representation analysis on the genes selected by the GEDAR
+  filters, split into separate up- and down-weighted gene sets
+
+In practice this means:
+
+- the GEDAR score can use a filtered subset of genes
+- GSEA still reads the full matched signed signature
+- ORA follows the exact genes retained for the GEDAR score and then separates
+  them by sign
 
 Interpretation
 --------------
@@ -165,6 +185,35 @@ Directional split:
      --direction split \
      --output /absolute/path/to/out_dir
 
+GEDAR with GSEA:
+
+.. code-block:: bash
+
+   imt gedar \
+     --weights /absolute/path/to/twas.tsv \
+     --atlas dk \
+     --gene-column gene_name \
+     --weight-column z_mean \
+     --enrichment gsea \
+     --geneset pooled \
+     --output /absolute/path/to/out_dir
+
+GEDAR with split ORA:
+
+.. code-block:: bash
+
+   imt gedar \
+     --weights /absolute/path/to/twas.tsv \
+     --atlas dk \
+     --gene-column gene_name \
+     --weight-column z_mean \
+     --rank-column pvalue \
+     --top-percent 5 \
+     --direction split \
+     --enrichment ora \
+     --geneset lake \
+     --output /absolute/path/to/out_dir
+
 Python example
 --------------
 
@@ -181,6 +230,27 @@ Python example
        top_percent=5,
        direction="combined",
        output_dir="out_gedar",
+   )
+
+   gsea_result = imt.run_gedar(
+       "/absolute/path/to/twas.tsv",
+       atlas="dk",
+       gene_column="gene_name",
+       weight_column="z_mean",
+       enrichment_method="gsea",
+       gene_set="pooled",
+   )
+
+   ora_result = imt.run_gedar(
+       "/absolute/path/to/twas.tsv",
+       atlas="dk",
+       gene_column="gene_name",
+       weight_column="z_mean",
+       rank_column="pvalue",
+       top_percent=5,
+       direction="split",
+       enrichment_method="ora",
+       gene_set="lake",
    )
 
 Reading the outputs
@@ -200,6 +270,14 @@ Reading the outputs
 ``matched_genes.txt`` and ``missing_genes.txt``
    Simple audit files for gene matching.
 
+``gsea_gedar_results.tsv``
+   Optional preranked GSEA results for the full matched signed GEDAR
+   signature.
+
+``ora_gedar_up.tsv`` and ``ora_gedar_down.tsv``
+   Optional ORA results for the up- and down-weighted genes selected by the
+   GEDAR filters.
+
 
 .. caution::
 
@@ -208,5 +286,7 @@ Reading the outputs
    - forgetting to set the correct gene column or weight column
    - using a rank column without thinking about whether lower or higher values
      should be considered better
+   - expecting enrichment to run automatically; GEDAR keeps enrichment off
+     unless ``--enrichment gsea`` or ``--enrichment ora`` is requested
    - being surprised by missing genes when they were actually removed by the
      packaged brain-gene filter and recorded in ``gedar_excluded.tsv``

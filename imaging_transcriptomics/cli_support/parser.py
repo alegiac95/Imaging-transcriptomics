@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import argparse
 
-from .shared import HelpFormatter, make_gene_pca_parent, make_shared_analysis_parent
+from .shared import HelpFormatter, make_gene_pca_parent, make_gene_query_parent, make_shared_analysis_parent
 
 
 def _top_level_parser() -> argparse.ArgumentParser:
@@ -26,6 +26,7 @@ def _top_level_parser() -> argparse.ArgumentParser:
             "    --ora-p-threshold 0.05 --geneset lake --output out_dir\n"
             "  imt pls --input map.nii.gz --space MNI152 --atlas dk --ncomp 2 --output out_dir\n"
             "  imt gene-pca --genes genes.txt --atlas dk --output out_dir\n\n"
+            "  imt gene --gene RELN --atlas dk --output out_dir\n\n"
             "  imt gedar --weights twas.tsv --atlas dk --weight-column zscore --output out_dir\n\n"
             "The long command name `imagingtranscriptomics` works as well."
         ),
@@ -81,16 +82,18 @@ def _add_corr_subcommand(subparsers, shared: argparse.ArgumentParser) -> None:
         help="Run the correlation workflow.",
         description=(
             "Compare one parcellated brain map with atlas gene expression, "
-            "then optionally run GSEA and/or ORA on the ranked genes."
+            "then run one enrichment backend on the ranked genes."
         ),
         formatter_class=HelpFormatter,
         epilog=(
             "Examples:\n"
             "  imt corr --input map.nii.gz --space MNI152 --atlas dk --output out_dir\n"
-            "  imt corr --input map.nii.gz --space MNI152 --atlas schaefer-200 \\\n"
-            "    --ora-p-threshold 0.05 --geneset lake --output out_dir\n"
             "  imt corr --input map.nii.gz --space MNI152 --atlas dk \\\n"
-            "    --ora-p-threshold 0.05 --gsea --geneset pooled --output out_dir"
+            "    --enrichment ensemble --geneset pooled --output out_dir\n"
+            "  imt corr --input map.nii.gz --space MNI152 --atlas schaefer-200 \\\n"
+            "    --enrichment ora --ora-p-threshold 0.05 --geneset lake --output out_dir\n"
+            "  imt corr --input map.nii.gz --space MNI152 --atlas dk \\\n"
+            "    --enrichment gsea --geneset pooled --output out_dir"
         ),
     )
     corr_parser.set_defaults(method="corr")
@@ -105,14 +108,16 @@ def _add_pls_subcommand(subparsers, shared: argparse.ArgumentParser) -> None:
         help="Run the PLS workflow.",
         description=(
             "Fit a PLS model between one parcellated brain map and atlas gene expression, "
-            "then optionally run GSEA and/or ORA on each kept component."
+            "then run one enrichment backend on each kept component."
         ),
         formatter_class=HelpFormatter,
         epilog=(
             "Examples:\n"
             "  imt pls --input map.nii.gz --space MNI152 --atlas dk --ncomp 2 --output out_dir\n"
             "  imt pls --input map.nii.gz --space MNI152 --atlas dk --var 0.5 \\\n"
-            "    --ora-p-threshold 0.05 --geneset lake --output out_dir"
+            "    --enrichment ora --ora-p-threshold 0.05 --geneset lake --output out_dir\n"
+            "  imt pls --input map.nii.gz --space MNI152 --atlas dk --ncomp 2 \\\n"
+            "    --enrichment ensemble --geneset GO_Biological_Process_2025 --output out_dir"
         ),
     )
     pls_group = pls_parser.add_mutually_exclusive_group(required=True)
@@ -157,6 +162,28 @@ def _add_gene_pca_subcommand(subparsers, shared: argparse.ArgumentParser) -> Non
     )
 
 
+def _add_gene_subcommand(subparsers, shared: argparse.ArgumentParser) -> None:
+    """Register the single-gene atlas query command."""
+
+    gene_parser = subparsers.add_parser(
+        "gene",
+        parents=[shared],
+        help="Return one gene's atlas expression profile and top co-expressed genes.",
+        description=(
+            "Extract the regional expression vector for one gene from the selected atlas, "
+            "plot that expression pattern, and rank the most significantly positively co-expressed genes."
+        ),
+        formatter_class=HelpFormatter,
+        epilog=(
+            "Examples:\n"
+            "  imt gene --gene RELN --atlas dk --output out_dir\n"
+            "  imt gene --gene GAD1 --atlas schaefer-200 --hemisphere both --top-n 50 --output out_dir\n"
+            "  imt gene --gene MBP --atlas dk --raw-expression --fdr-threshold 0.01 --output out_dir"
+        ),
+    )
+    gene_parser.set_defaults(command="gene")
+
+
 def _add_gedar_subcommand(subparsers) -> None:
     """Register the GEDAR/PTRS-style weighted-expression workflow."""
 
@@ -165,14 +192,18 @@ def _add_gedar_subcommand(subparsers) -> None:
         help="Compute a GEDAR/PTRS-style weighted average on atlas expression.",
         description=(
             "Match a weighted gene table to the selected atlas expression matrix, "
-            "optionally filter genes by rank and sign, apply the packaged AHPA brain-gene filter, and compute a regional GEDAR score."
+            "optionally filter genes by rank and sign, apply the packaged AHPA brain-gene filter, "
+            "compute a regional GEDAR score, and optionally run GSEA or split ORA on the matched signature."
         ),
         formatter_class=HelpFormatter,
         epilog=(
             "Examples:\n"
             "  imt gedar --weights twas.tsv --atlas dk --weight-column zscore --output out_dir\n"
             "  imt gedar --weights twas.tsv --atlas schaefer-200 --rank-column fdr \\\n"
-            "    --top-percent 5 --direction split --normalize-weights unit --output out_dir"
+            "    --top-percent 5 --direction split --normalize-weights unit --output out_dir\n"
+            "  imt gedar --weights twas.tsv --atlas dk --enrichment gsea --geneset pooled --output out_dir\n"
+            "  imt gedar --weights twas.tsv --atlas dk --top-percent 10 --direction split \\\n"
+            "    --enrichment ora --geneset lake --output out_dir"
         ),
     )
     gedar_parser.add_argument(
@@ -263,6 +294,40 @@ def _add_gedar_subcommand(subparsers) -> None:
         default="none",
         help="Optional normalization applied to the selected weights before the GEDAR average.",
     )
+    gedar_parser.add_argument(
+        "--geneset",
+        default="lake",
+        help="Gene set file or name for GEDAR GSEA or ORA. Use `lake`, `pooled`, a GSEApy/Enrichr library name, or a local `.gmt` file.",
+    )
+    gedar_parser.add_argument(
+        "--geneset-organism",
+        default="Human",
+        help="Organism used when --geneset is a GSEApy/Enrichr library name.",
+    )
+    gsea_group = gedar_parser.add_mutually_exclusive_group()
+    gedar_parser.add_argument(
+        "--enrichment",
+        choices=["gsea", "ora", "none"],
+        default=None,
+        help=(
+            "Optional GEDAR enrichment backend. `gsea` runs preranked GSEA on the full matched signed gene table, "
+            "`ora` runs split up/down ORA on the genes selected for the GEDAR score, and `none` skips enrichment."
+        ),
+    )
+    gsea_group.add_argument(
+        "--gsea",
+        dest="run_gsea",
+        action="store_true",
+        default=None,
+        help="Legacy compatibility flag equivalent to `--enrichment gsea`.",
+    )
+    gsea_group.add_argument(
+        "--no-gsea",
+        dest="run_gsea",
+        action="store_false",
+        default=None,
+        help="Legacy compatibility flag that disables GEDAR GSEA selection.",
+    )
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -272,12 +337,14 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers = parser.add_subparsers(dest="command", required=True)
     shared = make_shared_analysis_parent()
     gene_pca_shared = make_gene_pca_parent()
+    gene_query_shared = make_gene_query_parent()
 
     _add_atlases_subcommand(subparsers)
     _add_genesets_subcommand(subparsers)
     _add_corr_subcommand(subparsers, shared)
     _add_pls_subcommand(subparsers, shared)
     _add_gene_pca_subcommand(subparsers, gene_pca_shared)
+    _add_gene_subcommand(subparsers, gene_query_shared)
     _add_gedar_subcommand(subparsers)
     return parser
 

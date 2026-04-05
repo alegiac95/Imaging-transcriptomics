@@ -2,18 +2,30 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from imaging_transcriptomics import atlas_table, run_corr, run_gedar, run_gene_pca, run_pls
+from imaging_transcriptomics import atlas_table, run_corr, run_gedar, run_gene, run_gene_pca, run_pls
 
 from ..genesets import list_packaged_genesets, list_remote_genesets
-from .shared import default_gene_pca_output_dir, default_gedar_output_dir, default_output_dir
+from .shared import default_gene_output_dir, default_gene_pca_output_dir, default_gedar_output_dir, default_output_dir
+
+
+def resolve_enrichment_method(parsed, *, default: str = "ensemble") -> str:
+    """Resolve the requested enrichment backend from CLI flags."""
+
+    if getattr(parsed, "enrichment", None) is not None:
+        return str(parsed.enrichment)
+    if getattr(parsed, "run_gsea", None) is True:
+        return "gsea"
+    if getattr(parsed, "ora_p_threshold", None) is not None:
+        return "ora"
+    if getattr(parsed, "run_gsea", None) is False:
+        return "none"
+    return default
 
 
 def resolve_run_gsea(parsed) -> bool:
-    """Resolve the default GSEA behavior from CLI flags."""
+    """Backward-compatible helper retained for older tests and imports."""
 
-    if parsed.run_gsea is not None:
-        return bool(parsed.run_gsea)
-    return parsed.ora_p_threshold is None
+    return resolve_enrichment_method(parsed) == "gsea"
 
 
 def run_atlases_command(parsed) -> None:
@@ -60,10 +72,27 @@ def run_gene_pca_command(parsed) -> None:
     )
 
 
+def run_gene_command(parsed) -> None:
+    """Handle the `imt gene` subcommand."""
+
+    output_dir = Path(parsed.output) if parsed.output else default_gene_output_dir(parsed.gene, parsed.atlas)
+    run_gene(
+        parsed.gene,
+        atlas=parsed.atlas,
+        hemisphere=parsed.hemisphere,
+        regions=parsed.regions,
+        zscore_expression=not parsed.raw_expression,
+        top_n=parsed.top_n,
+        fdr_threshold=parsed.fdr_threshold,
+        output_dir=output_dir,
+    )
+
+
 def run_gedar_command(parsed) -> None:
     """Handle the `imt gedar` subcommand."""
 
     output_dir = Path(parsed.output) if parsed.output else default_gedar_output_dir(parsed.weights, parsed.atlas)
+    enrichment_method = resolve_enrichment_method(parsed, default="none")
     run_gedar(
         parsed.weights,
         atlas=parsed.atlas,
@@ -79,6 +108,10 @@ def run_gedar_command(parsed) -> None:
         direction=parsed.direction,
         normalize_expression=parsed.normalize_expression,
         normalize_weights=parsed.normalize_weights,
+        enrichment_method=enrichment_method,
+        run_gsea=enrichment_method == "gsea",
+        gene_set=parsed.geneset,
+        geneset_organism=parsed.geneset_organism,
         output_dir=output_dir,
     )
 
@@ -87,7 +120,7 @@ def run_analysis_command(parsed) -> None:
     """Handle the `imt corr` and `imt pls` workflow subcommands."""
 
     output_dir = Path(parsed.output) if parsed.output else default_output_dir(parsed.input, parsed.method)
-    run_gsea = resolve_run_gsea(parsed)
+    enrichment_method = resolve_enrichment_method(parsed)
 
     if parsed.method == "corr":
         run_corr(
@@ -100,7 +133,8 @@ def run_analysis_command(parsed) -> None:
             n_permutations=parsed.permutations,
             null_method=parsed.null_method,
             output_dir=output_dir,
-            run_gsea=run_gsea,
+            enrichment_method=enrichment_method,
+            run_gsea=enrichment_method == "gsea",
             gene_set=parsed.geneset,
             geneset_organism=parsed.geneset_organism,
             ora_p_threshold=parsed.ora_p_threshold,
@@ -121,7 +155,8 @@ def run_analysis_command(parsed) -> None:
         n_permutations=parsed.permutations,
         null_method=parsed.null_method,
         output_dir=output_dir,
-        run_gsea=run_gsea,
+        enrichment_method=enrichment_method,
+        run_gsea=enrichment_method == "gsea",
         gene_set=parsed.geneset,
         geneset_organism=parsed.geneset_organism,
         ora_p_threshold=parsed.ora_p_threshold,
@@ -141,6 +176,9 @@ def dispatch_command(parsed) -> None:
         return
     if parsed.command == "gene-pca":
         run_gene_pca_command(parsed)
+        return
+    if parsed.command == "gene":
+        run_gene_command(parsed)
         return
     if parsed.command == "gedar":
         run_gedar_command(parsed)

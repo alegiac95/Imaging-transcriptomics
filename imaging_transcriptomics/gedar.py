@@ -25,9 +25,17 @@ def run_gedar(
     direction: str = "combined",
     normalize_expression: str = "zscore",
     normalize_weights: str = "none",
+    enrichment_method: str | None = None,
+    run_gsea: bool = False,
+    gene_set: str = "lake",
+    geneset_organism: str = "Human",
     output_dir: str | Path | None = None,
 ):
-    """Compute a PTRS-style weighted gene-expression score on a packaged atlas."""
+    """Compute a PTRS-style weighted gene-expression score on a packaged atlas.
+
+    GEDAR enrichment is opt-in. By default no enrichment is run; set
+    ``enrichment_method="gsea"`` or ``"ora"`` explicitly when needed.
+    """
 
     return _run_gedar(
         weights,
@@ -44,6 +52,10 @@ def run_gedar(
         direction=direction,
         normalize_expression=normalize_expression,
         normalize_weights=normalize_weights,
+        enrichment_method=enrichment_method,
+        run_gsea=run_gsea,
+        gene_set=gene_set,
+        geneset_organism=geneset_organism,
         output_dir=output_dir,
         select_atlas_data_fn=select_atlas_data,
         load_brain_gene_symbols_fn=load_brain_gene_symbols,
