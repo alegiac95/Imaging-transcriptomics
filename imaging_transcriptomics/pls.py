@@ -6,7 +6,13 @@ import numpy as np
 
 from ._logging import get_logger
 from .genes import GeneResults
-from .pls_backend import PreparedPLS1, fit_prepared_pls1, pls_regression, prepare_pls1
+from .pls_backend import (
+    PreparedPLS1,
+    fit_prepared_pls1,
+    fit_prepared_pls1_chunk,
+    pls_regression,
+    prepare_pls1,
+)
 
 logger = get_logger(__name__)
 
@@ -219,6 +225,23 @@ class PLSAnalysis:
 
             def _fit_chunk(bounds: tuple[int, int]):
                 start, end = bounds
+                if isinstance(gene_exp, PreparedPLS1):
+                    block_fit = fit_prepared_pls1_chunk(
+                        gene_exp,
+                        permuted_imaging[:, start:end],
+                        n_components=self.n_components,
+                        return_x_weights=need_weights,
+                    )
+                    cumulative_block = np.cumsum(np.asarray(block_fit["varexp"], dtype=float), axis=1)[
+                        :, : self.n_components
+                    ]
+                    weight_block = (
+                        np.asarray(block_fit["x_weights"], dtype=float)
+                        if need_weights and "x_weights" in block_fit
+                        else None
+                    )
+                    return start, end, cumulative_block, weight_block
+
                 cumulative_block = np.zeros((end - start, self.n_components), dtype=float)
                 weight_block = [] if need_weights else None
                 for local_index, index in enumerate(range(start, end)):

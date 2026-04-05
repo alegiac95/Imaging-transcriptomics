@@ -31,6 +31,30 @@ def gsea_dot_frame(gsea_table: pd.DataFrame, top_n: int) -> pd.DataFrame:
     return ranked.sort_values("nes", ascending=True, kind="mergesort").reset_index(drop=True)
 
 
+def ensemble_dot_frame(ensemble_table: pd.DataFrame, top_n: int) -> pd.DataFrame:
+    """Prepare the ranked subset used by the ensemble-enrichment dot plot."""
+
+    required = {"Term", "category_score", "z_score", "fdr"}
+    missing = sorted(required - set(ensemble_table.columns))
+    if missing:
+        raise ValueError(f"Ensemble table is missing required columns: {', '.join(missing)}")
+
+    ranked = ensemble_table.copy()
+    ranked["fdr"] = pd.to_numeric(ranked["fdr"], errors="coerce")
+    ranked["z_score"] = pd.to_numeric(ranked["z_score"], errors="coerce")
+    ranked["category_score"] = pd.to_numeric(ranked["category_score"], errors="coerce")
+    ranked = ranked.dropna(subset=["Term", "category_score", "z_score", "fdr"])
+    if ranked.empty:
+        return ranked
+
+    ranked = ranked.assign(
+        _score=safe_neglog10(ranked["fdr"].to_numpy(dtype=float)),
+        _abs_z=np.abs(ranked["z_score"].to_numpy(dtype=float)),
+    )
+    ranked = ranked.sort_values(["fdr", "_abs_z"], ascending=[True, False], kind="mergesort").head(top_n)
+    return ranked.sort_values("z_score", ascending=True, kind="mergesort").reset_index(drop=True)
+
+
 def ora_stars(fdr: float) -> str:
     """Return significance stars for one ORA q-value."""
 
@@ -153,6 +177,42 @@ def plot_gsea_dotplot(
     style_axes(ax, title=title, xlabel="Normalized enrichment score", ylabel="Gene set", grid_axis="x")
     colorbar = fig.colorbar(scatter, ax=ax, pad=0.02)
     colorbar.set_label("NES")
+    return save_figure(fig, output_path)
+
+
+def plot_ensemble_dotplot(
+    ensemble_table: pd.DataFrame,
+    output_path: Path,
+    *,
+    title: str,
+    top_n: int = 20,
+) -> Path | None:
+    """Write an ensemble-enrichment dot plot for the top-ranked terms."""
+
+    _, plt = matplotlib_backend()
+    ranked = ensemble_dot_frame(ensemble_table, top_n=top_n)
+    if ranked.empty:
+        return None
+
+    sizes = 90 + 75 * ranked["_score"].to_numpy(dtype=float)
+    colors = ranked["category_score"].to_numpy(dtype=float)
+
+    fig_height = max(4.5, 0.35 * ranked.shape[0] + 1.5)
+    fig, ax = plt.subplots(figsize=(9, fig_height))
+    scatter = ax.scatter(
+        ranked["z_score"],
+        shorten_labels(ranked["Term"]),
+        s=sizes,
+        c=colors,
+        cmap="RdBu_r",
+        edgecolor="black",
+        linewidth=0.35,
+        alpha=0.9,
+    )
+    ax.axvline(0, color="#64748b", lw=1, alpha=0.6)
+    style_axes(ax, title=title, xlabel="Category z-score", ylabel="Gene set", grid_axis="x")
+    colorbar = fig.colorbar(scatter, ax=ax, pad=0.02)
+    colorbar.set_label("Category score")
     return save_figure(fig, output_path)
 
 

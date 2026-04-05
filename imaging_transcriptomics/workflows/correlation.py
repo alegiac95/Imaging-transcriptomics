@@ -28,13 +28,15 @@ def run_corr_configured(
     analysis = CorrAnalysis(
         n_iterations=config.n_permutations,
         n_genes=gene_labels.shape[0],
-        store_boot_corr=config.run_gsea,
+        store_boot_corr=config.enrichment_method in {"gsea", "ensemble"},
         n_jobs=config.n_jobs,
     )
     analysis.bootstrap_correlation(imaging, permuted, gene_exp, gene_labels)
 
     gsea_table = None
-    if config.run_gsea:
+    ensemble_table = None
+    ora_tables = None
+    if config.enrichment_method == "gsea":
         gsea_table = run_to_tables(
             config.output_dir,
             lambda outdir: analysis.gsea(
@@ -44,9 +46,17 @@ def run_corr_configured(
             ),
             lambda outdir: [outdir / "gsea_corr_results.tsv"],
         )[0]
-
-    ora_tables = None
-    if config.ora_p_threshold is not None:
+    elif config.enrichment_method == "ensemble":
+        ensemble_table = run_to_tables(
+            config.output_dir,
+            lambda outdir: analysis.ensemble(
+                gene_set=config.gene_set,
+                outdir=outdir,
+                geneset_organism=config.geneset_organism,
+            ),
+            lambda outdir: [outdir / "ensemble_corr_results.tsv"],
+        )[0]
+    elif config.enrichment_method == "ora":
         ora_up, ora_down = run_to_tables(
             config.output_dir,
             lambda outdir: analysis.ora(
@@ -64,6 +74,7 @@ def run_corr_configured(
         regional_values=regional_values_frame(extracted),
         gene_table=corr_gene_table(analysis),
         gsea_table=gsea_table,
+        ensemble_table=ensemble_table,
         ora_tables=ora_tables,
         output_dir=config.output_dir,
     )

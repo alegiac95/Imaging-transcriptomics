@@ -60,3 +60,37 @@ def resolve_geneset_resource(gene_set: str, organism: str = "Human"):
         min_size=0,
         max_size=100_000,
     )
+
+
+def parse_gmt(path: str | Path) -> dict[str, tuple[str, ...]]:
+    """Parse a GMT file into a mapping of term name to gene symbols."""
+
+    gmt_path = Path(path)
+    genesets: dict[str, tuple[str, ...]] = {}
+    with gmt_path.open("r", encoding="utf-8") as handle:
+        for line in handle:
+            fields = line.rstrip("\n").split("\t")
+            if len(fields) < 3:
+                continue
+            term = fields[0]
+            genes = tuple(gene for gene in fields[2:] if gene)
+            genesets[term] = genes
+    return genesets
+
+
+def as_geneset_mapping(resource) -> dict[str, tuple[str, ...]]:
+    """Normalize a geneset resource into a plain term-to-genes mapping."""
+
+    if isinstance(resource, (str, Path)):
+        return parse_gmt(resource)
+    if isinstance(resource, dict):
+        mapping: dict[str, tuple[str, ...]] = {}
+        for term, genes in resource.items():
+            if isinstance(genes, str):
+                mapping[str(term)] = (genes,)
+            else:
+                mapping[str(term)] = tuple(str(gene) for gene in genes)
+        return mapping
+    raise TypeError(
+        "Geneset resource must be a GMT path or a mapping of term names to iterables of gene symbols."
+    )

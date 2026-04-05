@@ -37,6 +37,22 @@ def _gsea_table() -> pd.DataFrame:
     )
 
 
+def _ensemble_table() -> pd.DataFrame:
+    return pd.DataFrame(
+        {
+            "Term": ["Astrocytes", "Microglia", "Neurons"],
+            "category_score": [0.32, -0.24, 0.19],
+            "null_mean": [0.04, -0.02, 0.01],
+            "null_sd": [0.11, 0.10, 0.09],
+            "z_score": [2.55, -2.20, 2.00],
+            "p_val": [0.01, 0.02, 0.03],
+            "fdr": [0.02, 0.03, 0.04],
+            "matched_size": [12, 10, 9],
+            "matched_genes": ["A;B;C", "D;E;F", "G;H;I"],
+        }
+    )
+
+
 def _ora_tables() -> dict[str, pd.DataFrame]:
     return {
         "up": pd.DataFrame(
@@ -111,6 +127,39 @@ def test_save_result_plots_writes_corr_gsea_dotplot(tmp_path: Path):
     assert any(path.name == "ora_corr_heatmap.png" for path in paths)
 
 
+def test_save_result_plots_writes_corr_ensemble_dotplot(tmp_path: Path):
+    result = CorrelationResult(
+        metadata=AnalysisMetadata(
+            method="corr",
+            atlas_id="dk",
+            atlas_label="Desikan-Killiany (83 regions)",
+            hemisphere="left",
+            regions="all",
+            source="array",
+            source_kind="vector",
+            source_space=None,
+            n_permutations=8,
+            enrichment_method="ensemble",
+        ),
+        regional_values=pd.DataFrame({"id": [1, 2, 3], "label": ["a", "b", "c"], "value": [0.1, -0.2, 0.3]}),
+        gene_table=pd.DataFrame(
+            {
+                "gene": ["A", "B", "C"],
+                "score": [0.5, -0.4, 0.2],
+                "p": [0.01, 0.02, 0.03],
+                "fdr": [0.02, 0.03, 0.04],
+                "maxT": [0.05, 0.1, 0.2],
+            }
+        ),
+        ensemble_table=_ensemble_table(),
+    )
+
+    paths = save_result_plots(result, tmp_path)
+
+    assert tmp_path.joinpath("plots", "ensemble_corr_dotplot.png").exists()
+    assert any(path.name == "ensemble_corr_dotplot.png" for path in paths)
+
+
 def test_save_result_plots_writes_pls_gsea_dotplot(tmp_path: Path):
     component = PLSComponentResult(
         index=1,
@@ -154,6 +203,48 @@ def test_save_result_plots_writes_pls_gsea_dotplot(tmp_path: Path):
     assert any(path.name == "regional_values_brain.png" for path in paths)
     assert any(path.name == "gsea_pls1_dotplot.png" for path in paths)
     assert any(path.name == "ora_pls1_heatmap.png" for path in paths)
+
+
+def test_save_result_plots_writes_pls_ensemble_dotplot(tmp_path: Path):
+    component = PLSComponentResult(
+        index=1,
+        explained_variance=0.2,
+        p_value=0.01,
+        gene_table=pd.DataFrame(
+            {
+                "gene": ["A", "B", "C"],
+                "weight": [0.6, -0.3, 0.1],
+                "zscore": [2.0, -1.8, 0.5],
+                "p": [0.01, 0.02, 0.1],
+                "fdr": [0.02, 0.04, 0.2],
+                "maxT": [0.03, 0.05, 0.3],
+            }
+        ),
+        ensemble_table=_ensemble_table(),
+    )
+    result = PLSResult(
+        metadata=AnalysisMetadata(
+            method="pls",
+            atlas_id="dk",
+            atlas_label="Desikan-Killiany (83 regions)",
+            hemisphere="left",
+            regions="all",
+            source="array",
+            source_kind="vector",
+            source_space=None,
+            n_permutations=8,
+            enrichment_method="ensemble",
+            n_components=1,
+        ),
+        regional_values=pd.DataFrame({"id": [1, 2, 3], "label": ["a", "b", "c"], "value": [0.1, -0.2, 0.3]}),
+        components=(component,),
+        cumulative_variance=np.array([0.2]),
+    )
+
+    paths = save_result_plots(result, tmp_path)
+
+    assert tmp_path.joinpath("plots", "ensemble_pls1_dotplot.png").exists()
+    assert any(path.name == "ensemble_pls1_dotplot.png" for path in paths)
 
 
 def test_save_result_plots_writes_gene_pca_plots(tmp_path: Path):

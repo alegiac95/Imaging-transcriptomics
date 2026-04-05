@@ -16,6 +16,7 @@ The toolbox supports:
 
 - spatial correlation between imaging maps and regional gene expression
 - partial least squares (PLS) workflows with atlas-aware null models
+- single-gene atlas queries with co-expression ranking
 - gene set enrichment analysis (GSEA) and over-representation analysis (ORA)
 - gene-list PCA
 - GEDAR weighted regional expression scoring from TWAS-style gene tables
@@ -83,6 +84,7 @@ The CLI entry point is `imt`. The longer `imagingtranscriptomics` command still 
 
 - `imt corr` or `run_corr()` for map-to-gene correlation and optional enrichment
 - `imt pls` or `run_pls()` for multivariate gene components
+- `imt gene` or `run_gene()` for one gene's regional expression and top co-expressed genes
 - `imt gene-pca` or `run_gene_pca()` for PCA on a selected gene list
 - `imt gedar` or `run_gedar()` for weighted regional transcriptomic scoring
 - `imt atlases` and `imt genesets` to inspect packaged resources
@@ -116,6 +118,16 @@ result = imt.run_corr(
     n_permutations=1000,
     output_dir="out_corr",
 )
+```
+
+### Single-gene example
+
+```bash
+imt gene \
+  --gene RELN \
+  --atlas dk \
+  --top-n 25 \
+  --output /abs/path/out_gene
 ```
 
 ## Packaged atlases
@@ -156,6 +168,8 @@ Common examples include:
 
 - `corr_genes.tsv`
 - `pls_summary.tsv`
+- `gene_expression.tsv`
+- `top_coexpressed_genes.tsv`
 - `gene_pca_scores.tsv`
 - `gedar_scores.tsv`
 
@@ -178,6 +192,7 @@ The CLI help is also intentionally descriptive:
 imt --help
 imt corr --help
 imt pls --help
+imt gene --help
 imt gene-pca --help
 imt gedar --help
 ```

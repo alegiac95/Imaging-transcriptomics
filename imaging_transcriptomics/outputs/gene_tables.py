@@ -5,7 +5,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from ..models import GEDARResult, GenePCAResult, PLSComponentResult, PLSResult
+from ..models import GEDARResult, GenePCAResult, GeneQueryResult, PLSComponentResult, PLSResult
 from .common import (
     ACCENT,
     NEGATIVE,
@@ -69,6 +69,28 @@ def plot_regional_values(regional_values: pd.DataFrame, output_dir: Path) -> Pat
     return save_figure(fig, output_dir / "plots" / "regional_values.png")
 
 
+def plot_region_profile(
+    regional_values: pd.DataFrame,
+    *,
+    value_column: str,
+    title: str,
+    ylabel: str,
+    output_path: Path,
+) -> Path:
+    """Write a generic region-index profile plot for one regional value column."""
+
+    _, plt = matplotlib_backend()
+    x = np.arange(regional_values.shape[0])
+    y = regional_values[value_column].to_numpy(dtype=float)
+    colors, _ = regional_colors(regional_values)
+    fig, ax = plt.subplots(figsize=(12, 5.2))
+    ax.plot(x, y, color="#94a3b8", lw=1.2, alpha=0.9, zorder=1)
+    ax.scatter(x, y, c=colors, s=28, edgecolor="white", linewidth=0.5, zorder=2)
+    ax.axhline(0, color="#64748b", lw=1, alpha=0.7)
+    style_axes(ax, title=title, xlabel="Region index", ylabel=ylabel, grid_axis="y")
+    return save_figure(fig, output_path)
+
+
 def plot_correlation_ranking(gene_table: pd.DataFrame, output_dir: Path, top_n: int = 20) -> Path:
     """Write the top positive and negative correlation genes plot."""
 
@@ -94,6 +116,79 @@ def plot_correlation_distribution(gene_table: pd.DataFrame, output_dir: Path) ->
     ax.axvline(np.median(scores), color="#f59e0b", lw=1.3, alpha=0.9, linestyle="--")
     style_axes(ax, title="Distribution of gene correlations", xlabel="Spearman correlation", ylabel="Count", grid_axis="y")
     return save_figure(fig, output_dir / "plots" / "corr_distribution.png")
+
+
+def plot_gene_query_ranking(result: GeneQueryResult, output_dir: Path) -> Path | None:
+    """Write the top positive and negative co-expression tails for one seed gene."""
+
+    if result.coexpressed_genes.empty and result.anticorrelated_genes.empty:
+        return None
+    positive = result.coexpressed_genes.copy()
+    positive["_color"] = [POSITIVE] * positive.shape[0]
+    negative = result.anticorrelated_genes.copy()
+    negative["_color"] = [NEGATIVE] * negative.shape[0]
+    ranked = pd.concat([negative, positive], ignore_index=True)
+    return barh_plot(
+        ranked["gene"],
+        ranked["score"],
+        ranked["_color"].tolist(),
+        title=f"Top co-expression tails with {result.gene}",
+        xlabel="Spearman correlation",
+        output_path=output_dir / "plots" / "gene_coexpression_top_genes.png",
+    )
+
+
+def plot_gene_query_distribution(result: GeneQueryResult, output_dir: Path) -> Path:
+    """Write the distribution of co-expression scores for one seed gene."""
+
+    _, plt = matplotlib_backend()
+    fig, ax = plt.subplots(figsize=(8, 5))
+    scores = result.gene_table["score"].to_numpy(dtype=float)
+    ax.hist(scores, bins=60, color=ACCENT, alpha=0.8, edgecolor="white", linewidth=0.4)
+    ax.axvline(0, color="#64748b", lw=1, alpha=0.7)
+    ax.axvline(np.median(scores), color="#f59e0b", lw=1.3, alpha=0.9, linestyle="--")
+    style_axes(
+        ax,
+        title=f"Distribution of co-expression with {result.gene}",
+        xlabel="Spearman correlation",
+        ylabel="Count",
+        grid_axis="y",
+    )
+    return save_figure(fig, output_dir / "plots" / "gene_coexpression_distribution.png")
+
+
+def plot_gene_query_matrix(result: GeneQueryResult, output_dir: Path) -> Path:
+    """Write a seed-plus-top-genes co-expression heatmap."""
+
+    _, plt = matplotlib_backend()
+    matrix = result.coexpression_matrix.copy()
+    labels = shorten_labels(matrix.index.astype(str))
+    n_genes = matrix.shape[0]
+    fig_size = max(4.8, min(10.5, 0.42 * n_genes + 2.8))
+    fig, ax = plt.subplots(figsize=(fig_size, fig_size))
+    image = ax.imshow(
+        matrix.to_numpy(dtype=float),
+        cmap="RdBu_r",
+        vmin=-1.0,
+        vmax=1.0,
+        interpolation="nearest",
+    )
+    ax.set_xticks(np.arange(n_genes), labels=labels, rotation=45, ha="right")
+    ax.set_yticks(np.arange(n_genes), labels=labels)
+    ax.set_xticks(np.arange(-0.5, n_genes, 1), minor=True)
+    ax.set_yticks(np.arange(-0.5, n_genes, 1), minor=True)
+    ax.grid(which="minor", color="white", linestyle="-", linewidth=0.9)
+    ax.tick_params(which="minor", bottom=False, left=False)
+    style_axes(
+        ax,
+        title=f"Co-expression matrix around {result.gene}",
+        xlabel="Gene",
+        ylabel="Gene",
+        grid_axis="",
+    )
+    colorbar = fig.colorbar(image, ax=ax, fraction=0.046, pad=0.04)
+    colorbar.set_label("Spearman correlation")
+    return save_figure(fig, output_dir / "plots" / "gene_coexpression_matrix.png")
 
 
 def plot_pls_variance(result: PLSResult, output_dir: Path) -> list[Path]:

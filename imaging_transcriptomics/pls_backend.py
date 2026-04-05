@@ -232,6 +232,51 @@ def fit_prepared_pls1(
     )
 
 
+def fit_prepared_pls1_chunk(
+    prepared: PreparedPLS1,
+    Y,
+    *,
+    n_components: int,
+    return_x_weights: bool = False,
+) -> dict[str, np.ndarray]:
+    """Fit repeated reduced PLS-1 models for a block of response vectors.
+
+    This provides a backend seam for permutation-heavy workflows without
+    forcing the workflow layer to manage one fit at a time.
+    """
+
+    response_block = np.asarray(Y, dtype=float)
+    if response_block.ndim == 1:
+        response_block = response_block.reshape(-1, 1)
+    if response_block.ndim != 2:
+        raise ValueError("Y must be a one- or two-dimensional array.")
+
+    n_perm = response_block.shape[1]
+    varexp = np.zeros((n_perm, n_components), dtype=float)
+    x_weights = (
+        np.zeros((n_perm, prepared.X.shape[1], n_components), dtype=float)
+        if return_x_weights
+        else None
+    )
+
+    for index in range(n_perm):
+        fit = _simpls_prepared_pls1_reduced(
+            prepared,
+            response_block[:, index],
+            n_components=n_components,
+            return_x_scores=False,
+            return_x_weights=return_x_weights,
+        )
+        varexp[index, :] = np.asarray(fit["varexp"], dtype=float)[:n_components]
+        if return_x_weights and x_weights is not None:
+            x_weights[index, :, :] = np.asarray(fit["x_weights"], dtype=float)[:, :n_components]
+
+    out = {"varexp": varexp}
+    if return_x_weights and x_weights is not None:
+        out["x_weights"] = x_weights
+    return out
+
+
 def pls_regression(
     X,
     Y,

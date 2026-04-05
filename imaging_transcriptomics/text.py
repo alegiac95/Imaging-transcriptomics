@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from pathlib import Path
 
-from .models import CorrelationResult, GEDARResult, GenePCAResult, PLSResult
+from .models import CorrelationResult, GEDARResult, GenePCAResult, GeneQueryResult, PLSResult
 
 
 def _analysis_header_lines(result: CorrelationResult | PLSResult) -> list[str]:
@@ -25,6 +25,7 @@ def _analysis_header_lines(result: CorrelationResult | PLSResult) -> list[str]:
     ]
     if meta.n_components is not None:
         lines.append(f"PLS components kept: {meta.n_components}")
+    lines.append(f"Enrichment method: {meta.enrichment_method}")
     if meta.geneset is not None:
         lines.append(f"Gene set file or name: {meta.geneset}")
     if meta.geneset_organism is not None:
@@ -76,6 +77,7 @@ def _gedar_header_lines(result: GEDARResult) -> list[str]:
         f"Direction filter: {result.direction}",
         f"Expression normalization: {result.normalize_expression}",
         f"Weight normalization: {result.normalize_weights}",
+        f"Enrichment method: {result.enrichment_method}",
         "Brain gene filter: packaged AHPA_mrna_brain.tsv",
         f"Requested genes: {len(result.requested_genes)}",
         f"Matched genes: {len(result.matched_genes)}",
@@ -88,7 +90,64 @@ def _gedar_header_lines(result: GEDARResult) -> list[str]:
     ]
 
 
-def render_readme(result: CorrelationResult | PLSResult | GenePCAResult | GEDARResult, *, plots_available: bool = True) -> str:
+def _gene_query_header_lines(result: GeneQueryResult) -> list[str]:
+    return [
+        "Imaging Transcriptomics 2.0 Gene Query",
+        "======================================",
+        "",
+        f"Generated: {datetime.now(timezone.utc).astimezone().isoformat(timespec='seconds')}",
+        "Method: gene",
+        f"Atlas: {result.atlas_label} ({result.atlas_id})",
+        f"Hemisphere mode: {result.hemisphere}",
+        f"Region scope: {result.regions}",
+        f"Gene: {result.gene}",
+        f"Expression z-scored across regions: {result.zscore_expression}",
+        f"Co-expression BH threshold: {result.fdr_threshold}",
+        f"Maximum co-expressed genes returned: {result.top_n}",
+        "",
+        "Files",
+        "-----",
+    ]
+
+
+def render_readme(result: CorrelationResult | PLSResult | GenePCAResult | GEDARResult | GeneQueryResult, *, plots_available: bool = True) -> str:
+    if isinstance(result, GeneQueryResult):
+        lines = _gene_query_header_lines(result)
+        lines.extend(
+            [
+                "metadata.json: machine-readable metadata for the gene query.",
+                "gene_query_summary.tsv: compact one-row summary of the queried gene, atlas, and hit counts.",
+                "gene_expression.tsv: atlas-aligned regional expression vector for the requested gene.",
+                "top_expression_regions.tsv: highest-expression atlas regions for the requested gene.",
+                "top_coexpressed_genes.tsv: top significant positively co-expressed genes after BH filtering.",
+                "top_negatively_correlated_genes.tsv: top significant negatively correlated genes after BH filtering.",
+            ]
+        )
+        if plots_available:
+            lines.extend(
+                [
+                    "plots/gene_expression_brain.png: atlas brain map of the requested gene's regional expression.",
+                    "plots/gene_expression_cortex.png: cortical surface map of the requested gene's regional expression when surface atlas geometry is available.",
+                    "plots/gene_expression_cortex_brainspace.png: optional BrainSpace-rendered cortical comparison plot when the BrainSpace backend is available.",
+                    "plots/gene_coexpression_matrix.png: seed-plus-top-genes co-expression heatmap including both positive and negative tails.",
+                    "plots/gene_coexpression_top_genes.png: top positive and negative co-expression tails for the requested gene.",
+                ]
+            )
+        lines.extend(
+            [
+                "",
+                "Notes",
+                "-----",
+                "The requested gene is first resolved against the selected atlas expression matrix after hemisphere and region filtering.",
+                "Co-expression is defined here as Spearman correlation of regional expression patterns across the selected atlas regions.",
+                "P-values use the standard asymptotic t approximation for Spearman correlation, followed by Benjamini-Hochberg correction across all tested genes.",
+                "The top results are written separately for positive and negative significant correlations, using the same `top_n` limit per direction.",
+            ]
+        )
+        if not plots_available:
+            lines.append("Plot PNGs were skipped because the optional plotting dependencies are not installed.")
+        return "\n".join(lines) + "\n"
+
     if isinstance(result, GenePCAResult):
         lines = _gene_pca_header_lines(result)
         lines.extend(
@@ -139,6 +198,10 @@ def render_readme(result: CorrelationResult | PLSResult | GenePCAResult | GEDARR
                 "missing_genes.txt: input genes that were not found in the atlas expression matrix.",
             ]
         )
+        if result.gsea_table is not None:
+            lines.append("gsea_gedar_results.tsv: preranked GSEA results for the full matched signed GEDAR gene table.")
+        if result.ora_tables is not None:
+            lines.append("ora_gedar_up.tsv / ora_gedar_down.tsv: ORA results for the up- and down-weighted genes selected by the GEDAR filters.")
         if plots_available and result.direction != "split":
             lines.extend(
                 [
@@ -159,6 +222,10 @@ def render_readme(result: CorrelationResult | PLSResult | GenePCAResult | GEDARR
                     "plots/gedar_up_weights.png / plots/gedar_down_weights.png: strongest gene weights used in the separate up and down GEDAR averages.",
                 ]
             )
+        if plots_available and result.gsea_table is not None:
+            lines.append("plots/gsea_gedar_dotplot.png: top GEDAR GSEA terms shown as a dot plot.")
+        if plots_available and result.ora_tables is not None:
+            lines.append("plots/ora_gedar_heatmap.png: GEDAR ORA heatmap with one row for up and one row for down.")
         lines.extend(
             [
                 "",
@@ -168,6 +235,7 @@ def render_readme(result: CorrelationResult | PLSResult | GenePCAResult | GEDARR
                 "Rows with blank genes, non-finite weights, non-finite rank values, duplicated gene symbols, or genes outside the packaged AHPA brain-gene filter are removed automatically and recorded in `gedar_excluded.tsv`.",
                 "In `combined` mode the signed weights are averaged as in the original PTRS script. In `up` and `down` modes the selected weights are converted to absolute values before averaging, again matching the original PTRS workflow.",
                 "The output `score` is the regional weighted average across genes, while `score_z` is standardized across the selected regions. Split runs write `score_up`, `score_up_z`, `score_down`, and `score_down_z` instead.",
+                "GEDAR enrichment is optional. `gsea` uses the full matched signed gene ranking, while `ora` splits the genes selected for the GEDAR score into separate up and down sets.",
             ]
         )
         if not plots_available:
@@ -197,6 +265,10 @@ def render_readme(result: CorrelationResult | PLSResult | GenePCAResult | GEDARR
             lines.append("gsea_corr_results.tsv: GSEA results for the correlation ranking.")
             if plots_available:
                 lines.append("plots/gsea_corr_dotplot.png: top GSEA terms shown as a dot plot.")
+        if result.ensemble_table is not None:
+            lines.append("ensemble_corr_results.tsv: ensemble-enrichment results for the correlation ranking, using category scores against phenotype nulls.")
+            if plots_available:
+                lines.append("plots/ensemble_corr_dotplot.png: top ensemble-enriched terms shown as a dot plot.")
         if result.ora_tables is not None:
             lines.append("ora_corr_up.tsv / ora_corr_down.tsv: ORA results for positive and negative genes, including odds ratios and 95% confidence intervals.")
             if plots_available:
@@ -225,6 +297,10 @@ def render_readme(result: CorrelationResult | PLSResult | GenePCAResult | GEDARR
             lines.append("gsea_pls<n>_results.tsv: GSEA results for each PLS component.")
             if plots_available:
                 lines.append("plots/gsea_pls<n>_dotplot.png: top GSEA terms shown as a dot plot for each component.")
+        if any(component.ensemble_table is not None for component in result.components):
+            lines.append("ensemble_pls<n>_results.tsv: ensemble-enrichment results for each PLS component, using category scores against phenotype nulls.")
+            if plots_available:
+                lines.append("plots/ensemble_pls<n>_dotplot.png: top ensemble-enriched terms shown as a dot plot for each component.")
         if any(component.ora_tables is not None for component in result.components):
             lines.append("ora_pls<n>_up.tsv / ora_pls<n>_down.tsv: ORA results for positive and negative genes in each PLS component, including odds ratios and 95% confidence intervals.")
             if plots_available:
@@ -248,7 +324,7 @@ def render_readme(result: CorrelationResult | PLSResult | GenePCAResult | GEDARR
 
 
 def write_readme(
-    result: CorrelationResult | PLSResult | GenePCAResult | GEDARResult,
+    result: CorrelationResult | PLSResult | GenePCAResult | GEDARResult | GeneQueryResult,
     output_dir: Path,
     *,
     plots_available: bool = True,

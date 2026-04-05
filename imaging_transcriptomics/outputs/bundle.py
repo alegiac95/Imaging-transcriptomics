@@ -4,19 +4,21 @@ from pathlib import Path
 
 import numpy as np
 
-from ..models import CorrelationResult, GEDARResult, GenePCAResult, PLSResult
+from ..models import CorrelationResult, GEDARResult, GenePCAResult, GeneQueryResult, PLSResult
 from .brain import (
     plot_brain_volume_map,
     plot_cortical_surface_map,
     plot_cortical_surface_map_brainspace,
 )
 from .common import zscore_for_plot
-from .enrichment import plot_gsea_dotplot, plot_ora_heatmap
+from .enrichment import plot_ensemble_dotplot, plot_gsea_dotplot, plot_ora_heatmap
 from .gene_tables import (
     plot_correlation_distribution,
     plot_correlation_ranking,
     plot_gedar_regional_scores,
     plot_gedar_weights,
+    plot_gene_query_matrix,
+    plot_gene_query_ranking,
     plot_gene_pca_loadings,
     plot_gene_pca_regional_component,
     plot_gene_pca_variance,
@@ -57,8 +59,33 @@ def _append_cortical_plots(
         paths.append(brainspace_path)
 
 
-def save_result_plots(result: CorrelationResult | PLSResult | GenePCAResult | GEDARResult, output_dir: Path) -> list[Path]:
+def save_result_plots(result: CorrelationResult | PLSResult | GenePCAResult | GEDARResult | GeneQueryResult, output_dir: Path) -> list[Path]:
     """Write the standard plot bundle for one result object."""
+
+    if isinstance(result, GeneQueryResult):
+        paths: list[Path] = [plot_gene_query_matrix(result, output_dir)]
+        ranking_path = plot_gene_query_ranking(result, output_dir)
+        if ranking_path is not None:
+            paths.append(ranking_path)
+        value_column = "expression_z" if result.zscore_expression else "expression"
+        brain_path = plot_brain_volume_map(
+            result.regional_values,
+            atlas_id=result.atlas_id,
+            value_column=value_column,
+            title=f"{result.gene} expression map",
+            output_path=output_dir / "plots" / "gene_expression_brain.png",
+        )
+        if brain_path is not None:
+            paths.append(brain_path)
+        _append_cortical_plots(
+            paths,
+            table=result.regional_values,
+            atlas_id=result.atlas_id,
+            value_column=value_column,
+            title=f"{result.gene} cortical expression",
+            output_path=output_dir / "plots" / "gene_expression_cortex.png",
+        )
+        return paths
 
     if isinstance(result, GenePCAResult):
         paths: list[Path] = [plot_gene_pca_variance(result, output_dir)]
@@ -151,6 +178,22 @@ def save_result_plots(result: CorrelationResult | PLSResult | GenePCAResult | GE
             weights_path = plot_gedar_weights(result, output_dir)
             if weights_path is not None:
                 paths.append(weights_path)
+        if result.gsea_table is not None:
+            gsea_path = plot_gsea_dotplot(
+                result.gsea_table,
+                output_dir / "plots" / "gsea_gedar_dotplot.png",
+                title="GEDAR GSEA",
+            )
+            if gsea_path is not None:
+                paths.append(gsea_path)
+        if result.ora_tables is not None:
+            ora_path = plot_ora_heatmap(
+                result.ora_tables,
+                output_dir / "plots" / "ora_gedar_heatmap.png",
+                title="GEDAR ORA up/down heatmap",
+            )
+            if ora_path is not None:
+                paths.append(ora_path)
         return paths
 
     paths: list[Path] = []
@@ -185,6 +228,14 @@ def save_result_plots(result: CorrelationResult | PLSResult | GenePCAResult | GE
             )
             if gsea_path is not None:
                 paths.append(gsea_path)
+        if result.ensemble_table is not None:
+            ensemble_path = plot_ensemble_dotplot(
+                result.ensemble_table,
+                output_dir / "plots" / "ensemble_corr_dotplot.png",
+                title="Top ensemble-enriched terms",
+            )
+            if ensemble_path is not None:
+                paths.append(ensemble_path)
         if result.ora_tables is not None:
             ora_path = plot_ora_heatmap(
                 result.ora_tables,
@@ -206,6 +257,14 @@ def save_result_plots(result: CorrelationResult | PLSResult | GenePCAResult | GE
             )
             if gsea_path is not None:
                 paths.append(gsea_path)
+        if component.ensemble_table is not None:
+            ensemble_path = plot_ensemble_dotplot(
+                component.ensemble_table,
+                output_dir / "plots" / f"ensemble_pls{component.index}_dotplot.png",
+                title=f"PLS component {component.index} ensemble enrichment",
+            )
+            if ensemble_path is not None:
+                paths.append(ensemble_path)
         if component.ora_tables is not None:
             ora_path = plot_ora_heatmap(
                 component.ora_tables,

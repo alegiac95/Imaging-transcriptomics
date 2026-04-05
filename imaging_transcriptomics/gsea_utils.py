@@ -2,9 +2,20 @@ from __future__ import annotations
 
 import logging
 from contextlib import contextmanager
+from dataclasses import dataclass
 
 import numpy as np
 import pandas as pd
+
+from .genesets import as_geneset_mapping
+
+
+@dataclass(frozen=True)
+class PreparedPrerankGeneSets:
+    """Compact geneset representation for repeated preranked ES evaluation."""
+
+    terms: tuple[str, ...]
+    hit_positions: tuple[np.ndarray, ...]
 
 
 def make_prerank_table(genes, scores) -> pd.DataFrame:
@@ -39,6 +50,122 @@ def make_prerank_table(genes, scores) -> pd.DataFrame:
         adjusted[member_idx] = base + offsets
 
     return pd.DataFrame({"gene": gene_array, "score": adjusted})
+
+
+def result_terms(res2d: pd.DataFrame) -> list[str]:
+    """Return the ordered term labels from a GSEA result table."""
+
+    if "Term" in res2d.columns:
+        return res2d["Term"].astype(str).tolist()
+    return [str(index) for index in res2d.index.tolist()]
+
+
+def result_column(res2d: pd.DataFrame, *candidates: str) -> np.ndarray:
+    """Return the first available column among a set of spelling variants."""
+
+    lowered = {str(column).lower(): column for column in res2d.columns}
+    for candidate in candidates:
+        column = lowered.get(candidate.lower())
+        if column is not None:
+            return res2d[column].to_numpy()
+    raise KeyError(f"None of the requested columns were found: {', '.join(candidates)}")
+
+
+def prepare_prerank_genesets(
+    genes,
+    geneset_resource,
+    *,
+    term_order: list[str] | tuple[str, ...] | None = None,
+) -> PreparedPrerankGeneSets:
+    """Prepare geneset hit indices for repeated ES calculations.
+
+    Parameters
+    ----------
+    genes
+        Ranked gene list in the order used by the prerank routine.
+    geneset_resource
+        Either a GMT path or a term-to-genes mapping.
+    term_order
+        Optional ordered subset of terms to retain. When provided, the prepared
+        collection follows exactly that order.
+    """
+
+    genes = [str(gene) for gene in np.asarray(genes, dtype=object).reshape(-1).tolist()]
+    gene_to_pos = {gene: index for index, gene in enumerate(genes)}
+    geneset_mapping = as_geneset_mapping(geneset_resource)
+    if term_order is None:
+        ordered_terms = list(geneset_mapping)
+    else:
+        ordered_terms = [str(term) for term in term_order]
+
+    terms: list[str] = []
+    hit_positions: list[np.ndarray] = []
+    for term in ordered_terms:
+        members = geneset_mapping.get(term)
+        if members is None:
+            raise KeyError(f"Geneset term {term!r} was not found in the resolved geneset resource.")
+        positions = sorted({gene_to_pos[gene] for gene in members if gene in gene_to_pos})
+        if not positions:
+            raise ValueError(f"Geneset term {term!r} does not overlap the ranked gene universe.")
+        terms.append(term)
+        hit_positions.append(np.asarray(positions, dtype=np.int32))
+    return PreparedPrerankGeneSets(
+        terms=tuple(terms),
+        hit_positions=tuple(hit_positions),
+    )
+
+
+def enrichment_scores_many(
+    scores,
+    prepared: PreparedPrerankGeneSets,
+) -> np.ndarray:
+    """Return enrichment scores for one or many preranked score vectors.
+
+    The implementation mirrors weighted preranked GSEA with ``p=1`` and
+    returns one ES value per geneset and score vector.
+    """
+
+    score_matrix = np.asarray(scores, dtype=float)
+    if score_matrix.ndim == 1:
+        score_matrix = score_matrix.reshape(-1, 1)
+    if score_matrix.ndim != 2:
+        raise ValueError("scores must be a one- or two-dimensional array.")
+
+    n_genes, n_rankings = score_matrix.shape
+    abs_scores = np.abs(score_matrix)
+    out = np.zeros((len(prepared.terms), n_rankings), dtype=float)
+
+    for term_index, positions in enumerate(prepared.hit_positions):
+        nh = int(positions.size)
+        if nh == 0 or nh >= n_genes:
+            continue
+        hit_weights = abs_scores[positions, :]
+        norm = hit_weights.sum(axis=0)
+        norm_safe = np.where(norm == 0, 1.0, norm)
+        hit_increments = hit_weights / norm_safe.reshape(1, -1)
+        hit_cumulative = np.cumsum(hit_increments, axis=0)
+
+        miss_scale = 1.0 / float(n_genes - nh)
+        hit_order = np.arange(1, nh + 1, dtype=float).reshape(-1, 1)
+        nonhits_after = positions.reshape(-1, 1).astype(float) + 1.0 - hit_order
+        rs_after_hits = hit_cumulative - (nonhits_after * miss_scale)
+
+        if nh == 1:
+            rs_before_hits = -positions.reshape(-1, 1).astype(float) * miss_scale
+        else:
+            misses_before = positions.reshape(-1, 1).astype(float) - np.arange(nh, dtype=float).reshape(-1, 1)
+            rs_before_hits = np.vstack(
+                [
+                    -positions[0] * miss_scale * np.ones((1, n_rankings), dtype=float),
+                    hit_cumulative[:-1, :] - misses_before[1:, :] * miss_scale,
+                ]
+            )
+
+        max_pos = np.max(rs_after_hits, axis=0)
+        min_neg = np.min(np.vstack([rs_before_hits, np.zeros((1, n_rankings), dtype=float)]), axis=0)
+        out[term_index, :] = np.where(np.abs(max_pos) >= np.abs(min_neg), max_pos, min_neg)
+
+    return out
 
 
 class _SuppressDuplicatePrerankWarnings(logging.Filter):

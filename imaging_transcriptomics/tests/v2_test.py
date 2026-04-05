@@ -22,12 +22,15 @@ import imaging_transcriptomics.api as api
 from imaging_transcriptomics._compat import suppress_pkg_resources_deprecation
 from imaging_transcriptomics.atlas_registry import get_atlas
 from imaging_transcriptomics.corr import CorrAnalysis
+from imaging_transcriptomics.ensemble import category_scores_many, prepare_category_sets
 from imaging_transcriptomics.genes import PLSGenes
 from imaging_transcriptomics.gsea_utils import (
+    enrichment_scores_many,
     gsea_style_fdr,
     make_prerank_table,
     normalize_enrichment_nulls,
     normalize_enrichment_scores,
+    prepare_prerank_genesets,
     run_prerank,
 )
 from imaging_transcriptomics.genesets import get_geneset
@@ -220,6 +223,26 @@ def test_build_run_config_normalizes_inputs(tmp_path):
     assert config.output_dir == tmp_path
 
 
+def test_build_run_config_defaults_to_ensemble_enrichment():
+    config = build_run_config("corr", atlas="dk", hemisphere="left", regions="default", n_permutations=8)
+
+    assert config.enrichment_method == "ensemble"
+
+
+def test_build_run_config_defaults_ora_threshold_when_ora_is_selected():
+    config = build_run_config(
+        "corr",
+        atlas="dk",
+        hemisphere="left",
+        regions="default",
+        n_permutations=8,
+        enrichment_method="ora",
+    )
+
+    assert config.enrichment_method == "ora"
+    assert config.ora_p_threshold == 0.05
+
+
 def test_run_analysis_accepts_explicit_config(monkeypatch):
     def fake_permutations(extracted, n_permutations, *, null_method="auto", seed=1234):
         del seed
@@ -235,6 +258,33 @@ def test_run_analysis_accepts_explicit_config(monkeypatch):
 
     assert result.metadata.method == "corr"
     assert result.metadata.n_permutations == 4
+
+
+def test_run_corr_defaults_to_ensemble_outputs(tmp_path, monkeypatch):
+    def fake_permutations(extracted, n_permutations, *, null_method="auto", seed=1234):
+        del seed
+        values = extracted.values - np.mean(extracted.values)
+        std = np.std(values, ddof=1)
+        zvalues = values / std if std else values
+        offsets = np.linspace(-0.2, 0.2, n_permutations, dtype=float)
+        return zvalues.reshape(-1, 1) + offsets.reshape(1, -1), null_method
+
+    monkeypatch.setattr(api, "_permute_scan_values", fake_permutations)
+    result = run_corr(
+        np.linspace(-1.0, 1.0, 41),
+        atlas="dk",
+        hemisphere="left",
+        regions="all",
+        n_permutations=8,
+        output_dir=tmp_path,
+    )
+
+    assert result.metadata.enrichment_method == "ensemble"
+    assert result.ensemble_table is not None
+    assert result.gsea_table is None
+    assert result.ora_tables is None
+    assert (tmp_path / "ensemble_corr_results.tsv").exists()
+    assert (tmp_path / "plots" / "ensemble_corr_dotplot.png").exists()
 
 
 def test_run_pls_reuses_original_and_permuted_fits_once(monkeypatch):
@@ -346,11 +396,7 @@ def test_extract_scan_data_accepts_multidot_nifti_filename(tmp_path: Path):
 
 def test_corr_gsea_writes_results_with_outdir(tmp_path: Path, monkeypatch):
     seen_duplicate_flags = []
-    es_sequence = [
-        [0.4, -0.6],
-        [0.2, -0.3],
-        [0.4, -0.9],
-    ]
+    gene_sets = {"TermA": ("G1", "G2"), "TermB": ("G2", "G3")}
 
     class _FakeResult:
         def __init__(self, es):
@@ -364,10 +410,11 @@ def test_corr_gsea_writes_results_with_outdir(tmp_path: Path, monkeypatch):
     def _fake_prerank(rnk, *args, **kwargs):
         frame = rnk if isinstance(rnk, pd.DataFrame) else pd.DataFrame(rnk)
         seen_duplicate_flags.append(frame.iloc[:, 1].duplicated().any())
-        return _FakeResult(es_sequence[len(seen_duplicate_flags) - 1])
+        return _FakeResult([0.4, -0.6])
 
     fake_gseapy = types.SimpleNamespace(prerank=_fake_prerank)
     monkeypatch.setitem(sys.modules, "gseapy", fake_gseapy)
+    monkeypatch.setattr("imaging_transcriptomics.corr.resolve_geneset_resource", lambda *args, **kwargs: gene_sets)
 
     analysis = CorrAnalysis(n_iterations=2, n_genes=3)
     results = analysis.gene_results.results
@@ -389,21 +436,32 @@ def test_corr_gsea_writes_results_with_outdir(tmp_path: Path, monkeypatch):
     table = pd.read_csv(output, sep="\t")
     assert list(table.columns) == ["Term", "es", "nes", "p_val", "fdr"]
     assert table.shape == (2, 5)
+    prepared = prepare_prerank_genesets(["G1", "G2", "G3"], gene_sets, term_order=["TermA", "TermB"])
+    boot_es = enrichment_scores_many(results.boot_corr, prepared)
     expected_nes = normalize_enrichment_scores(
-        np.array(es_sequence[0], dtype=float),
-        np.array(es_sequence[1:], dtype=float).T,
+        np.array([0.4, -0.6], dtype=float),
+        boot_es,
     )
     expected_fdr = gsea_style_fdr(
         expected_nes,
         normalize_enrichment_nulls(
-            np.array(es_sequence[0], dtype=float),
-            np.array(es_sequence[1:], dtype=float).T,
+            np.array([0.4, -0.6], dtype=float),
+            boot_es,
         ),
     )
     np.testing.assert_allclose(table["nes"].to_numpy(dtype=float), expected_nes)
-    np.testing.assert_allclose(table["p_val"].to_numpy(dtype=float), np.array([2 / 3, 2 / 3]))
+    np.testing.assert_allclose(
+        table["p_val"].to_numpy(dtype=float),
+        np.array(
+            [
+                (np.sum(boot_es[0, :] >= 0.4) + 1) / 3,
+                (np.sum(boot_es[1, :] <= -0.6) + 1) / 3,
+            ],
+            dtype=float,
+        ),
+    )
     np.testing.assert_allclose(table["fdr"].to_numpy(dtype=float), expected_fdr)
-    assert seen_duplicate_flags == [False, False, False]
+    assert seen_duplicate_flags == [False]
 
 
 def test_make_prerank_table_breaks_ties_deterministically():
@@ -416,6 +474,49 @@ def test_make_prerank_table_breaks_ties_deterministically():
     assert not table["score"].duplicated().any()
     assert table.loc[0, "score"] < table.loc[1, "score"]
     assert table.loc[2, "score"] < table.loc[3, "score"] < table.loc[4, "score"]
+
+
+def test_enrichment_scores_many_matches_manual_weighted_es():
+    genes = ["G1", "G2", "G3", "G4", "G5"]
+    gene_sets = {"TermA": ("G1", "G3", "G5"), "TermB": ("G2", "G4")}
+    prepared = prepare_prerank_genesets(genes, gene_sets, term_order=["TermA", "TermB"])
+    scores = np.array(
+        [
+            [2.0, -1.0],
+            [1.0, 0.5],
+            [0.5, 2.0],
+            [-0.5, -0.5],
+            [-1.5, 1.5],
+        ],
+        dtype=float,
+    )
+
+    def _manual_es(vector: np.ndarray, hits: tuple[str, ...]) -> float:
+        hit_idx = [genes.index(gene) for gene in hits]
+        nh = len(hit_idx)
+        weights = np.abs(vector[hit_idx])
+        nr = float(weights.sum())
+        miss = 1.0 / float(len(vector) - nh)
+        running = 0.0
+        peak = -np.inf
+        trough = np.inf
+        hit_lookup = {index: weight / nr for index, weight in zip(hit_idx, weights, strict=False)}
+        for index in range(len(vector)):
+            running += hit_lookup.get(index, -miss)
+            peak = max(peak, running)
+            trough = min(trough, running)
+        return peak if abs(peak) >= abs(trough) else trough
+
+    expected = np.array(
+        [
+            [_manual_es(scores[:, 0], gene_sets["TermA"]), _manual_es(scores[:, 1], gene_sets["TermA"])],
+            [_manual_es(scores[:, 0], gene_sets["TermB"]), _manual_es(scores[:, 1], gene_sets["TermB"])],
+        ],
+        dtype=float,
+    )
+    actual = enrichment_scores_many(scores, prepared)
+
+    np.testing.assert_allclose(actual, expected)
 
 
 def test_normalize_enrichment_scores_matches_gseapy_same_sign_rule():
@@ -450,12 +551,37 @@ def test_gsea_style_fdr_matches_expected_tail_ratio():
     np.testing.assert_allclose(fdr, np.array([0.5, 0.5, 0.75, 0.5], dtype=float))
 
 
+def test_corr_ensemble_uses_category_scores_from_permuted_gene_statistics(tmp_path: Path, monkeypatch):
+    gene_sets = {"TermA": ("G1", "G2"), "TermB": ("G2", "G3")}
+    monkeypatch.setattr("imaging_transcriptomics.corr.resolve_geneset_resource", lambda *args, **kwargs: gene_sets)
+
+    analysis = CorrAnalysis(n_iterations=2, n_genes=3)
+    results = analysis.gene_results.results
+    results.genes = np.array([["G1"], ["G2"], ["G3"]], dtype=object)
+    results.corr = np.array([[0.4, -0.1, 0.2]], dtype=float)
+    results.boot_corr = np.array(
+        [
+            [0.5, 0.3],
+            [-0.2, -0.1],
+            [0.1, 0.4],
+        ],
+        dtype=float,
+    )
+
+    table = analysis.ensemble(gene_set="lake", outdir=tmp_path, n_perm=2)
+
+    output = tmp_path / "ensemble_corr_results.tsv"
+    assert output.exists()
+    prepared = prepare_category_sets(["G1", "G2", "G3"], gene_sets)
+    observed = category_scores_many(results.corr[0, :], prepared)[:, 0]
+    null_scores = category_scores_many(results.boot_corr, prepared)
+    np.testing.assert_allclose(table["category_score"].to_numpy(dtype=float), observed)
+    np.testing.assert_allclose(table["null_mean"].to_numpy(dtype=float), null_scores.mean(axis=1))
+    np.testing.assert_allclose(table["null_sd"].to_numpy(dtype=float), null_scores.std(axis=1, ddof=1))
+
+
 def test_pls_gsea_uses_external_nulls_for_nes(tmp_path: Path, monkeypatch):
-    es_sequence = [
-        [0.6, -0.5],
-        [0.3, -0.25],
-        [0.9, -0.75],
-    ]
+    gene_sets = {"TermA": ("G1", "G2"), "TermB": ("G2", "G3")}
     permutation_nums = []
 
     class _FakeResult:
@@ -476,10 +602,14 @@ def test_pls_gsea_uses_external_nulls_for_nes(tmp_path: Path, monkeypatch):
 
     def _fake_prerank(rnk, *args, **kwargs):
         permutation_nums.append(kwargs.get("permutation_num"))
-        return _FakeResult(es_sequence[len(permutation_nums) - 1])
+        return _FakeResult([0.6, -0.5])
 
     fake_gseapy = types.SimpleNamespace(prerank=_fake_prerank)
     monkeypatch.setitem(sys.modules, "gseapy", fake_gseapy)
+    monkeypatch.setattr(
+        "imaging_transcriptomics.gene_stats.pls.resolve_geneset_resource",
+        lambda *args, **kwargs: gene_sets,
+    )
 
     pls = PLSGenes(1, n_iter=2, n_genes=3)
     pls.orig.genes[0, :] = np.array(["G1", "G2", "G3"], dtype=object)
@@ -492,20 +622,53 @@ def test_pls_gsea_uses_external_nulls_for_nes(tmp_path: Path, monkeypatch):
     output = tmp_path / "gsea_pls1_results.tsv"
     assert output.exists()
     table = pd.read_csv(output, sep="\t")
+    prepared = prepare_prerank_genesets(["G1", "G2", "G3"], gene_sets, term_order=["TermA", "TermB"])
+    boot_scores = (
+        pls.boot.weights[0, :, :2] - pls.boot.weights[0, :, :2].mean(axis=0, keepdims=True)
+    ) / pls.boot.weights[0, :, :2].std(axis=0, ddof=1, keepdims=True)
+    boot_es = enrichment_scores_many(boot_scores, prepared)
     expected_nes = normalize_enrichment_scores(
-        np.array(es_sequence[0], dtype=float),
-        np.array(es_sequence[1:], dtype=float).T,
+        np.array([0.6, -0.5], dtype=float),
+        boot_es,
     )
     expected_fdr = gsea_style_fdr(
         expected_nes,
         normalize_enrichment_nulls(
-            np.array(es_sequence[0], dtype=float),
-            np.array(es_sequence[1:], dtype=float).T,
+            np.array([0.6, -0.5], dtype=float),
+            boot_es,
         ),
     )
     np.testing.assert_allclose(table["nes"].to_numpy(dtype=float), expected_nes)
     np.testing.assert_allclose(table["fdr"].to_numpy(dtype=float), expected_fdr)
-    assert permutation_nums == [0, 0, 0]
+    assert permutation_nums == [0]
+
+
+def test_pls_ensemble_uses_component_weight_nulls(tmp_path: Path, monkeypatch):
+    gene_sets = {"TermA": ("G1", "G2"), "TermB": ("G2", "G3")}
+    monkeypatch.setattr(
+        "imaging_transcriptomics.gene_stats.pls.resolve_geneset_resource",
+        lambda *args, **kwargs: gene_sets,
+    )
+
+    pls = PLSGenes(1, n_iter=2, n_genes=3)
+    pls.orig.genes[0, :] = np.array(["G1", "G2", "G3"], dtype=object)
+    pls.orig.zscored[0, :] = np.array([1.0, 0.2, -0.5], dtype=float)
+    pls.boot.weights[0, :, 0] = np.array([1.2, 0.1, -0.6], dtype=float)
+    pls.boot.weights[0, :, 1] = np.array([0.8, 0.3, -0.7], dtype=float)
+
+    tables = pls.ensemble(gene_set="lake", outdir=tmp_path, n_iter=2)
+
+    output = tmp_path / "ensemble_pls1_results.tsv"
+    assert output.exists()
+    assert len(tables) == 1
+    prepared = prepare_category_sets(["G1", "G2", "G3"], gene_sets)
+    observed = category_scores_many(pls.orig.zscored[0, :], prepared)[:, 0]
+    boot_scores = (
+        pls.boot.weights[0, :, :2] - pls.boot.weights[0, :, :2].mean(axis=0, keepdims=True)
+    ) / pls.boot.weights[0, :, :2].std(axis=0, ddof=1, keepdims=True)
+    null_scores = category_scores_many(boot_scores, prepared)
+    np.testing.assert_allclose(tables[0]["category_score"].to_numpy(dtype=float), observed)
+    np.testing.assert_allclose(tables[0]["null_mean"].to_numpy(dtype=float), null_scores.mean(axis=1))
 
 
 def test_run_prerank_suppresses_duplicate_score_warning(tmp_path: Path, monkeypatch, capsys):

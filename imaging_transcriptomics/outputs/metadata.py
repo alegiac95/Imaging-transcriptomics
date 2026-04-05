@@ -8,12 +8,29 @@ from pathlib import Path
 
 import numpy as np
 
-from ..models import CorrelationResult, GEDARResult, GenePCAResult, PLSResult
+from ..models import CorrelationResult, GEDARResult, GenePCAResult, GeneQueryResult, PLSResult
 
 
-def metadata_dict(result: CorrelationResult | PLSResult | GenePCAResult | GEDARResult) -> dict[str, object]:
+def metadata_dict(result: CorrelationResult | PLSResult | GenePCAResult | GEDARResult | GeneQueryResult) -> dict[str, object]:
     """Return the JSON-serializable metadata payload for one result object."""
 
+    if isinstance(result, GeneQueryResult):
+        return {
+            "method": "gene",
+            "atlas_id": result.atlas_id,
+            "atlas_label": result.atlas_label,
+            "hemisphere": result.hemisphere,
+            "regions": result.regions,
+            "gene": result.gene,
+            "zscore_expression": bool(result.zscore_expression),
+            "top_n": int(result.top_n),
+            "fdr_threshold": float(result.fdr_threshold),
+            "n_regions": int(result.regional_values.shape[0]),
+            "n_tested_genes": int(result.gene_table.shape[0]),
+            "n_significant_positive_genes": int(result.coexpressed_genes.shape[0]),
+            "n_significant_negative_genes": int(result.anticorrelated_genes.shape[0]),
+            "output_dir": None if result.output_dir is None else str(result.output_dir),
+        }
     if isinstance(result, GenePCAResult):
         return {
             "method": "gene-pca",
@@ -52,6 +69,9 @@ def metadata_dict(result: CorrelationResult | PLSResult | GenePCAResult | GEDARR
             "atlas_label": result.atlas_label,
             "hemisphere": result.hemisphere,
             "regions": result.regions,
+            "enrichment_method": result.enrichment_method,
+            "geneset": result.geneset,
+            "geneset_organism": result.geneset_organism,
             "weights_source": result.weights_source,
             "gene_column": result.gene_column,
             "weight_column": result.weight_column,
@@ -83,7 +103,7 @@ def metadata_dict(result: CorrelationResult | PLSResult | GenePCAResult | GEDARR
     return metadata
 
 
-def write_metadata_json(result: CorrelationResult | PLSResult | GenePCAResult | GEDARResult, output_dir: Path) -> Path:
+def write_metadata_json(result: CorrelationResult | PLSResult | GenePCAResult | GEDARResult | GeneQueryResult, output_dir: Path) -> Path:
     """Write the metadata payload for one result bundle as JSON."""
 
     output_dir.mkdir(parents=True, exist_ok=True)

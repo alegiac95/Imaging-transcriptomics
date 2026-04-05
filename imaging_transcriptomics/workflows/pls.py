@@ -44,7 +44,7 @@ def run_pls_configured(
     )
     analysis.gene_results.results.compute(n_jobs=config.n_jobs)
 
-    if config.run_gsea:
+    if config.enrichment_method == "gsea":
         gsea_tables = run_to_tables(
             config.output_dir,
             lambda outdir: analysis.gene_results.results.gsea(
@@ -60,7 +60,23 @@ def run_pls_configured(
     else:
         gsea_tables = [None] * analysis.n_components
 
-    if config.ora_p_threshold is not None:
+    if config.enrichment_method == "ensemble":
+        ensemble_tables = run_to_tables(
+            config.output_dir,
+            lambda outdir: analysis.gene_results.results.ensemble(
+                gene_set=config.gene_set,
+                outdir=outdir,
+                geneset_organism=config.geneset_organism,
+            ),
+            lambda outdir: [
+                outdir / f"ensemble_pls{index}_results.tsv"
+                for index in range(1, analysis.n_components + 1)
+            ],
+        )
+    else:
+        ensemble_tables = [None] * analysis.n_components
+
+    if config.enrichment_method == "ora":
         ora_files = run_to_tables(
             config.output_dir,
             lambda outdir: analysis.gene_results.results.ora(
@@ -90,7 +106,7 @@ def run_pls_configured(
             n_components=analysis.n_components,
         ),
         regional_values=regional_values_frame(extracted),
-        components=pls_components(analysis, gsea_tables, ora_tables),
+        components=pls_components(analysis, gsea_tables, ensemble_tables, ora_tables),
         cumulative_variance=np.cumsum(analysis.components_var),
         output_dir=config.output_dir,
     )

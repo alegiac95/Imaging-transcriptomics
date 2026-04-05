@@ -1,6 +1,11 @@
 import numpy as np
 
-from imaging_transcriptomics.pls_backend import fit_prepared_pls1, pls_regression, prepare_pls1
+from imaging_transcriptomics.pls_backend import (
+    fit_prepared_pls1,
+    fit_prepared_pls1_chunk,
+    pls_regression,
+    prepare_pls1,
+)
 
 
 def test_local_pls_backend_runs_and_returns_expected_shapes():
@@ -63,3 +68,34 @@ def test_reduced_prepared_pls_backend_matches_full_weights_and_variance():
     np.testing.assert_allclose(reduced["x_weights"], full["x_weights"])
     np.testing.assert_allclose(reduced["varexp"], full["varexp"])
     assert "x_scores" not in reduced
+
+
+def test_chunked_prepared_pls_backend_matches_individual_reduced_fits():
+    rs = np.random.RandomState(29)
+    X = rs.normal(size=(26, 8))
+    Y = rs.normal(size=(26, 5))
+    prepared = prepare_pls1(X)
+
+    chunked = fit_prepared_pls1_chunk(
+        prepared,
+        Y,
+        n_components=3,
+        return_x_weights=True,
+    )
+
+    expected_varexp = []
+    expected_weights = []
+    for index in range(Y.shape[1]):
+        fit = fit_prepared_pls1(
+            prepared,
+            Y[:, index],
+            n_components=3,
+            return_full=False,
+            return_x_scores=False,
+            return_x_weights=True,
+        )
+        expected_varexp.append(fit["varexp"])
+        expected_weights.append(fit["x_weights"])
+
+    np.testing.assert_allclose(chunked["varexp"], np.asarray(expected_varexp, dtype=float))
+    np.testing.assert_allclose(chunked["x_weights"], np.asarray(expected_weights, dtype=float))

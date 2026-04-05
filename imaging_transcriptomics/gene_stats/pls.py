@@ -9,12 +9,17 @@ import pandas as pd
 from scipy.stats import zscore
 
 from .._logging import get_logger
+from ..ensemble import category_scores_many, ensemble_table as build_ensemble_table, prepare_category_sets
 from ..gsea_utils import (
+    enrichment_scores_many,
     gsea_style_fdr,
     make_prerank_table,
     nominal_pvalues_from_nulls,
     normalize_enrichment_nulls,
     normalize_enrichment_scores,
+    prepare_prerank_genesets,
+    result_column,
+    result_terms,
     run_prerank,
 )
 from ..genesets import resolve_geneset_resource
@@ -244,37 +249,29 @@ class PLSGenes:
                 seed=1234,
                 permutation_num=0,
             )
-            origin_es = gsea_results.res2d.es.to_numpy()
-            boot_es = np.zeros((origin_es.shape[0], n_iter))
-            for iteration in range(n_iter):
-                rnk = make_prerank_table(
-                    gene_list,
-                    zscore(self.boot.weights[component, :, iteration], ddof=1),
-                )
-                gsea_res = run_prerank(
-                    gseapy,
-                    rnk,
-                    gene_set,
-                    max_size=gene_limit,
-                    outdir=None,
-                    seed=1234,
-                    permutation_num=0,
-                )
-                boot_es[:, iteration] = gsea_res.res2d.es.to_numpy()
+            term_order = result_terms(gsea_results.res2d)
+            prepared_sets = prepare_prerank_genesets(gene_list, gene_set, term_order=term_order)
+            origin_es = result_column(gsea_results.res2d, "ES", "es").astype(float)
+            boot_scores = zscore(
+                np.asarray(self.boot.weights[component, :, :n_iter], dtype=float),
+                axis=0,
+                ddof=1,
+            )
+            boot_es = enrichment_scores_many(boot_scores, prepared_sets)
             nes = normalize_enrichment_scores(origin_es, boot_es)
             nes_null = normalize_enrichment_nulls(origin_es, boot_es)
             p_val = nominal_pvalues_from_nulls(origin_es, boot_es)
             p_corr = gsea_style_fdr(nes, nes_null)
             out_data = OrderedDict()
-            out_data["Term"] = gsea_results.res2d.axes[0].to_list()
-            out_data["es"] = gsea_results.res2d.values[:, 0]
+            out_data["Term"] = term_order
+            out_data["es"] = origin_es
             out_data["nes"] = nes
             out_data["p_val"] = p_val
             out_data["fdr"] = p_corr
-            out_data["genest_size"] = gsea_results.res2d.values[:, 4]
-            out_data["matched_size"] = gsea_results.res2d.values[:, 5]
-            out_data["matched_genes"] = gsea_results.res2d.values[:, 6]
-            out_data["ledge_genes"] = gsea_results.res2d.values[:, 7]
+            out_data["genest_size"] = result_column(gsea_results.res2d, "geneset_size", "genest_size")
+            out_data["matched_size"] = result_column(gsea_results.res2d, "matched_size")
+            out_data["matched_genes"] = result_column(gsea_results.res2d, "matched_genes")
+            out_data["ledge_genes"] = result_column(gsea_results.res2d, "ledge_genes")
             out_df = pd.DataFrame.from_dict(out_data)
             if outdir is not None:
                 logger.info("Saving GSEA results.")
@@ -318,3 +315,38 @@ class PLSGenes:
                     )
             results.append(ora_tables)
         return results
+
+    def ensemble(
+        self,
+        gene_set="lake",
+        outdir=None,
+        n_iter=1000,
+        geneset_organism: str = "Human",
+    ) -> list[pd.DataFrame]:
+        """Run phenotype-null ensemble enrichment on each retained PLS component."""
+
+        assert isinstance(self.orig, OrigPLS)
+        assert isinstance(self.boot, BootPLS)
+        if self.boot.weights is None:
+            raise RuntimeError("PLS ensemble enrichment requires stored permutation gene weights. Re-run with enrichment enabled.")
+        logger.info("Performing ensemble enrichment.")
+        gene_set = resolve_geneset_resource(gene_set, organism=geneset_organism)
+        outputs: list[pd.DataFrame] = []
+        for component in range(self.n_components):
+            gene_list = list(self.orig.genes[component, :])
+            prepared = prepare_category_sets(gene_list, gene_set)
+            observed = category_scores_many(self.orig.zscored[component, :], prepared)[:, 0]
+            boot_scores = zscore(
+                np.asarray(self.boot.weights[component, :, :n_iter], dtype=float),
+                axis=0,
+                ddof=1,
+            )
+            null_scores = category_scores_many(boot_scores, prepared)
+            out_df = build_ensemble_table(observed, null_scores, prepared)
+            outputs.append(out_df)
+            if outdir is not None:
+                logger.info("Saving ensemble enrichment results.")
+                output_dir = Path(outdir)
+                assert output_dir.exists()
+                out_df.to_csv(output_dir / f"ensemble_pls{component + 1}_results.tsv", index=False, sep="\t")
+        return outputs

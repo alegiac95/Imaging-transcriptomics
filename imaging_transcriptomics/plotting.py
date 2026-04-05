@@ -25,13 +25,18 @@ from .outputs.common import (
     zscore_for_plot as _zscore_for_plot,
 )
 from .outputs.enrichment import (
+    ensemble_dot_frame as _ensemble_dot_frame,
     ora_heatmap_frame as _ora_heatmap_frame,
+    plot_ensemble_dotplot,
     plot_gsea_dotplot,
     plot_ora_heatmap,
 )
 from .outputs.gene_tables import (
     plot_correlation_distribution,
     plot_correlation_ranking,
+    plot_gene_query_distribution,
+    plot_gene_query_matrix,
+    plot_gene_query_ranking,
     plot_gene_pca_loadings,
     plot_gene_pca_regional_component,
     plot_gene_pca_variance,
@@ -39,11 +44,13 @@ from .outputs.gene_tables import (
     plot_gedar_weights,
     plot_pls_component,
     plot_pls_variance,
+    plot_region_profile,
     plot_regional_values,
 )
 
 __all__ = [
     "_load_surface_parcellation",
+    "_ensemble_dot_frame",
     "_matplotlib",
     "_ora_heatmap_frame",
     "_regional_colors",
@@ -56,6 +63,9 @@ __all__ = [
     "plot_brain_volume_map",
     "plot_correlation_distribution",
     "plot_correlation_ranking",
+    "plot_gene_query_distribution",
+    "plot_gene_query_matrix",
+    "plot_gene_query_ranking",
     "plot_cortical_surface_map",
     "plot_cortical_surface_map_brainspace",
     "plot_gene_pca_loadings",
@@ -63,10 +73,12 @@ __all__ = [
     "plot_gene_pca_variance",
     "plot_gedar_regional_scores",
     "plot_gedar_weights",
+    "plot_ensemble_dotplot",
     "plot_gsea_dotplot",
     "plot_ora_heatmap",
     "plot_pls_component",
     "plot_pls_variance",
+    "plot_region_profile",
     "plot_regional_values",
     "save_result_plots",
 ]

@@ -53,9 +53,10 @@ def result_metadata(extracted, config: RunConfig, *, null_method: str, n_compone
         source_space=extracted.source_space,
         n_permutations=config.n_permutations,
         null_method=null_method,
-        geneset=config.gene_set if (config.run_gsea or config.ora_p_threshold is not None) else None,
-        geneset_organism=config.geneset_organism if (config.run_gsea or config.ora_p_threshold is not None) else None,
-        ora_p_threshold=config.ora_p_threshold,
+        enrichment_method=config.enrichment_method,
+        geneset=config.gene_set if config.enrichment_method != "none" else None,
+        geneset_organism=config.geneset_organism if config.enrichment_method != "none" else None,
+        ora_p_threshold=config.ora_p_threshold if config.enrichment_method == "ora" else None,
         n_components=n_components,
     )
 
@@ -77,6 +78,7 @@ def corr_gene_table(analysis) -> pd.DataFrame:
 def pls_components(
     analysis,
     gsea_tables: list[pd.DataFrame | None],
+    ensemble_tables: list[pd.DataFrame | None],
     ora_tables: list[dict[str, pd.DataFrame] | None],
 ) -> tuple[PLSComponentResult, ...]:
     """Pack per-component PLS outputs into typed result records."""
@@ -97,6 +99,7 @@ def pls_components(
                 }
             ),
             gsea_table=gsea_tables[index],
+            ensemble_table=ensemble_tables[index],
             ora_tables=ora_tables[index],
         )
         for index in range(analysis.n_components)

@@ -13,13 +13,18 @@ from .corr_stats import (
     spearman_correlation_bootstrap,
     spearman_correlation_matrix,
 )
+from .ensemble import category_scores_many, ensemble_table as build_ensemble_table, prepare_category_sets
 from .genes import CorrGenes, GeneResults
 from .gsea_utils import (
+    enrichment_scores_many,
     gsea_style_fdr,
     make_prerank_table,
     nominal_pvalues_from_nulls,
     normalize_enrichment_nulls,
     normalize_enrichment_scores,
+    prepare_prerank_genesets,
+    result_column,
+    result_terms,
     run_prerank,
 )
 from .genesets import resolve_geneset_resource
@@ -159,21 +164,13 @@ class CorrAnalysis:
             permutation_num=0,
             seed=1234,
         )
-        origin_es = gsea_results.res2d.ES.to_numpy()
-        boot_es = np.zeros((origin_es.shape[0], n_perm))
-        for index in range(n_perm):
-            rnk = make_prerank_table(gene_list, self.gene_results.results.boot_corr[:, index])
-            gsea_res = run_prerank(
-                gseapy,
-                rnk,
-                gene_set,
-                max_size=gene_limit,
-                permutation_num=0,
-                no_plot=True,
-                outdir=None,
-                seed=1234,
-            )
-            boot_es[:, index] = gsea_res.res2d.ES.values
+        term_order = result_terms(gsea_results.res2d)
+        prepared_sets = prepare_prerank_genesets(gene_list, gene_set, term_order=term_order)
+        origin_es = result_column(gsea_results.res2d, "ES", "es").astype(float)
+        boot_es = enrichment_scores_many(
+            self.gene_results.results.boot_corr[:, :n_perm],
+            prepared_sets,
+        )
 
         boot_nes = normalize_enrichment_scores(origin_es, boot_es)
         boot_nes_null = normalize_enrichment_nulls(origin_es, boot_es)
@@ -182,8 +179,8 @@ class CorrAnalysis:
 
         out_df = pd.DataFrame.from_dict(
             OrderedDict(
-                Term=gsea_results.res2d.Term.values.tolist(),
-                es=gsea_results.res2d.ES.values,
+                Term=term_order,
+                es=origin_es,
                 nes=boot_nes,
                 p_val=p_val,
                 fdr=p_corr,
@@ -221,3 +218,29 @@ class CorrAnalysis:
             for direction, table in ora_tables.items():
                 table.to_csv(outdir / f"ora_corr_{direction}.tsv", index=False, sep="\t")
         return ora_tables
+
+    def ensemble(
+        self,
+        gene_set="lake",
+        outdir=None,
+        n_perm=1_000,
+        geneset_organism: str = "Human",
+    ):
+        """Run phenotype-null ensemble enrichment on the correlation scores."""
+
+        assert isinstance(self.gene_results.results, CorrGenes)
+        if self.gene_results.results.boot_corr is None:
+            raise RuntimeError("Correlation ensemble enrichment requires stored permutation nulls. Re-run with enrichment enabled.")
+        logger.info("Performing ensemble enrichment.")
+        gene_set = resolve_geneset_resource(gene_set, organism=geneset_organism)
+        gene_list = list(self.gene_results.results.genes[:, 0].tolist())
+        prepared = prepare_category_sets(gene_list, gene_set)
+        observed = category_scores_many(self.gene_results.results.corr[0, :], prepared)[:, 0]
+        null_scores = category_scores_many(self.gene_results.results.boot_corr[:, :n_perm], prepared)
+        out_df = build_ensemble_table(observed, null_scores, prepared)
+        if outdir is not None:
+            logger.info("Saving ensemble enrichment results.")
+            outdir = Path(outdir)
+            assert outdir.exists()
+            out_df.to_csv(outdir / "ensemble_corr_results.tsv", index=False, sep="\t")
+        return out_df

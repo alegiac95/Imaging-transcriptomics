@@ -14,10 +14,12 @@ DEFAULT_NULL_METHOD = "auto"
 DEFAULT_SEED = 1234
 DEFAULT_N_JOBS = 1
 DEFAULT_GENESET_ORGANISM = "Human"
+DEFAULT_ENRICHMENT_METHOD = "ensemble"
 VALID_HEMISPHERES = {"left", "both"}
 VALID_REGIONS = {"default", "all", "cort", "cort+sub"}
 VALID_METHODS = {"corr", "pls"}
 VALID_NULL_METHODS = {"auto", "vasa", "alexander_bloch", "moran", "random"}
+VALID_ENRICHMENT_METHODS = {"ensemble", "gsea", "ora", "none"}
 
 
 @dataclass(frozen=True)
@@ -32,6 +34,7 @@ class RunConfig:
     n_permutations: int = DEFAULT_PERMUTATIONS
     null_method: NullMethod = DEFAULT_NULL_METHOD
     output_dir: Path | None = None
+    enrichment_method: str = DEFAULT_ENRICHMENT_METHOD
     run_gsea: bool = False
     gene_set: str = "lake"
     geneset_organism: str = DEFAULT_GENESET_ORGANISM
@@ -62,6 +65,7 @@ def build_run_config(
     n_permutations: int = DEFAULT_PERMUTATIONS,
     null_method: str = DEFAULT_NULL_METHOD,
     output_dir: str | Path | None = None,
+    enrichment_method: str | None = None,
     run_gsea: bool = False,
     gene_set: str = "lake",
     geneset_organism: str = DEFAULT_GENESET_ORGANISM,
@@ -90,6 +94,18 @@ def build_run_config(
     n_jobs = ensure_positive_int(n_jobs, name="n_jobs")
     resolved_output = ensure_output_dir(output_dir)
 
+    if enrichment_method is not None:
+        enrichment_method = ensure_choice(enrichment_method, VALID_ENRICHMENT_METHODS, name="enrichment_method")
+    elif run_gsea:
+        enrichment_method = "gsea"
+    elif ora_p_threshold is not None:
+        enrichment_method = "ora"
+    else:
+        enrichment_method = DEFAULT_ENRICHMENT_METHOD
+
+    if enrichment_method == "ora" and ora_p_threshold is None:
+        ora_p_threshold = 0.05
+
     if method == "pls":
         if n_components is None and var is None:
             raise ConfigurationError("PLS runs require either n_components or var.")
@@ -107,6 +123,7 @@ def build_run_config(
         n_permutations=n_permutations,
         null_method=null_method,
         output_dir=resolved_output,
+        enrichment_method=enrichment_method,
         run_gsea=bool(run_gsea),
         gene_set=gene_set,
         geneset_organism=str(geneset_organism),

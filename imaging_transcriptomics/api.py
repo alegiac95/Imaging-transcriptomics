@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from .config import DEFAULT_NULL_METHOD, DEFAULT_PERMUTATIONS, RunConfig, build_run_config
+from .gene_query import run_gene as _run_gene
 from .models import CorrelationResult, PLSResult
 from .nulls import permute_scan_values as _permute_scan_values
 from .workflows.correlation import run_corr_configured as _workflow_run_corr_configured
@@ -50,6 +51,7 @@ def run_corr(
     n_permutations: int = DEFAULT_PERMUTATIONS,
     null_method: str = DEFAULT_NULL_METHOD,
     output_dir=None,
+    enrichment_method: str | None = None,
     run_gsea: bool = False,
     gene_set: str = "lake",
     geneset_organism: str = "Human",
@@ -86,8 +88,15 @@ def run_corr(
         on the atlas and available dependencies.
     output_dir
         Optional output directory for TSV, metadata, and plot files.
+    enrichment_method
+        Enrichment backend to apply after the gene-wise statistics are
+        computed. Use ``"ensemble"`` for phenotype-null category enrichment,
+        ``"gsea"`` for preranked GSEA, ``"ora"`` for over-representation
+        analysis, or ``"none"`` to skip enrichment. When omitted, the default
+        is ``"ensemble"`` unless the legacy ``run_gsea`` or
+        ``ora_p_threshold`` arguments imply another choice.
     run_gsea
-        Whether to run preranked GSEA after gene-wise statistics are computed.
+        Legacy compatibility flag that forces the preranked GSEA backend.
     gene_set
         Packaged geneset name, Enrichr library name, or GMT path used by GSEA
         and ORA.
@@ -119,6 +128,7 @@ def run_corr(
         n_permutations=n_permutations,
         null_method=null_method,
         output_dir=output_dir,
+        enrichment_method=enrichment_method,
         run_gsea=run_gsea,
         gene_set=gene_set,
         geneset_organism=geneset_organism,
@@ -142,6 +152,7 @@ def run_pls(
     n_permutations: int = DEFAULT_PERMUTATIONS,
     null_method: str = DEFAULT_NULL_METHOD,
     output_dir=None,
+    enrichment_method: str | None = None,
     run_gsea: bool = False,
     gene_set: str = "lake",
     geneset_organism: str = "Human",
@@ -179,8 +190,13 @@ def run_pls(
         on the atlas and available dependencies.
     output_dir
         Optional output directory for TSV, metadata, and plot files.
+    enrichment_method
+        Enrichment backend to apply to each retained component. Use
+        ``"ensemble"``, ``"gsea"``, ``"ora"``, or ``"none"``. When omitted,
+        the default is ``"ensemble"`` unless the legacy ``run_gsea`` or
+        ``ora_p_threshold`` arguments imply another choice.
     run_gsea
-        Whether to run preranked GSEA on the component gene rankings.
+        Legacy compatibility flag that forces the preranked GSEA backend.
     gene_set
         Packaged geneset name, Enrichr library name, or GMT path used by GSEA
         and ORA.
@@ -211,6 +227,7 @@ def run_pls(
         n_permutations=n_permutations,
         null_method=null_method,
         output_dir=output_dir,
+        enrichment_method=enrichment_method,
         run_gsea=run_gsea,
         gene_set=gene_set,
         geneset_organism=geneset_organism,
@@ -226,7 +243,33 @@ def run_pls(
 __all__ = [
     "RunConfig",
     "build_run_config",
+    "run_gene",
     "run_analysis",
     "run_corr",
     "run_pls",
 ]
+
+
+def run_gene(
+    gene: str,
+    *,
+    atlas: str = "dk",
+    hemisphere: str = "left",
+    regions: str = "default",
+    zscore_expression: bool = True,
+    top_n: int = 25,
+    fdr_threshold: float = 0.05,
+    output_dir=None,
+):
+    """Return one gene's regional expression vector and top co-expressed genes."""
+
+    return _run_gene(
+        gene,
+        atlas=atlas,
+        hemisphere=hemisphere,
+        regions=regions,
+        zscore_expression=zscore_expression,
+        top_n=top_n,
+        fdr_threshold=fdr_threshold,
+        output_dir=output_dir,
+    )

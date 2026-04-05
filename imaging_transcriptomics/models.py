@@ -10,8 +10,9 @@ import pandas as pd
 
 HemisphereMode = Literal["left", "both"]
 RegionScope = Literal["default", "all", "cort", "cort+sub"]
-AnalysisMethod = Literal["corr", "pls", "gene-pca", "gedar"]
+AnalysisMethod = Literal["corr", "pls", "gene-pca", "gedar", "gene"]
 NullMethod = Literal["auto", "vasa", "alexander_bloch", "moran", "random"]
+EnrichmentMethod = Literal["ensemble", "gsea", "ora", "none"]
 SourceKind = Literal["vector", "surface", "volume"]
 RankMode = Literal["ascending", "descending"]
 GEDARDirection = Literal["combined", "up", "down", "split"]
@@ -125,6 +126,7 @@ class AnalysisMetadata:
     source_space: str | None
     n_permutations: int
     null_method: NullMethod = "auto"
+    enrichment_method: EnrichmentMethod = "none"
     geneset: str | None = None
     geneset_organism: str | None = None
     ora_p_threshold: float | None = None
@@ -139,6 +141,7 @@ class CorrelationResult:
     regional_values: pd.DataFrame
     gene_table: pd.DataFrame
     gsea_table: pd.DataFrame | None = None
+    ensemble_table: pd.DataFrame | None = None
     ora_tables: dict[str, pd.DataFrame] | None = None
     output_dir: Path | None = None
 
@@ -152,6 +155,7 @@ class PLSComponentResult:
     p_value: float
     gene_table: pd.DataFrame
     gsea_table: pd.DataFrame | None = None
+    ensemble_table: pd.DataFrame | None = None
     ora_tables: dict[str, pd.DataFrame] | None = None
 
 
@@ -209,4 +213,29 @@ class GEDARResult:
     top_percent: float | None
     top_n: int | None
     p_threshold: float | None
+    gsea_table: pd.DataFrame | None = None
+    ora_tables: dict[str, pd.DataFrame] | None = None
+    enrichment_method: Literal["gsea", "ora", "none"] = "none"
+    geneset: str | None = None
+    geneset_organism: str | None = None
+    output_dir: Path | None = None
+
+
+@dataclass(frozen=True)
+class GeneQueryResult:
+    """Returned by the single-gene expression and co-expression query."""
+
+    atlas_id: str
+    atlas_label: str
+    hemisphere: HemisphereMode
+    regions: RegionScope
+    gene: str
+    zscore_expression: bool
+    regional_values: pd.DataFrame
+    gene_table: pd.DataFrame
+    coexpressed_genes: pd.DataFrame
+    anticorrelated_genes: pd.DataFrame
+    coexpression_matrix: pd.DataFrame
+    top_n: int
+    fdr_threshold: float
     output_dir: Path | None = None

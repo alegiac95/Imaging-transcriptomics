@@ -11,12 +11,12 @@ import numpy as np
 import pandas as pd
 
 from ..exceptions import PlottingUnavailableError
-from ..models import CorrelationResult, GEDARResult, GenePCAResult, PLSResult
+from ..models import CorrelationResult, GEDARResult, GenePCAResult, GeneQueryResult, PLSResult
 from ..text import write_readme
 from .metadata import write_metadata_json
 
 
-def _write_optional_plots(result: CorrelationResult | PLSResult | GenePCAResult | GEDARResult, output_dir: Path) -> bool:
+def _write_optional_plots(result: CorrelationResult | PLSResult | GenePCAResult | GEDARResult | GeneQueryResult, output_dir: Path) -> bool:
     """Try to write plots for one result bundle and warn on optional failures."""
 
     from ..plotting import save_result_plots
@@ -39,6 +39,8 @@ def _write_analysis_bundle(result: CorrelationResult | PLSResult, output_dir: Pa
         result.gene_table.to_csv(output_dir / "corr_genes.tsv", sep="\t", index=False)
         if result.gsea_table is not None:
             result.gsea_table.to_csv(output_dir / "gsea_corr_results.tsv", sep="\t", index=False)
+        if result.ensemble_table is not None:
+            result.ensemble_table.to_csv(output_dir / "ensemble_corr_results.tsv", sep="\t", index=False)
         if result.ora_tables is not None:
             for direction, table in result.ora_tables.items():
                 if table is not None:
@@ -58,6 +60,12 @@ def _write_analysis_bundle(result: CorrelationResult | PLSResult, output_dir: Pa
         if component.gsea_table is not None:
             component.gsea_table.to_csv(
                 output_dir / f"gsea_pls{component.index}_results.tsv",
+                sep="\t",
+                index=False,
+            )
+        if component.ensemble_table is not None:
+            component.ensemble_table.to_csv(
+                output_dir / f"ensemble_pls{component.index}_results.tsv",
                 sep="\t",
                 index=False,
             )
@@ -90,13 +98,56 @@ def _write_gedar_bundle(result: GEDARResult, output_dir: Path, *, plots_availabl
     result.regional_scores.to_csv(output_dir / "gedar_scores.tsv", sep="\t", index=False)
     result.gene_table.to_csv(output_dir / "gedar_genes.tsv", sep="\t", index=False)
     result.excluded_table.to_csv(output_dir / "gedar_excluded.tsv", sep="\t", index=False)
+    if result.gsea_table is not None:
+        result.gsea_table.to_csv(output_dir / "gsea_gedar_results.tsv", sep="\t", index=False)
+    if result.ora_tables is not None:
+        for direction, table in result.ora_tables.items():
+            if table is not None:
+                table.to_csv(output_dir / f"ora_gedar_{direction}.tsv", sep="\t", index=False)
     (output_dir / "matched_genes.txt").write_text("\n".join(result.matched_genes) + ("\n" if result.matched_genes else ""))
     (output_dir / "missing_genes.txt").write_text("\n".join(result.missing_genes) + ("\n" if result.missing_genes else ""))
     write_metadata_json(result, output_dir)
     write_readme(result, output_dir, plots_available=plots_available)
 
 
-def write_result_bundle(result: CorrelationResult | PLSResult | GenePCAResult | GEDARResult, output_dir: Path) -> None:
+def _write_gene_query_bundle(result: GeneQueryResult, output_dir: Path, *, plots_available: bool) -> None:
+    """Write the standard persisted bundle for single-gene query runs."""
+
+    value_column = "expression_z" if result.zscore_expression else "expression"
+    top_regions = (
+        result.regional_values.sort_values(value_column, ascending=False, kind="mergesort")
+        .head(min(10, result.regional_values.shape[0]))
+        .reset_index(drop=True)
+    )
+    summary = pd.DataFrame(
+        [
+            {
+                "gene": result.gene,
+                "atlas_id": result.atlas_id,
+                "atlas_label": result.atlas_label,
+                "hemisphere": result.hemisphere,
+                "regions": result.regions,
+                "expression_column": value_column,
+                "n_regions": int(result.regional_values.shape[0]),
+                "n_positive_hits": int(result.coexpressed_genes.shape[0]),
+                "n_negative_hits": int(result.anticorrelated_genes.shape[0]),
+                "expression_min": float(result.regional_values[value_column].min()),
+                "expression_median": float(result.regional_values[value_column].median()),
+                "expression_max": float(result.regional_values[value_column].max()),
+            }
+        ]
+    )
+
+    result.regional_values.to_csv(output_dir / "gene_expression.tsv", sep="\t", index=False)
+    summary.to_csv(output_dir / "gene_query_summary.tsv", sep="\t", index=False)
+    top_regions.to_csv(output_dir / "top_expression_regions.tsv", sep="\t", index=False)
+    result.coexpressed_genes.to_csv(output_dir / "top_coexpressed_genes.tsv", sep="\t", index=False)
+    result.anticorrelated_genes.to_csv(output_dir / "top_negatively_correlated_genes.tsv", sep="\t", index=False)
+    write_metadata_json(result, output_dir)
+    write_readme(result, output_dir, plots_available=plots_available)
+
+
+def write_result_bundle(result: CorrelationResult | PLSResult | GenePCAResult | GEDARResult | GeneQueryResult, output_dir: Path) -> None:
     """Write all standard tables, metadata, README text, and optional plots."""
 
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -106,6 +157,9 @@ def write_result_bundle(result: CorrelationResult | PLSResult | GenePCAResult | 
         return
     if isinstance(result, GEDARResult):
         _write_gedar_bundle(result, output_dir, plots_available=plots_available)
+        return
+    if isinstance(result, GeneQueryResult):
+        _write_gene_query_bundle(result, output_dir, plots_available=plots_available)
         return
     _write_analysis_bundle(result, output_dir, plots_available=plots_available)
 
