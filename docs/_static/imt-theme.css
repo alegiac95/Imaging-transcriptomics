@@ -496,26 +496,27 @@ body[data-theme="dark"] figure.imt-workflow-story-figure {
 }
 
 body[data-theme="dark"] .imt-workflow-group {
-  border-color: rgba(255, 255, 255, 0.06);
-  background: linear-gradient(180deg, rgba(226, 233, 240, 0.88), rgba(214, 224, 233, 0.88));
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+  border-color: rgba(151, 175, 202, 0.16);
+  background: linear-gradient(180deg, rgba(31, 43, 60, 0.96), rgba(22, 31, 45, 0.96));
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22);
 }
 
 body[data-theme="dark"] .imt-workflow-card {
-  border-color: rgba(255, 255, 255, 0.06);
-  background: rgba(255, 255, 255, 0.82);
+  border-color: rgba(151, 175, 202, 0.12);
+  background: rgba(19, 28, 41, 0.92);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.16);
 }
 
 body[data-theme="dark"] .imt-workflow-group--inferential {
-  background: linear-gradient(180deg, rgba(213, 225, 239, 0.9), rgba(201, 216, 232, 0.9));
+  background: linear-gradient(180deg, rgba(26, 45, 70, 0.96), rgba(18, 32, 52, 0.96));
 }
 
 body[data-theme="dark"] .imt-workflow-group--gene {
-  background: linear-gradient(180deg, rgba(217, 234, 224, 0.9), rgba(205, 224, 213, 0.9));
+  background: linear-gradient(180deg, rgba(26, 48, 41, 0.96), rgba(19, 36, 31, 0.96));
 }
 
 body[data-theme="dark"] .imt-workflow-group--signature {
-  background: linear-gradient(180deg, rgba(236, 225, 213, 0.9), rgba(228, 216, 203, 0.9));
+  background: linear-gradient(180deg, rgba(58, 42, 28, 0.96), rgba(43, 31, 20, 0.96));
 }
 
 body[data-theme="dark"] figure.imt-workflow-story-figure img.imt-workflow-story {
@@ -532,26 +533,27 @@ body[data-theme="dark"] figure.imt-workflow-story-figure img.imt-workflow-story 
   }
 
   body:not([data-theme="light"]) .imt-workflow-group {
-    border-color: rgba(255, 255, 255, 0.06);
-    background: linear-gradient(180deg, rgba(226, 233, 240, 0.88), rgba(214, 224, 233, 0.88));
-    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+    border-color: rgba(151, 175, 202, 0.16);
+    background: linear-gradient(180deg, rgba(31, 43, 60, 0.96), rgba(22, 31, 45, 0.96));
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22);
   }
 
   body:not([data-theme="light"]) .imt-workflow-card {
-    border-color: rgba(255, 255, 255, 0.06);
-    background: rgba(255, 255, 255, 0.82);
+    border-color: rgba(151, 175, 202, 0.12);
+    background: rgba(19, 28, 41, 0.92);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.16);
   }
 
   body:not([data-theme="light"]) .imt-workflow-group--inferential {
-    background: linear-gradient(180deg, rgba(213, 225, 239, 0.9), rgba(201, 216, 232, 0.9));
+    background: linear-gradient(180deg, rgba(26, 45, 70, 0.96), rgba(18, 32, 52, 0.96));
   }
 
   body:not([data-theme="light"]) .imt-workflow-group--gene {
-    background: linear-gradient(180deg, rgba(217, 234, 224, 0.9), rgba(205, 224, 213, 0.9));
+    background: linear-gradient(180deg, rgba(26, 48, 41, 0.96), rgba(19, 36, 31, 0.96));
   }
 
   body:not([data-theme="light"]) .imt-workflow-group--signature {
-    background: linear-gradient(180deg, rgba(236, 225, 213, 0.9), rgba(228, 216, 203, 0.9));
+    background: linear-gradient(180deg, rgba(58, 42, 28, 0.96), rgba(43, 31, 20, 0.96));
   }
 
   body:not([data-theme="light"]) figure.imt-workflow-story-figure img.imt-workflow-story {
