@@ -17,13 +17,13 @@ imaging-transcriptomics context, with the practical and review papers by
 `Fulcher et al. (2021) <https://doi.org/10.1038/s41467-021-22862-1>`_.
 
 .. figure:: ../images/enrichment_pipeline_story.png
-   :alt: Enrichment overview figure showing a brain map, a ranked gene signature, and the three main enrichment families: GSEA, ORA, and ensemble enrichment.
+   :alt: Enrichment overview figure showing a brain map, a ranked gene signature, and the three main enrichment families: GSEA, ORA, and ensemble-GCEA.
    :class: imt-workflow-story
    :figclass: imt-workflow-story-figure
 
    A single ranked gene signature can be summarized in several different ways:
    GSEA uses the full ranking, ORA focuses on thresholded gene tails, and
-   ensemble enrichment compares category scores against null phenotypes.
+   ensemble-GCEA compares category scores against null phenotypes.
 
 What the workflow answers
 -------------------------
@@ -51,7 +51,7 @@ In practice, the three main families are:
 
 - ``GSEA``: ranking-based enrichment across the full ordered gene list
 - ``ORA``: over-representation among thresholded positive or negative hits
-- ``ensemble enrichment``: category scores tested against null phenotypes
+- ``ensemble-GCEA``: category scores tested against null phenotypes
 
 Method comparison
 -----------------
@@ -75,7 +75,7 @@ Method comparison
      - Overlap count, enrichment ratio, or odds ratio
      - Hypergeometric overlap against a gene background
      - When you want a simple hit-list interpretation
-   * - ``Ensemble``
+   * - ``Ensemble-GCEA``
      - A gene-wise score derived from the observed phenotype
      - Category score, often the mean gene score in the set
      - Null phenotypes or spatially matched phenotype ensembles
@@ -85,14 +85,14 @@ One practical way to think about them is:
 
 - ``GSEA`` asks whether category members cluster near the top or bottom of a ranking
 - ``ORA`` asks whether category members are over-represented among selected hits
-- ``ensemble enrichment`` asks whether a category score is unusually strong under null phenotypes
+- ``ensemble-GCEA`` asks whether a category score is unusually strong under null phenotypes
 
 Current toolbox status
 ----------------------
 
 The toolbox currently supports:
 
-- ``ensemble enrichment`` after ``corr`` and after each retained PLS component
+- ``ensemble-GCEA`` after ``corr`` and after each retained PLS component
 - ``GSEA`` after ``corr`` and after each retained PLS component
 - ``ORA`` after ``corr`` and after each retained PLS component
 
@@ -169,7 +169,7 @@ Important caveat
 GSEA is a ranking-based method. It is not the same as testing category scores
 directly against null phenotypes. In other words, it is excellent for
 describing how a pathway sits inside a ranked signature, but it is not the
-same inferential object as phenotype-ensemble enrichment.
+same inferential object as ensemble-GCEA.
 
 ORA
 ---
@@ -240,21 +240,21 @@ In imaging transcriptomics, the most defensible background is usually the set
 of genes that were actually tested in the atlas expression matrix, not the full
 human transcriptome.
 
-Ensemble enrichment
--------------------
+Ensemble-GCEA
+-------------
 
 .. figure:: ../images/enrichment_ensemble_story.png
-   :alt: Ensemble enrichment workflow figure showing a brain map, gene-wise scores, null phenotype distributions, and a category-score table.
+   :alt: Ensemble-GCEA workflow figure showing a brain map, gene-wise scores, null phenotype distributions, and a category-score table.
    :class: imt-workflow-story
    :figclass: imt-workflow-story-figure
 
-   Ensemble enrichment shifts the question from ranking position to category
+   Ensemble-GCEA shifts the question from ranking position to category
    score, and evaluates that score against a phenotype-null ensemble.
 
-What ensemble enrichment tests
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+What ensemble-GCEA tests
+~~~~~~~~~~~~~~~~~~~~~~~~
 
-Ensemble enrichment starts from the observed phenotype and computes a gene-wise
+Ensemble-GCEA starts from the observed phenotype and computes a gene-wise
 score, for example:
 
 - gene-map correlation in ``corr``
@@ -282,14 +282,14 @@ Imagine a pathway contains four genes with scores:
 - ``0.05``
 
 The pathway mean is still clearly positive, even if only two genes sit near the
-top of the ranking. Ensemble enrichment compares that observed pathway score to
+top of the ranking. Ensemble-GCEA compares that observed pathway score to
 the same pathway score computed from null phenotypes. If the null category
 means are usually much smaller, the pathway is significant.
 
 How to read the result
 ~~~~~~~~~~~~~~~~~~~~~~
 
-A typical ensemble-style output table would contain:
+A typical ensemble-GCEA output table would contain:
 
 ``Term``
    Pathway or gene-category name.
@@ -324,13 +324,13 @@ If you are unsure which family to use, a practical rule of thumb is:
 
 - choose ``GSEA`` when the full ranking is the main object of interest
 - choose ``ORA`` when you want a simple hit-list summary and are comfortable with a threshold
-- choose ``ensemble enrichment`` when the scientific question is explicitly about category scores under phenotype nulls
+- choose ``ensemble-GCEA`` when the scientific question is explicitly about category scores under phenotype nulls
 
 In many studies, it is reasonable to use more than one family:
 
 - ``GSEA`` for a broad ranked overview
 - ``ORA`` for a compact hit-list interpretation
-- ``ensemble`` for the strongest phenotype-null inference
+- ``ensemble`` for ensemble-GCEA and the strongest phenotype-null inference
 
 Current toolbox usage
 ---------------------
@@ -344,7 +344,7 @@ The main shared controls are:
 Choose the backend with ``--enrichment`` on the CLI or ``enrichment_method=``
 in the Python API:
 
-- ``ensemble`` for category scores against phenotype nulls
+- ``ensemble`` for ensemble-GCEA style category scores against phenotype nulls
 - ``gsea`` for preranked GSEA
 - ``ora`` for thresholded over-representation analysis
 

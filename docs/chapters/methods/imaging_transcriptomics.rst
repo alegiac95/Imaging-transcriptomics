@@ -107,4 +107,4 @@ Where to go next
 
 - :doc:`statistics`: exact definitions of the exported correlation and PLS statistics
 - :doc:`null_models`: how cortical and mixed-atlas spatial nulls are generated
-- :doc:`gene_sets`: how GSEA, ORA, and ensemble enrichment differ
+- :doc:`gene_sets`: how GSEA, ORA, and ensemble-GCEA differ

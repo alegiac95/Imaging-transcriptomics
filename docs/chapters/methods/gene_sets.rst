@@ -4,7 +4,7 @@ Enrichment methods
 
 This page summarizes the three enrichment families exposed by the toolbox:
 
-- ``ensemble``
+- ``ensemble`` (documented here as ``ensemble-GCEA``)
 - ``gsea``
 - ``ora``
 
@@ -19,7 +19,7 @@ gene set itself. For a broader discussion of those concerns, see
 Overview
 --------
 
-``ensemble``
+``ensemble-GCEA``
    Tests a category-level score directly against category scores obtained from
    null phenotypes. This is the default enrichment backend in the package.
 
@@ -34,13 +34,13 @@ Overview
 The workflow-facing explanation lives in :doc:`/chapters/workflows/enrichment`.
 This page instead focuses on the statistical objects that each method computes.
 
-Ensemble
---------
+Ensemble-GCEA
+-------------
 
 Category score
 ~~~~~~~~~~~~~~
 
-Ensemble enrichment starts from one observed gene-wise score vector. In
+Ensemble-GCEA starts from one observed gene-wise score vector. In
 practice, that score is:
 
 - a gene-map association score for ``corr``
@@ -98,7 +98,9 @@ Interpretation
 
 This method is often the most natural fit for imaging transcriptomics because
 it carries the phenotype null all the way through to the pathway level. That
-is why it is the package default.
+is why it is the package default. The label ``ensemble-GCEA`` follows Fulcher
+and colleagues' wording, "ensemble gene-category enrichment analysis (GCEA)",
+while the current CLI and API switch remains ``ensemble``.
 
 GSEA
 ----
@@ -172,7 +174,7 @@ The reported GSEA ``fdr`` is not a Benjamini-Hochberg correction on pathway
 p-values. It is a GSEA-style q-value computed from the observed NES values and
 the pooled null NES values.
 
-This is why the GSEA ``fdr`` column and the ORA or ensemble ``fdr`` columns
+This is why the GSEA ``fdr`` column and the ORA or ensemble-GCEA ``fdr`` columns
 should not be interpreted as the same quantity.
 
 Interpretation
@@ -180,7 +182,7 @@ Interpretation
 
 GSEA is most useful when the full gene ordering matters and you do not want to
 choose a hard selection threshold. It is a ranking-based enrichment test, not
-a direct phenotype-ensemble test.
+a direct ensemble-GCEA style phenotype-ensemble test.
 
 ORA
 ---
@@ -244,7 +246,7 @@ threshold and on the chosen gene universe.
 Choosing between methods
 ------------------------
 
-Use ``ensemble`` when:
+Use ``ensemble-GCEA`` when:
 
 - you want the enrichment null to inherit the phenotype null
 - spatial autocorrelation is the main inferential concern
