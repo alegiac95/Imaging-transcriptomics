@@ -54,6 +54,28 @@ Across those workflows, the package tries to keep three things explicit:
 - which null model is actually being used
 - which output is descriptive and which output is inferential
 
+Representative applications
+---------------------------
+
+The same general logic has already been used in several different kinds of
+studies. `Martins et al. (2021) <https://doi.org/10.1016/j.celrep.2021.110173>`_
+show the canonical atlas-based use case: correlating regional molecular
+neuroimaging phenotypes with atlas-matched transcriptomic profiles in the
+healthy adult brain. `Giacomel et al. (2026)
+<https://doi.org/10.1038/s41380-026-03497-4>`_ illustrate a weighted-signature
+variant, where genetically informed disease-associated gene weights are
+projected back into regional transcriptomic cartographies; this is the closest
+published analogue of the ``gedar`` workflow. More recently,
+`Ecker et al. (2025) <https://doi.org/10.1038/s41467-025-61927-3>`_ showed how
+transcriptomic decoding can also be extended to dense surface-based imaging
+phenotypes for pharmacotranscriptomics.
+
+Together, those papers illustrate a useful spectrum:
+
+- atlas-based phenotype-to-gene association in healthy-brain imaging
+- weighted gene-signature cartography in disorder-related applications
+- high-resolution surface-based decoding for molecular and pharmacological questions
+
 Why preprocessing matters
 -------------------------
 

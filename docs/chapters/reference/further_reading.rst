@@ -18,6 +18,28 @@ Foundational and practical papers
   `https://doi.org/10.7554/eLife.72129
   <https://doi.org/10.7554/eLife.72129>`_
 
+Representative applications
+---------------------------
+
+- Martins, D., Giacomel, A., Williams, S. C. R., Turkheimer, F., Dipasquale,
+  O. & Veronese, M. Imaging transcriptomics: Convergent cellular,
+  transcriptomic, and molecular neuroimaging signatures in the healthy adult
+  human brain. *Cell Reports* **37**, 110173 (2021).
+  `https://doi.org/10.1016/j.celrep.2021.110173
+  <https://doi.org/10.1016/j.celrep.2021.110173>`_
+
+- Giacomel, A., Powell, T. R., Duarte, R. R. R. *et al.* Transcriptome-informed
+  brain cartography of polygenic risk and association with brain structure in
+  major psychiatric disorders. *Molecular Psychiatry* (2026).
+  `https://doi.org/10.1038/s41380-026-03497-4
+  <https://doi.org/10.1038/s41380-026-03497-4>`_
+
+- Ecker, C. *et al.* Transcriptomic decoding of surface-based imaging
+  phenotypes and its application to pharmacotranscriptomics.
+  *Nature Communications* **16**, 6727 (2025).
+  `https://doi.org/10.1038/s41467-025-61927-3
+  <https://doi.org/10.1038/s41467-025-61927-3>`_
+
 Spatial nulls and enrichment
 ----------------------------
 
